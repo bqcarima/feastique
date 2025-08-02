@@ -2,7 +2,6 @@ package com.qinet.feastique.utility
 
 import com.qinet.feastique.model.entity.RefreshToken
 import com.qinet.feastique.model.enums.AccountType
-import com.qinet.feastique.repository.RefreshTokenRepository
 import com.qinet.feastique.response.Token
 import com.qinet.feastique.response.TokenPair
 import com.qinet.feastique.security.HashEncoder
@@ -26,6 +25,8 @@ import java.lang.IllegalArgumentException
  * as an environmental variable. You will have to set this up yourself
  * for testing.
  * @param jwtSecret Gotten from the environment variable jwt.secret
+ * @param hashEncoder
+ * @param refreshTokenService
  *
  * @author Bassey Otudor
  */
@@ -34,8 +35,7 @@ class JwtUtility(
     @Value("\${JWT_SECRET}") // injecting the jwt.secret into the variable jwtSecret
     private val jwtSecret: String,
     private val hashEncoder: HashEncoder,
-    private val refreshTokenService: RefreshTokenService,
-    private val refreshTokenRepository: RefreshTokenRepository
+    private val refreshTokenService: RefreshTokenService
 ) {
 
     /**
@@ -155,7 +155,7 @@ class JwtUtility(
 
     /**
      * This function gets the id from a valid token.
-     * fun getUserId(token: String): Long = getClaims(token)?.get("subject") as Long
+     * "fun getUserId(token: String): Long = getClaims(token)?.get("subject") as Long"
      * generates a null pointer exception because the "subject" is a standard JWT claim
      * and not a custom claim.
      *
@@ -225,11 +225,11 @@ class JwtUtility(
         }
 
         if(userType == AccountType.CUSTOMER.name) {
-            refreshTokenRepository.findByCustomerId(id)
+            refreshTokenService.getTokenByCustomerId(id)
                 ?: throw ResponseStatusException(HttpStatusCode.valueOf(401), "Invalid refresh token.")
 
         } else {
-            refreshTokenRepository.findByVendorId(id)
+            refreshTokenService.getTokenByVendorId(id)
                 ?: throw ResponseStatusException(HttpStatusCode.valueOf(401), "Invalid refresh token.")
         }
 

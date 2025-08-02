@@ -53,7 +53,7 @@ class VendorService(
     fun signup(vendorSignupDTO: VendorSignupDTO) {
         if(vendorSignupDTO.username?.let { getVendorByUsername(it).getOrNull() } == null) {
             if(vendorSignupDTO.defaultPhoneNumber?.let {getVendorByPhoneNumber(it).getOrNull()} == null) {
-                // Information meant for the customer table
+                // Information meant for the vendor table
                 val vendor = Vendor()
                 vendor.username = vendorSignupDTO.username ?: throw IllegalArgumentException("Please enter a username")
                 vendor.firstName = vendorSignupDTO.firstName ?: throw IllegalArgumentException("Please enter a first name.")
@@ -81,6 +81,8 @@ class VendorService(
                 address.vendor = vendor
 
                 vendorAddressService.saveAddress(address)
+
+                // Update the vendor with a foreign key reference in the address table
                 saveVendor(vendor)
 
             } else {
@@ -103,8 +105,12 @@ class VendorService(
         val authentication = authManager.authenticate(authenticationToken)
         SecurityContextHolder.getContext().authentication = authentication
 
-        // Get user details as a UserSecurity object from the
-        // security authentication object to get access to the id.
+        /*
+        Get user details as a UserSecurity object from the
+        security authentication object to get access to the id.
+        "as UserDetails" also works, but you will not be able
+        to access the vendor id.
+        */
         val userDetails = authentication.principal as UserSecurity
         val vendorId = userDetails.id
 

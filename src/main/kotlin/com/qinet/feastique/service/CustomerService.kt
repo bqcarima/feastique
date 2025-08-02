@@ -81,6 +81,8 @@ class CustomerService(
                 address.customer = customer
 
                 customerAddressService.saveAddress(address)
+
+                // Update the customer with a foreign key reference in the address table
                 saveCustomer(customer)
 
             } else {
@@ -104,8 +106,12 @@ class CustomerService(
         val authentication = authManager.authenticate(authenticationToken)
         SecurityContextHolder.getContext().authentication = authentication
 
-        // Get user details as a UserSecurity object from the
-        // security authentication object to get access to the id.
+        /*
+        Get user details as a UserSecurity object from the
+        security authentication object to get access to the id.
+        "as UserDetails" also works, but you will not be able
+        to access the customer id.
+        */
         val userDetails = authentication.principal as UserSecurity
         val customerId = userDetails.id
 
