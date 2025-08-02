@@ -1,0 +1,42 @@
+package com.qinet.feastique.service
+
+import com.qinet.feastique.repository.CustomerRepository
+import com.qinet.feastique.repository.VendorRepository
+import com.qinet.feastique.security.UserSecurity
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.security.core.userdetails.UserDetailsService
+import org.springframework.security.core.userdetails.UsernameNotFoundException
+import org.springframework.stereotype.Service
+import java.util.Collections
+
+@Service
+class UserDetailService(
+    private val customerRepository: CustomerRepository,
+    private val vendorRepository: VendorRepository
+) : UserDetailsService {
+    override fun loadUserByUsername(username: String): UserDetails? {
+
+        val customer = customerRepository.findByUsername(username).orElse(null)
+        if (customer != null) {
+            return UserSecurity(
+                id = customer.id!!,
+                username = customer.username,
+                password = customer.password!!,
+                Collections.singleton(SimpleGrantedAuthority("CUSTOMER"))
+            )
+        }
+
+        val vendor = vendorRepository.findByUsername(username).orElse(null)
+        if(vendor != null) {
+            return UserSecurity(
+                id = vendor.id!!,
+                username = vendor.username,
+                password = vendor.password!!,
+                Collections.singleton(SimpleGrantedAuthority("VENDOR"))
+            )
+        }
+
+        throw UsernameNotFoundException("User not found with username: $username")
+    }
+}
