@@ -2,7 +2,7 @@ package com.qinet.feastique.utility
 
 import com.qinet.feastique.model.entity.RefreshToken
 import com.qinet.feastique.model.enums.AccountType
-import com.qinet.feastique.response.Token
+import com.qinet.feastique.response.TokenResponse
 import com.qinet.feastique.response.TokenPair
 import com.qinet.feastique.security.HashEncoder
 import com.qinet.feastique.service.RefreshTokenService
@@ -108,11 +108,15 @@ class JwtUtility(
      * @throws Exception
      */
     private fun getClaims(token: String): Claims? {
+        val rawToken = if(token.startsWith("Bearer ")) {
+            token.removePrefix("Bearer ")
+
+        } else token
         return try {
             Jwts.parser()
                 .verifyWith(SECRET)
                 .build()
-                .parseSignedClaims(token)
+                .parseSignedClaims(rawToken)
                 .payload
 
         } catch (e: JwtException) {
@@ -205,12 +209,12 @@ class JwtUtility(
      * This function generated a new valid access token from a valid
      * refresh token.
      * @param refreshToken
-     * @return Token
+     * @return TokenResponse
      * @throws ResponseStatusException
      * @throws IllegalArgumentException
      */
     @Transactional
-    fun refresh(refreshToken: String): Token {
+    fun refresh(refreshToken: String): TokenResponse {
         if(!validateRefreshToken(refreshToken)) {
             throw ResponseStatusException(HttpStatusCode.valueOf(401), "Invalid refresh token.")
         }
@@ -243,7 +247,7 @@ class JwtUtility(
             }
         )
 
-        return Token(newAccessToken)
+        return TokenResponse(newAccessToken)
     }
 
     /**

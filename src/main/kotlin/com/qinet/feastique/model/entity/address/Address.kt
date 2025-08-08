@@ -1,15 +1,6 @@
 package com.qinet.feastique.model.entity.address
 
-import com.qinet.feastique.model.enums.Region
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.Inheritance
-import jakarta.persistence.InheritanceType
+import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 
@@ -22,9 +13,9 @@ class Address {
 
     var country: String = "Cameroon"
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    var region: Region? = null
+    @NotBlank(message = "Region cannot be null.")
+    @NotEmpty(message = "Region cannot be empty.")
+    var region: String? = ""
 
     @NotBlank(message = "City cannot be null.")
     @NotEmpty(message = "City cannot be empty.")

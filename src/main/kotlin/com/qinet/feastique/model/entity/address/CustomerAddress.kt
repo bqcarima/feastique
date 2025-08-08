@@ -18,3 +18,4 @@ class CustomerAddress : Address() {
     @JsonIgnore
     lateinit var customer: Customer
 }
+

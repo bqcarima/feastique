@@ -1,7 +1,12 @@
 package com.qinet.feastique.model.entity
 
+import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonManagedReference
+import com.qinet.feastique.model.entity.addOn.AddOn
 import com.qinet.feastique.model.entity.address.VendorAddress
+import com.qinet.feastique.model.entity.complement.Complement
+import com.qinet.feastique.model.entity.discount.Discount
+import com.qinet.feastique.model.entity.food.Food
 import com.qinet.feastique.model.enums.AccountType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -71,7 +76,36 @@ class Vendor {
     @JsonManagedReference // prevent infinite recursion for extra protection
     @OneToMany(
         mappedBy = "vendor",
-        orphanRemoval = true // Automatic removal of addresses if removed from the customer
+        orphanRemoval = true // Automatic removal of addresses if removed from the vendor
+    )
+    var addOn: MutableSet<AddOn> = mutableSetOf()
+
+    @JsonManagedReference
+    @OneToMany(
+        mappedBy = "vendor",
+        orphanRemoval = true
     )
     var addresses: MutableSet<VendorAddress> = mutableSetOf()
+
+    @JsonBackReference
+    @OneToMany(
+        mappedBy = "vendor",
+        orphanRemoval = true
+    )
+    var complement: MutableSet<Complement> = mutableSetOf()
+
+    @JsonManagedReference
+    @OneToMany(
+        mappedBy = "vendor",
+        orphanRemoval = true
+    )
+    var discount: MutableSet<Discount> = mutableSetOf()
+
+    @JsonManagedReference
+    @OneToMany(
+        mappedBy = "vendor",
+        orphanRemoval = true
+    )
+    var food: MutableSet<Food> = mutableSetOf()
 }
+

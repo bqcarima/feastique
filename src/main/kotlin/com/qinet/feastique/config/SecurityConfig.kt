@@ -30,9 +30,9 @@ class SecurityConfig(
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/auth/**").permitAll()
-                    .requestMatchers("/customer/**").hasRole("CUSTOMER")
-                    .requestMatchers("/vendor/**").hasRole("VENDOR")
+                    .requestMatchers("/api/auth/**").permitAll()
+                    //.requestMatchers("/api/customer/**").hasRole("CUSTOMER")
+                    //.requestMatchers("/api/vendor/**").hasRole("VENDOR")
                     .anyRequest().authenticated()
             }
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter::class.java)

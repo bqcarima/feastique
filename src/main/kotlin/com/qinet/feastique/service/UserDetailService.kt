@@ -1,7 +1,7 @@
 package com.qinet.feastique.service
 
-import com.qinet.feastique.repository.CustomerRepository
-import com.qinet.feastique.repository.VendorRepository
+import com.qinet.feastique.repository.customer.CustomerRepository
+import com.qinet.feastique.repository.vendor.VendorRepository
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
@@ -27,7 +27,7 @@ class UserDetailService(
             )
         }
 
-        val vendor = vendorRepository.findByUsername(username).orElse(null)
+        val vendor = vendorRepository.findByUsername(username)
         if(vendor != null) {
             return UserSecurity(
                 id = vendor.id!!,

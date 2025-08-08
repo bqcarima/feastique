@@ -15,18 +15,22 @@ class RefreshTokenService(
         refreshTokenRepository.save(refreshToken)
     }
 
+    @Transactional(readOnly = true)
     fun getTokenByCustomerId(customerId: Long): RefreshToken? {
         return refreshTokenRepository.findByCustomerId(customerId)
     }
 
+    @Transactional
     fun deleteTokenByCustomerId(customerId: Long) {
         refreshTokenRepository.deleteByCustomerId(customerId)
     }
 
+    @Transactional(readOnly = true)
     fun getTokenByVendorId(vendorId: Long): RefreshToken? {
         return refreshTokenRepository.findByVendorId(vendorId)
     }
 
+    @Transactional
     fun deleteTokenByVendorId(vendorId: Long) {
         refreshTokenRepository.deleteByVendorId(vendorId)
     }
