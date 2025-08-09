@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotEmpty
 
 data class FoodDto(
 
+    var id: Long? = null,
+
     @field:NotBlank(message = "Food name cannot be null.")
     @field:NotEmpty(message = "Food name cannot be empty.")
     var foodName: String?,

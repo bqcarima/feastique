@@ -5,6 +5,7 @@ import com.qinet.feastique.model.entity.food.Food
 import com.qinet.feastique.model.entity.food.FoodSize
 import com.qinet.feastique.response.FoodResponse
 import com.qinet.feastique.security.UserSecurity
+import com.qinet.feastique.service.addOn.FoodAddOnService
 import com.qinet.feastique.service.food.FoodService
 import com.qinet.feastique.service.complement.FoodComplementService
 import com.qinet.feastique.service.food.FoodSizeService
@@ -21,7 +22,8 @@ import java.lang.Exception
 class FoodController(
     private val foodService: FoodService,
     private val foodComplementService: FoodComplementService,
-    private val foodSizeService: FoodSizeService
+    private val foodSizeService: FoodSizeService,
+    private val foodAddOnService: FoodAddOnService
 ) {
 
     @PostMapping("/add")
@@ -33,7 +35,6 @@ class FoodController(
 
     ): FoodResponse {
         return foodService.addFood(foodDto, vendorDetails)
-
     }
 
     @PostMapping("/delete/{foodId}")
@@ -43,19 +44,20 @@ class FoodController(
         @AuthenticationPrincipal vendorDetails: UserSecurity
     ): ResponseEntity<String> {
 
-        if(vendorId != vendorDetails.id) {
-            throw Exception("You do not have permission to delete this food.")
-        }
+        val food = foodService.getFoodById(foodId)
+            .orElseThrow { IllegalArgumentException("Food with id: $foodId found. Unable to delete food.") }
+            .also {
+                if(it.vendor.id != vendorDetails.id) {
+                    throw IllegalArgumentException("You do not have permission to update food ${it.foodName}")
+                }
+            }
 
-        if(foodId.let { foodService.getFoodById(it).getOrNull()} != null) {
-            foodComplementService.deleteAllFoodComplements(foodId)
-            foodSizeService.deleteAllFoodSizes(foodId)
-            foodService.deleteByFoodIdAndVendorId(foodId, vendorId)
+        foodAddOnService.deleteAllFoodAddOnsByFoodId(foodId)
+        foodComplementService.deleteAllFoodComplements(foodId)
+        foodSizeService.deleteAllFoodSizes(foodId)
+        foodService.delete(food)
 
-            return ResponseEntity("Food deleted successfully. Complement associations will be deleted too.",HttpStatus.OK)
-        } else {
-            throw Exception("You are trying to delete a food that does not exist.")
-        }
+        return ResponseEntity("Food deleted successfully. Complement associations will be deleted too.",HttpStatus.OK)
     }
 
     @DeleteMapping("/delete/{foodId}/food_size/{id}")

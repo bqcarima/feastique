@@ -26,6 +26,7 @@ class FoodComplementService(
         foodComplementRepository.save(foodComplement)
     }
 
+    // No use-case for this method exists yet.
     @Transactional
     fun deleteFoodComplement(complementId: Long, foodId: Long) {
         foodComplementRepository.deleteByComplementIdAndFoodId(complementId, foodId)

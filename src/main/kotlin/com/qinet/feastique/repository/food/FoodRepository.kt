@@ -8,5 +8,6 @@ import org.springframework.stereotype.Repository
 interface FoodRepository : JpaRepository<Food, Long> {
     fun deleteByIdAndVendorId(foodId: Long, vendorId: Long)
     fun findAllByVendorId(vendorId: Long): List<Food>
+    fun findByFoodNameIgnoreCaseAndVendorId(foodName: String, vendorId: Long): Food?
 
 }

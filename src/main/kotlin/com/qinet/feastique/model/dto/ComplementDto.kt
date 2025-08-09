@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 
 data class ComplementDto (
+
+    var id: Long? = null,
     @field:NotBlank(message = "Complement name cannot be null.")
     @field:NotEmpty(message = "Complement name cannot be empty.")
     var complementName: String?,

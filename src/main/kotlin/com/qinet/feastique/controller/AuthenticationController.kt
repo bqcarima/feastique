@@ -28,11 +28,10 @@ class AuthenticationController(
     @PostMapping("/signup")
     fun signup(
         @RequestBody
-        @Valid
-        signupDTO: SignupDto
+        @Valid signupDTO: SignupDto
     ): ResponseEntity<String> {
         customerService.signupCustomer(signupDTO)
-        return ResponseEntity("Created", HttpStatus.CREATED)
+        return ResponseEntity("Account created for ${signupDTO.username}", HttpStatus.CREATED)
     }
 
     @PostMapping("/login")
@@ -43,11 +42,10 @@ class AuthenticationController(
     @PostMapping("/vendor/signup")
     fun vendorSignup(
         @RequestBody
-        @Valid
-        vendorSignupDTO: VendorSignupDto
+        @Valid vendorSignupDTO: VendorSignupDto
         ): ResponseEntity<String> {
             vendorService.signup(vendorSignupDTO)
-            return ResponseEntity("Created", HttpStatus.CREATED)
+            return ResponseEntity("Account created for: ${vendorSignupDTO.username}", HttpStatus.CREATED)
         }
 
 

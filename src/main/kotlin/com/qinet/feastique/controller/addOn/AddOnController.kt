@@ -5,7 +5,7 @@ import com.qinet.feastique.model.entity.addOn.AddOn
 import com.qinet.feastique.response.AddOnResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.addOn.AddOnService
-import com.qinet.feastique.service.vendor.VendorService
+import com.qinet.feastique.service.addOn.FoodAddOnService
 import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/vendor/{vendorId}/add_on")
 class AddOnController(
     private val addOnService: AddOnService,
-    private val vendorService: VendorService
+    private val foodAddOnService: FoodAddOnService
 ) {
 
     @PostMapping("/add")
@@ -40,17 +40,16 @@ class AddOnController(
         @PathVariable addOnId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity
     ) {
-        val addOn = addOnService.getAddOn(addOnId).orElseThrow {
-            Exception("Add-on not found.")
-        }
+        val addOn = addOnService.getAddOn(addOnId)
+            .orElseThrow { IllegalArgumentException("Add-on not found.") }
+            .also {
+                if(it.vendor.id != vendorDetails.id) {
+                    throw IllegalArgumentException("You do not have permission to delete add-on")
+                }
+            }
 
-        val vendor = vendorService.getVendorById(vendorDetails.id).orElseThrow {
-            Exception("An unexpected error occurred. Unable to delete add-on.")
-        }
-
-        if(vendor != addOn.vendor) {
-            throw IllegalAccessError("You do not have permission to delete add-on")
-        }
+        foodAddOnService.deleteAllFoodAddOnsByAddOnId(addOn.id!!)
+        addOnService.deleteAddOn(addOn)
     }
 
     @GetMapping("/all")
@@ -59,7 +58,10 @@ class AddOnController(
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): List<AddOn> {
-        if(vendorId != vendorDetails.id) throw IllegalAccessException("You do not have permission to delete this add-on.")
+        if(vendorId != vendorDetails.id) {
+            throw IllegalArgumentException("You do not have permission to delete this add-on.")
+        }
         return addOnService.getAllComplements(vendorDetails.id)
     }
 }
+

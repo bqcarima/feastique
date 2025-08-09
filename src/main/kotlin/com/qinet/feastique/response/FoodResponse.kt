@@ -14,3 +14,4 @@ data class FoodResponse(
     val orderType: List<String>,
     val image: List<String>
 )
+

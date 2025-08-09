@@ -5,7 +5,6 @@ import com.qinet.feastique.model.entity.complement.Complement
 import com.qinet.feastique.response.ComplementResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.complement.ComplementService
-import com.qinet.feastique.service.vendor.VendorService
 import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
@@ -14,8 +13,7 @@ import java.lang.Exception
 @RestController
 @RequestMapping("/api/vendor/{vendorId}/complement")
 class ComplementController(
-    private val complementService: ComplementService,
-    private val vendorService: VendorService
+    private val complementService: ComplementService
 ) {
 
     @PostMapping("/add")
@@ -35,16 +33,14 @@ class ComplementController(
         @PathVariable complementId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity
     ) {
-        val complement = complementService.getComplement(complementId).orElseThrow {
-            Exception("Complement not found.")
-        }
+        val complement = complementService.getComplement(complementId)
+            .orElseThrow { Exception("Complement not found.") }
+            .also {
+                if(it.vendor.id != vendorDetails.id) {
+                    IllegalArgumentException("You do not have permission to delete complement.")
+                }
+            }
 
-        val vendor = vendorService.getVendorById(vendorDetails.id).orElseThrow {
-            Exception("An unexpected error occurred. Unable to delete complement.")
-        }
-        if(vendor != complement.vendor) {
-            throw IllegalAccessError("You do not have permission to delete complement.")
-        }
         complementService.deleteComplement(complement)
     }
 
@@ -54,7 +50,7 @@ class ComplementController(
         @AuthenticationPrincipal vendorDetails: UserSecurity
     ) : List<Complement> {
         if(vendorId != vendorDetails.id) {
-            throw Exception("You do not have permission to delete this complement.")
+            throw IllegalArgumentException("You do not have permission to view these complements.")
         }
         return complementService.getAllComplements(vendorDetails.id )
     }

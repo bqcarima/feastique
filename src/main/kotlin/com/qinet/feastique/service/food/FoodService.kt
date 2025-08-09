@@ -1,15 +1,19 @@
 package com.qinet.feastique.service.food
 
 import com.qinet.feastique.model.dto.FoodDto
+import com.qinet.feastique.model.entity.addOn.FoodAddOn
 import com.qinet.feastique.model.entity.complement.FoodComplement
 import com.qinet.feastique.model.entity.food.Food
 import com.qinet.feastique.model.entity.food.FoodSize
 import com.qinet.feastique.model.enums.Size
+import com.qinet.feastique.repository.addOn.AddOnRepository
+import com.qinet.feastique.repository.addOn.FoodAddOnRepository
 import com.qinet.feastique.repository.complement.ComplementRepository
 import com.qinet.feastique.repository.complement.FoodComplementRepository
 import com.qinet.feastique.repository.food.FoodRepository
 import com.qinet.feastique.repository.food.FoodSizeRepository
 import com.qinet.feastique.repository.vendor.VendorRepository
+import com.qinet.feastique.response.AddOnResponse
 import com.qinet.feastique.response.ComplementResponse
 import com.qinet.feastique.response.FoodResponse
 import com.qinet.feastique.response.FoodSizeResponse
@@ -17,10 +21,7 @@ import com.qinet.feastique.security.UserSecurity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.lang.Exception
-import java.lang.IllegalArgumentException
-import java.util.Locale
-import java.util.Optional
+import java.util.*
 
 @Service
 class FoodService(
@@ -28,7 +29,9 @@ class FoodService(
     private val vendorRepository: VendorRepository,
     private val complementRepository: ComplementRepository,
     private val foodComplementRepository: FoodComplementRepository,
-    private val foodSizeRepository: FoodSizeRepository
+    private val foodSizeRepository: FoodSizeRepository,
+    private val addOnRepository: AddOnRepository,
+    private val foodAddOnRepository: FoodAddOnRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -41,14 +44,14 @@ class FoodService(
         return foodRepository.findAllByVendorId(vendorId)
     }
 
-    @Transactional
-    fun delete(food: Food) {
-        foodRepository.delete(food)
+    @Transactional(readOnly = true)
+    fun getDuplicate(foodName: String, vendorId: Long): Food? {
+        return foodRepository.findByFoodNameIgnoreCaseAndVendorId(foodName, vendorId)
     }
 
     @Transactional
-    fun deleteByFoodIdAndVendorId(foodId: Long, vendorId: Long) {
-        foodRepository.deleteByIdAndVendorId(foodId, vendorId)
+    fun delete(food: Food) {
+        foodRepository.delete(food)
     }
 
     @Transactional
@@ -62,11 +65,35 @@ class FoodService(
         @AuthenticationPrincipal
         vendorDetails: UserSecurity
     ): FoodResponse {
-        val vendor = vendorRepository.findById(vendorDetails.id).get()
+        val vendor = vendorRepository.findById(vendorDetails.id)
+            .orElseThrow { IllegalArgumentException("Vendor not found.") }
 
         // Information meant for the food table
-        var food = Food()
-        food.foodName = foodDto.foodName ?: throw IllegalArgumentException("Please enter a food name.")
+        // Determine if food is to be created or update an existing one
+        var food: Food = if(foodDto.id != null) {
+            foodRepository.findById(foodDto.id!!)
+                .orElseThrow { IllegalArgumentException("Food not found.") }
+                .also {
+                    if(it.vendor.id != vendorDetails.id) {
+                        throw IllegalArgumentException("You do not have permission to update food ${it.foodName}")
+                    }
+                }
+        } else {
+            Food()
+        }
+
+        if(foodDto.id == null) {
+
+            // Check if the vendor has already added food with the same name
+            if(getDuplicate(foodDto.foodName!!, vendorDetails.id) == null) {
+                food.foodName = foodDto.foodName ?: throw IllegalArgumentException("Please enter a food name.")
+            } else {
+                throw IllegalArgumentException("A food with the name: ${foodDto.foodName} already exist. Cannot add duplicate.")
+            }
+        } else {
+            food.foodName = foodDto.foodName ?: throw IllegalArgumentException("Please enter a food name.")
+        }
+
         food.mainCourse = foodDto.mainCourse ?: throw IllegalArgumentException("Please enter a main course.")
         food.description = foodDto.description ?: throw IllegalArgumentException("Please enter a description.")
         food.basePrice = foodDto.basePrice ?: throw IllegalArgumentException("Please enter a base price.")
@@ -74,6 +101,13 @@ class FoodService(
         food.vendor = vendor
 
         food = saveFood(food)
+
+        // Remove old relationships when updating
+        if(foodDto.id != null) {
+            foodComplementRepository.deleteAllByFoodId(food.id!!)
+            foodSizeRepository.deleteAllByFoodId(food.id!!)
+            foodAddOnRepository.deleteAllByFoodId(food.id!!)
+        }
 
         // Information meant for the food_complement table
         val complementSelection: List<Long> = foodDto.complementIds ?: throw Exception("Error parsing list of complementIds")
@@ -115,6 +149,24 @@ class FoodService(
         }
         foodSizeRepository.saveAll(foodSizes)
 
+        // Information meant for the food_add_on table
+        val addOnSelection: List<Long>? = foodDto.addOnIds
+        val addOns = if(!addOnSelection.isNullOrEmpty()) {
+            addOnRepository.findAllByIdInAndVendorId(addOnSelection, vendorDetails.id)
+        } else {
+            emptyList()
+        }
+
+        if(!addOns.isEmpty()) {
+            val foodAddOns = mutableListOf<FoodAddOn>()
+            for(addOn in addOns) {
+                val foodAddOn = FoodAddOn()
+                foodAddOn.food = food
+                foodAddOn.addOn = addOn
+                foodAddOns.add(foodAddOn)
+            }
+            foodAddOnRepository.saveAll(foodAddOns)
+        }
 
         /**
          * Updating food with the new references to
@@ -123,18 +175,24 @@ class FoodService(
 
         food = saveFood(food)
 
-        val complementResponse = complements.map { it ->
-            ComplementResponse(
-                id = it.id ?: 0,
-                name = it.complementName ?: "",
-                price = it.price ?: ""
+        val addOnResponse = addOns.map {it ->
+            AddOnResponse (
+                id = it.id!!,
+                addOnName = it.addOnName!!,
+                price = it.price!!
             )
         }
-
+        val complementResponse = complements.map { it ->
+            ComplementResponse(
+                id = it.id!!,
+                name = it.complementName!!,
+                price = it.price!!
+            )
+        }
         val foodSizeResponse = foodSizes.map { it ->
             FoodSizeResponse(
-                id = it.id ?: 0,
-                size = it.size ?: ""
+                id = it.id!!,
+                size = it.size!!
             )
         }
 
@@ -148,7 +206,7 @@ class FoodService(
             basePrice = food.basePrice!!,
             size = foodSizeResponse,
             complements = complementResponse,
-            addOn = emptyList(),
+            addOn = addOnResponse,
             orderType = emptyList(),
             image = emptyList()
         )

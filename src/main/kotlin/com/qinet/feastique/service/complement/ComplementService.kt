@@ -8,8 +8,6 @@ import com.qinet.feastique.security.UserSecurity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
-import kotlin.jvm.optionals.getOrNull
-import java.lang.Exception
 
 @Service
 class ComplementService(
@@ -36,13 +34,6 @@ class ComplementService(
         complementRepository.delete(complement)
     }
 
-
-    // No use-case for this method yet.
-    @Transactional
-    fun deleteComplement(complementId: Long, vendorId: Long) {
-        complementRepository.deleteByIdAndVendorId(complementId, vendorId)
-    }
-
     @Transactional
     fun saveComplement(complement: Complement): Complement {
         return complementRepository.save(complement)
@@ -53,16 +44,32 @@ class ComplementService(
         complementDto: ComplementDto,
         vendorDetails: UserSecurity
     ): Complement {
-        val vendor = vendorRepository.findById(vendorDetails.id).getOrNull() ?: throw Exception("An unexpected error occurred. Unable to add complement.")
+        val vendor = vendorRepository.findById(vendorDetails.id)
+            .orElseThrow { IllegalArgumentException("Vendor not found.") }
 
-        var complement = Complement()
-
-        // Check if a vendor has already added a complement with the same name
-        if(getDuplicates(complementDto.complementName!!, vendorDetails.id) == null) {
-            complement.complementName = complementDto.complementName ?: throw IllegalArgumentException("Please enter a complement name")
+        var complement: Complement = if(complementDto.id != null) {
+            complementRepository.findById(complementDto.id!!)
+                .orElseThrow { IllegalArgumentException("Food not found.") }
+                .also {
+                    if(it.vendor.id != vendorDetails.id) {
+                        throw IllegalArgumentException("You do not have permission to update food ${it.complementName}")
+                    }
+                }
 
         } else {
-            throw Exception("A complement with the name ${complementDto.complementName} already exist. Unable add a duplicate.")
+            Complement()
+        }
+
+        if(complementDto.id == null) {
+
+            // Check if a vendor has already added a complement with the same name
+            if(getDuplicates(complementDto.complementName!!, vendorDetails.id) == null) {
+                complement.complementName = complementDto.complementName ?: throw IllegalArgumentException("Please enter a complement name")
+            } else {
+                throw Exception("A complement with the name ${complementDto.complementName} already exist. Unable add a duplicate.")
+            }
+        } else {
+            complement.complementName = complementDto.complementName ?: throw IllegalArgumentException("Please enter a complement name")
         }
 
         complement.price = complementDto.price ?: throw IllegalArgumentException("Please enter a price.")

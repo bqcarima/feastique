@@ -26,15 +26,15 @@ class VendorAddressController(
         return ResponseEntity("Address Added.", HttpStatus.CREATED)
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/delete/{addressId}")
     fun deleteById(
         @PathVariable vendorId: Long,
-        @PathVariable id: Long,
+        @PathVariable addressId: Long,
         @AuthenticationPrincipal
         vendorDetails: UserSecurity
     ): ResponseEntity<String> {
 
-        val vendorAddress = vendorAddressService.getAddress(id).orElseThrow {
+        val vendorAddress = vendorAddressService.getAddress(addressId).orElseThrow {
             Exception("Address not found.")
         }
 

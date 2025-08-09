@@ -7,10 +7,7 @@ import com.qinet.feastique.repository.vendor.VendorRepository
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.lang.Exception
-import java.lang.IllegalArgumentException
-import java.util.Optional
-import kotlin.jvm.optionals.getOrNull
+import java.util.*
 
 @Service
 class AddOnService(
@@ -47,24 +44,40 @@ class AddOnService(
         addOnDto: AddOnDto,
         vendorDetails: UserSecurity
     ): AddOn {
-        val vendor = vendorRepository.findById(vendorDetails.id).getOrNull() ?: throw Exception("An unexpected error occurred. Unable to add add-on.")
-        var addOn = AddOn()
+        val vendor = vendorRepository.findById(vendorDetails.id)
+            .orElseThrow { IllegalArgumentException("Vendor with id: ${vendorDetails.id} not found.") }
 
-        // check if the vendor has already added an add-on with the same name
-        if(getDuplicates(addOnDto.addOnName!!, vendorDetails.id) == null) {
-            addOn.addOnName = addOnDto.addOnName
-
+        var addOn: AddOn = if(addOnDto.id != null) {
+            addOnRepository.findById(addOnDto.id!!)
+                .orElseThrow { IllegalArgumentException("Add-on with id: ${addOnDto.id} not found.") }
+                .also {
+                    if(it.vendor.id != vendorDetails.id) {
+                        throw IllegalArgumentException("You do not have permission to update add-on.")
+                    }
+                }
         } else {
-            throw Exception("An add-on with the name ${addOnDto.addOnName} already exists. Unable to add a duplicate ")
+            AddOn()
+        }
+
+        if(addOnDto.id == null) {
+
+            // check if the vendor has already added an add-on with the same name
+            if (getDuplicates(addOnDto.addOnName!!, vendorDetails.id) == null) {
+                addOn.addOnName = addOnDto.addOnName
+            } else {
+                throw IllegalArgumentException("An add-on with the name ${addOnDto.addOnName} already exists. Unable to add a duplicate ")
+            }
+        } else {
+            addOn.addOnName = addOnDto.addOnName
         }
 
         addOn.price = addOnDto.price ?: throw IllegalArgumentException("Please enter a price.")
         addOn.vendor = vendor
-        addOn = addOnRepository.save(addOn)
+        addOn = saveAddOn(addOn)
         vendorRepository.save(vendor)
 
         return addOn
 
     }
-
 }
+

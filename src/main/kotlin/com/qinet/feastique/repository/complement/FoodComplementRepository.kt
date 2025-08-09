@@ -10,3 +10,4 @@ interface FoodComplementRepository : JpaRepository<FoodComplement, Long> {
     fun deleteByComplementIdAndFoodId(complementId: Long, foodId: Long)
     fun deleteAllByFoodId(foodId: Long)
 }
+
