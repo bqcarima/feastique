@@ -32,13 +32,7 @@ class Food {
     var description: String? = ""
 
     @Column(name = "base_price")
-    @NotBlank(message = "Base price cannot be null.")
-    @NotBlank(message = "Base price cannot be empty.")
-    var basePrice: String? = ""
-
-    @NotBlank(message = "Image cannot be null.")
-    @NotEmpty(message = "Image cannot be empty.")
-    var image: String? = ""
+    var basePrice: Long? = 0
 
     @JsonBackReference // prevent infinite recursion for extra protection
     @ManyToOne(fetch = FetchType.LAZY)
@@ -52,7 +46,8 @@ class Food {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var foodAddOn: MutableSet<FoodAddOn> = mutableSetOf()
+    @OrderColumn(name = "order_index")
+    var foodImage: MutableList<FoodImage> = mutableListOf()
 
     @JsonBackReference
     @OneToMany(
@@ -60,7 +55,8 @@ class Food {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var foodAvailability: MutableSet<FoodAvailability> = mutableSetOf()
+    @OrderColumn(name = "order_index")
+    var foodAddOn: MutableList<FoodAddOn> = mutableListOf()
 
     @JsonBackReference
     @OneToMany(
@@ -68,7 +64,8 @@ class Food {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var foodComplement: MutableSet<FoodComplement> = mutableSetOf()
+    @OrderColumn(name = "order_index")
+    var foodAvailability: MutableList<FoodAvailability> = mutableListOf()
 
     @JsonBackReference
     @OneToMany(
@@ -76,7 +73,8 @@ class Food {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var foodDiscount: MutableSet<FoodDiscount> = mutableSetOf()
+    @OrderColumn(name = "order_index")
+    var foodComplement: MutableList<FoodComplement> = mutableListOf()
 
     @JsonBackReference
     @OneToMany(
@@ -84,7 +82,8 @@ class Food {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var foodOrderType: MutableSet<FoodOrderType> = mutableSetOf()
+    @OrderColumn(name = "order_index")
+    var foodDiscount: MutableList<FoodDiscount> = mutableListOf()
 
     @JsonBackReference
     @OneToMany(
@@ -92,6 +91,16 @@ class Food {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var foodSize: MutableSet<FoodSize> = mutableSetOf()
+    @OrderColumn(name = "order_index")
+    var foodOrderType: MutableList<FoodOrderType> = mutableListOf()
+
+    @JsonBackReference
+    @OneToMany(
+        mappedBy = "food",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    @OrderColumn(name = "order_index")
+    var foodSize: MutableList<FoodSize> = mutableListOf()
 }
 

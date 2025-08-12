@@ -16,15 +16,20 @@ class FoodSizeService(
         return foodSizeRepository.findAllByFoodId(foodId)
     }
 
+    @Transactional(readOnly = true)
     fun getFoodSize(id: Long, foodId: Long): FoodSize? {
         return foodSizeRepository.findByIdAndFoodId(id, foodId)
     }
 
+    @Transactional
+    fun saveFoodSize(foodSize: FoodSize): FoodSize {
+        return foodSizeRepository.save(foodSize)
+    }
 
     // No use-case for this yet.
     @Transactional
     fun addFoodSize(foodSize: FoodSize): FoodSize {
-        return foodSizeRepository.save(foodSize)
+        return saveFoodSize(foodSize)
     }
 
     @Transactional

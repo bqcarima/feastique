@@ -27,9 +27,7 @@ class Complement {
     @NotEmpty(message = "Complement cannot be empty.")
     var complementName: String? = ""
 
-    @NotBlank(message = "Price cannot be null.")
-    @NotEmpty(message = "Price cannot be empty.")
-    var price: String? = ""
+    var price: Long? = 0
 
     @JsonBackReference // prevent infinite recursion for extra protection
     @ManyToOne(fetch = FetchType.LAZY)

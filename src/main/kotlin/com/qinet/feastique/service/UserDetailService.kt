@@ -23,7 +23,7 @@ class UserDetailService(
                 id = customer.id!!,
                 username = customer.username,
                 password = customer.password!!,
-                Collections.singleton(SimpleGrantedAuthority("CUSTOMER"))
+                Collections.singleton(SimpleGrantedAuthority("ROLE_CUSTOMER"))
             )
         }
 
@@ -33,7 +33,7 @@ class UserDetailService(
                 id = vendor.id!!,
                 username = vendor.username,
                 password = vendor.password!!,
-                Collections.singleton(SimpleGrantedAuthority("VENDOR"))
+                Collections.singleton(SimpleGrantedAuthority("ROLE_VENDOR"))
             )
         }
 

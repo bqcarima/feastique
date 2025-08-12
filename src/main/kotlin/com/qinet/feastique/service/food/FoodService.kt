@@ -1,23 +1,27 @@
 package com.qinet.feastique.service.food
 
+import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.FoodDto
 import com.qinet.feastique.model.entity.addOn.FoodAddOn
 import com.qinet.feastique.model.entity.complement.FoodComplement
 import com.qinet.feastique.model.entity.food.Food
+import com.qinet.feastique.model.entity.food.FoodImage
+import com.qinet.feastique.model.entity.food.FoodOrderType
 import com.qinet.feastique.model.entity.food.FoodSize
+import com.qinet.feastique.model.enums.OrderType
 import com.qinet.feastique.model.enums.Size
 import com.qinet.feastique.repository.addOn.AddOnRepository
 import com.qinet.feastique.repository.addOn.FoodAddOnRepository
 import com.qinet.feastique.repository.complement.ComplementRepository
 import com.qinet.feastique.repository.complement.FoodComplementRepository
+import com.qinet.feastique.repository.food.FoodImageRepository
+import com.qinet.feastique.repository.food.FoodOrderTypeRepository
 import com.qinet.feastique.repository.food.FoodRepository
 import com.qinet.feastique.repository.food.FoodSizeRepository
 import com.qinet.feastique.repository.vendor.VendorRepository
-import com.qinet.feastique.response.AddOnResponse
-import com.qinet.feastique.response.ComplementResponse
 import com.qinet.feastique.response.FoodResponse
-import com.qinet.feastique.response.FoodSizeResponse
 import com.qinet.feastique.security.UserSecurity
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -31,7 +35,9 @@ class FoodService(
     private val foodComplementRepository: FoodComplementRepository,
     private val foodSizeRepository: FoodSizeRepository,
     private val addOnRepository: AddOnRepository,
-    private val foodAddOnRepository: FoodAddOnRepository
+    private val foodAddOnRepository: FoodAddOnRepository,
+    private val foodOrderTypeRepository: FoodOrderTypeRepository,
+    private val foodImageRepository: FoodImageRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -62,8 +68,7 @@ class FoodService(
     @Transactional
     fun addFood(
         foodDto: FoodDto,
-        @AuthenticationPrincipal
-        vendorDetails: UserSecurity
+        @AuthenticationPrincipal vendorDetails: UserSecurity
     ): FoodResponse {
         val vendor = vendorRepository.findById(vendorDetails.id)
             .orElseThrow { IllegalArgumentException("Vendor not found.") }
@@ -79,7 +84,9 @@ class FoodService(
                     }
                 }
         } else {
-            Food()
+            Food().apply {
+                this.vendor = vendor
+            }
         }
 
         if(foodDto.id == null) {
@@ -97,119 +104,94 @@ class FoodService(
         food.mainCourse = foodDto.mainCourse ?: throw IllegalArgumentException("Please enter a main course.")
         food.description = foodDto.description ?: throw IllegalArgumentException("Please enter a description.")
         food.basePrice = foodDto.basePrice ?: throw IllegalArgumentException("Please enter a base price.")
-        food.image = foodDto.image
-        food.vendor = vendor
 
         food = saveFood(food)
 
         // Remove old relationships when updating
         if(foodDto.id != null) {
-            foodComplementRepository.deleteAllByFoodId(food.id!!)
-            foodSizeRepository.deleteAllByFoodId(food.id!!)
-            foodAddOnRepository.deleteAllByFoodId(food.id!!)
+            food.foodComplement.clear()
+            food.foodSize.clear()
+            food.foodAddOn.clear()
+            food.foodOrderType.clear()
+            food.foodImage.clear()
         }
+
+        // Information meant for the food_image table
+        val foodImages = foodDto.foodImage.map { it ->
+            FoodImage().apply {
+                this.imageUrl = it
+                this.food = food
+            }
+        }
+        food.foodImage.addAll(foodImages)
 
         // Information meant for the food_complement table
-        val complementSelection: List<Long> = foodDto.complementIds ?: throw Exception("Error parsing list of complementIds")
-        val complements = complementRepository.findAllByIdInAndVendorId(complementSelection, vendor.id!!)
-        val foodComplements = mutableListOf<FoodComplement>()
-
-        for(complement in complements) {
-            val foodComplement = FoodComplement()
-            foodComplement.food = food
-            foodComplement.complement = complement
-            foodComplements.add(foodComplement)
+        val complements = complementRepository.findAllByIdInAndVendorId(
+            foodDto.complementIds,
+            vendor.id!!
+        )
+        
+        val foodComplements = complements.map { it ->
+            FoodComplement().apply {
+                this.food = food
+                this.complement = it
+            }
         }
-        foodComplementRepository.saveAll(foodComplements)
+        food.foodComplement.addAll(foodComplements)
 
         // Information meant for the food_order_type table
-        val foodSizeSelection: List<String> = foodDto.foodSize ?: throw Exception("Error parsing list of food order type")
-        val foodSizes = mutableListOf<FoodSize>()
-        for(size in foodSizeSelection) {
-            val foodSize = FoodSize()
-            when (size.lowercase(Locale.ENGLISH)) {
-                "medium" -> {
-                    foodSize.food = food
-                    foodSize.size = Size.MEDIUM.name
-
-                }
-                "large" -> {
-                    foodSize.food = food
-                    foodSize.size = Size.LARGE.name
-                }
-                "extra-large" -> {
-                    foodSize.food = food
-                    foodSize.size = Size.EXTRA_LARGE.name
-                }
-                else -> {
-                    throw IllegalArgumentException("$size is not a valid food size.")
+        val foodSizes = foodDto.foodSize.map {it
+            FoodSize().apply {
+                this.food = food
+                this.size = when(it) {
+                    "medium" -> Size.MEDIUM.type
+                    "large" -> Size.LARGE.type
+                    "extra-large" -> Size.EXTRA_LARGE.type
+                    else -> { throw IllegalArgumentException("$it is not a valid food size.")
+                    }
                 }
             }
-            foodSizes.add(foodSize)
         }
-        foodSizeRepository.saveAll(foodSizes)
+        food.foodSize.addAll(foodSizes)
+
+        // Information meant for the food_order_type table
+        val foodOrderTypes = foodDto.orderType.map { order ->
+            FoodOrderType().apply {
+                this.food = food
+                this.orderType = when (order.lowercase()) {
+                    "delivery" -> OrderType.DELIVERY.type
+                    "dine-in" -> OrderType.DINE_IN.type
+                    "takeaway" -> OrderType.TAKEAWAY.type
+                    else -> throw IllegalArgumentException("$order is not a valid order type.")
+                }
+            }
+        }
+        food.foodOrderType.addAll(foodOrderTypes)
 
         // Information meant for the food_add_on table
-        val addOnSelection: List<Long>? = foodDto.addOnIds
-        val addOns = if(!addOnSelection.isNullOrEmpty()) {
-            addOnRepository.findAllByIdInAndVendorId(addOnSelection, vendorDetails.id)
-        } else {
-            emptyList()
-        }
+        val addOns = if(!foodDto.addOnIds.isNullOrEmpty()) {
+            addOnRepository.findAllByIdInAndVendorId(foodDto.addOnIds!!, vendorDetails.id)
+        } else emptyList()
 
         if(!addOns.isEmpty()) {
-            val foodAddOns = mutableListOf<FoodAddOn>()
-            for(addOn in addOns) {
-                val foodAddOn = FoodAddOn()
-                foodAddOn.food = food
-                foodAddOn.addOn = addOn
-                foodAddOns.add(foodAddOn)
-            }
-            foodAddOnRepository.saveAll(foodAddOns)
+            val foodAddOns =
+                addOns.map {
+                    FoodAddOn().apply {
+                        this.food = food
+                        this.addOn = it
+                    }
+                }
+            food.foodAddOn.addAll(foodAddOns)
         }
 
-        /**
-         * Updating food with the new references to
-         * food complements in the food complement table.
-         */
-
+        // Updating food with the new references to food complements in the food complement table.
         food = saveFood(food)
 
-        val addOnResponse = addOns.map {it ->
-            AddOnResponse (
-                id = it.id!!,
-                addOnName = it.addOnName!!,
-                price = it.price!!
-            )
-        }
-        val complementResponse = complements.map { it ->
-            ComplementResponse(
-                id = it.id!!,
-                name = it.complementName!!,
-                price = it.price!!
-            )
-        }
-        val foodSizeResponse = foodSizes.map { it ->
-            FoodSizeResponse(
-                id = it.id!!,
-                size = it.size!!
-            )
-        }
+        // Reload the saved food with all relationships
+        val savedFood = foodRepository.findByIdWithAllRelations(food.id!!)
+            .orElseThrow { EntityNotFoundException("Food not found.") }
 
-        return FoodResponse(
-            id = food.id!!,
-            foodName = food.foodName!!,
-            vendorId = food.vendor.id!!,
-            vendorName = food.vendor.chefName!!,
-            mainCourse = food.mainCourse!!,
-            description = food.description!!,
-            basePrice = food.basePrice!!,
-            size = foodSizeResponse,
-            complements = complementResponse,
-            addOn = addOnResponse,
-            orderType = emptyList(),
-            image = emptyList()
-        )
+        return savedFood.toResponse()
 
     }
 }

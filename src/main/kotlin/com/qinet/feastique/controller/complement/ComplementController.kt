@@ -1,5 +1,6 @@
 package com.qinet.feastique.controller.complement
 
+import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.ComplementDto
 import com.qinet.feastique.model.entity.complement.Complement
 import com.qinet.feastique.response.ComplementResponse
@@ -54,14 +55,5 @@ class ComplementController(
         }
         return complementService.getAllComplements(vendorDetails.id )
     }
-
-    private fun Complement.toResponse(): ComplementResponse {
-        return ComplementResponse (
-            id = id!!,
-            name = complementName!!,
-            price = price!!
-        )
-    }
-
 }
 

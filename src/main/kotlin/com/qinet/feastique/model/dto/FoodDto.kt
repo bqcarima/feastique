@@ -19,16 +19,11 @@ data class FoodDto(
     @field:NotEmpty(message = "Description cannot be empty.")
     var description: String?,
 
-    @field:NotBlank(message = "Base price cannot be null.")
-    @field:NotBlank(message = "Base price cannot be empty.")
-    var basePrice: String?,
-
-    @field:NotBlank(message = "Image cannot be null.")
-    @field:NotEmpty(message = "Image cannot be empty.")
-    var image: String?,
-
+    var basePrice: Long?,
+    var foodImage: List<String>,
     var foodSize: List<String>,
     var complementIds: List<Long>,
-    var addOnIds: List<Long>?
+    var addOnIds: List<Long>?,
+    var orderType: List<String>
 )
 
