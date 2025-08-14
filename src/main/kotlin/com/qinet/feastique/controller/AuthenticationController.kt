@@ -4,7 +4,7 @@ import com.qinet.feastique.model.dto.LoginDto
 import com.qinet.feastique.model.dto.SignupDto
 import com.qinet.feastique.model.dto.VendorSignupDto
 import com.qinet.feastique.response.TokenResponse
-import com.qinet.feastique.response.TokenPair
+import com.qinet.feastique.response.TokenPairResponse
 import com.qinet.feastique.service.customer.CustomerService
 import com.qinet.feastique.service.vendor.VendorService
 import com.qinet.feastique.utility.JwtUtility
@@ -35,7 +35,7 @@ class AuthenticationController(
     }
 
     @PostMapping("/login")
-    fun login(@RequestBody @Valid loginDto: LoginDto): TokenPair {
+    fun login(@RequestBody @Valid loginDto: LoginDto): TokenPairResponse {
         return customerService.login(loginDto)
     }
 
@@ -53,7 +53,7 @@ class AuthenticationController(
     fun vendorLogin(
         @RequestBody
         @Valid
-        loginDto: LoginDto): TokenPair {
+        loginDto: LoginDto): TokenPairResponse {
         return vendorService.login(loginDto)
     }
 

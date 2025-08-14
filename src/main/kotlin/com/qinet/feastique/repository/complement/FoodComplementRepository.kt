@@ -5,9 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface FoodComplementRepository : JpaRepository<FoodComplement, Long> {
-    fun findAllByFoodId(foodId: Long): List<FoodComplement>
-    fun deleteByComplementIdAndFoodId(complementId: Long, foodId: Long)
-    fun deleteAllByFoodId(foodId: Long)
-}
+interface FoodComplementRepository : JpaRepository<FoodComplement, Long>
 

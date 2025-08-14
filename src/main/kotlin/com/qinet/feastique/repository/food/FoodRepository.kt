@@ -9,7 +9,6 @@ import java.util.Optional
 
 @Repository
 interface FoodRepository : JpaRepository<Food, Long> {
-    fun deleteByIdAndVendorId(foodId: Long, vendorId: Long)
     fun findAllByVendorId(vendorId: Long): List<Food>
     fun findByFoodNameIgnoreCaseAndVendorId(foodName: String, vendorId: Long): Food?
 
@@ -23,6 +22,7 @@ interface FoodRepository : JpaRepository<Food, Long> {
         LEFT JOIN FETCH f.foodAddOn fa
         LEFT JOIN FETCH fa.addOn a
         LEFT JOIN FETCH f.foodOrderType fo
+        LEFT JOIN FETCH f.foodAvailability fv
         WHERE f.id = :id
     """)
     fun findByIdWithAllRelations(@Param("id") id: Long): Optional<Food>

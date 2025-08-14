@@ -25,7 +25,7 @@ class FoodAddOn {
     @JsonIgnore
     lateinit var addOn: AddOn
 
-    @JsonBackReference // prevent infinite recursion for extra protection
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "food_id", nullable = false)
     @JsonIgnore

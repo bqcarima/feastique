@@ -4,8 +4,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.qinet.feastique.model.entity.food.Food
 import jakarta.persistence.*
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotNull
 
 @Entity
 @Table(name = "food_discount")
@@ -15,9 +14,8 @@ class FoodDiscount {
     @GeneratedValue
     var id: Long? = null
 
-    @NotBlank(message = "Active status cannot be null.")
-    @NotEmpty(message = "Active status cannot be empty.")
-    var active: String? = ""
+    @NotNull(message = "Active status cannot be null.")
+    var active: Boolean? = null
 
     @JsonBackReference // prevent infinite recursion for extra protection
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,3 +30,4 @@ class FoodDiscount {
     lateinit var food: Food
 
 }
+

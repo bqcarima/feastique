@@ -3,7 +3,7 @@ package com.qinet.feastique.utility
 import com.qinet.feastique.model.entity.RefreshToken
 import com.qinet.feastique.model.enums.AccountType
 import com.qinet.feastique.response.TokenResponse
-import com.qinet.feastique.response.TokenPair
+import com.qinet.feastique.response.TokenPairResponse
 import com.qinet.feastique.security.HashEncoder
 import com.qinet.feastique.service.RefreshTokenService
 import io.jsonwebtoken.Claims
@@ -256,10 +256,10 @@ class JwtUtility(
      * @param id
      * @param username
      * @param userType
-     * @return TokenPair
+     * @return TokenPairResponse
      * @throws IllegalArgumentException
      */
-    fun generateTokenPair(id: Long, username: String, userType: String): TokenPair {
+    fun generateTokenPair(id: Long, username: String, userType: String): TokenPairResponse {
         val accessToken = generateAccessToken(
             id = id,
             username = username,
@@ -284,6 +284,6 @@ class JwtUtility(
         val parsedToken = parseToken(id, userType, hashEncoder.encode(refreshToken))
 
         refreshTokenService.storeRefreshToken(parsedToken)
-        return TokenPair(accessToken, refreshToken)
+        return TokenPairResponse(accessToken, refreshToken)
     }
 }

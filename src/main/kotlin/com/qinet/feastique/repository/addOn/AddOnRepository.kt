@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository
 @Repository
 interface AddOnRepository : JpaRepository<AddOn, Long> {
     fun findAllByVendorId(vendorId: Long): List<AddOn>
-    fun deleteByIdAndVendorId(id: Long, vendorId: Long)
     fun findAllByIdInAndVendorId(addOnIds: List<Long>, vendorId: Long): List<AddOn>
     fun findByAddOnNameIgnoreCaseAndVendorId(addOnName: String, vendorId: Long): AddOn?
 }

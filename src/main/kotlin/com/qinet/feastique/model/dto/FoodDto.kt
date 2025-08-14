@@ -24,6 +24,9 @@ data class FoodDto(
     var foodSize: List<String>,
     var complementIds: List<Long>,
     var addOnIds: List<Long>?,
-    var orderType: List<String>
+    var orderType: List<String>,
+    var availability: List<String>,
+    var discountIds: List<Long>?,
+    var discountActive: Map<Long, Boolean>? = null
 )
 

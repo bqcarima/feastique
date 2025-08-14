@@ -6,7 +6,7 @@ import com.qinet.feastique.model.entity.Customer
 import com.qinet.feastique.model.entity.address.CustomerAddress
 import com.qinet.feastique.model.enums.AccountType
 import com.qinet.feastique.repository.customer.CustomerRepository
-import com.qinet.feastique.response.TokenPair
+import com.qinet.feastique.response.TokenPairResponse
 import com.qinet.feastique.security.PasswordEncoder
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.RefreshTokenService
@@ -95,7 +95,7 @@ class CustomerService(
     }
 
     @Transactional
-    fun login(loginDTO: LoginDto): TokenPair {
+    fun login(loginDTO: LoginDto): TokenPairResponse {
         // Create authentication token
         val authenticationToken = UsernamePasswordAuthenticationToken(
             loginDTO.username,

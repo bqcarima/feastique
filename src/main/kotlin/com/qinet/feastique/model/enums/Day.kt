@@ -7,5 +7,7 @@ enum class Day(val type: String) {
     THURSDAY("Thursday"),
     FRIDAY("Friday"),
     SATURDAY("Saturday"),
-    SUNDAY("Sunday")
+    SUNDAY("Sunday"),
+    ALL("Everyday"),
+    NONE("Unavailable")
 }

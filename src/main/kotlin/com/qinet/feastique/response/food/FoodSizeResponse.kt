@@ -1,4 +1,4 @@
-package com.qinet.feastique.response
+package com.qinet.feastique.response.food
 
 data class FoodSizeResponse(
     val id: Long,
