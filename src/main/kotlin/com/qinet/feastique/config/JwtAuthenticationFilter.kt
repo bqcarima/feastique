@@ -2,6 +2,7 @@ package com.qinet.feastique.config
 
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.UserDetailService
+import com.qinet.feastique.service.UserSessionService
 import com.qinet.feastique.utility.JwtUtility
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
@@ -36,69 +37,80 @@ import org.springframework.web.filter.OncePerRequestFilter
  *
  * @param jwtUtility Utility class for creating, parsing, and validating JWT tokens.
  * @param userDetailService Service for loading user details from a data source.
+ * @param userSessionService Service for verifying user session existence.
  */
 @Component
 class JwtAuthenticationFilter(
     private val jwtUtility: JwtUtility,
-    private val userDetailService: UserDetailService
+    private val userDetailService: UserDetailService,
+    private val userSessionService: UserSessionService
 ) : OncePerRequestFilter() {
 
-    /**
-     * Performs JWT extraction and validation, and sets authentication context.
-     *
-     * @param request Incoming HTTP request.
-     * @param response HTTP response object.
-     * @param filterChain The remaining filter chain to be executed.
-     */
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        // Extract Authorization header
-        val header = request.getHeader("Authorization")
 
-        // Proceed only if token is present and starts with "Bearer "
-        if (header != null && header.startsWith("Bearer ")) {
-            val token = header.substring(7) // Remove "Bearer " prefix
+        val path = request.requestURI
 
-            // Validate token's integrity and expiration
-            if (jwtUtility.validateAccessToken(token)) {
-
-                // Extract username from the token
-                val username = try {
-                    jwtUtility.getUsername(token)
-
-                } catch (e: Exception) {
-                    throw IllegalArgumentException("Unable to get username from token. $e")
-                }
-
-                // Load user details (authorities, credentials, etc.)
-                val userDetail = userDetailService.loadUserByUsername(username!!) as UserSecurity
-
-                // Extract user type from token
-                val userType = try {
-                    jwtUtility.getUserType(token)
-                } catch (e: Exception) {
-                    throw IllegalArgumentException("Unable to get account type from token. $e")
-                }
-
-                val normalizedUserType = userType.uppercase().removePrefix("ROLE_")
-                val authorities = listOf(SimpleGrantedAuthority("ROLE_$normalizedUserType"))
-
-                // Create authentication object
-                val authentication = UsernamePasswordAuthenticationToken(
-                    userDetail,
-                    null,
-                    userDetail.authorities)
-
-                // Set authentication in security context
-                SecurityContextHolder.getContext().authentication = authentication
-
-            }
+        // Skip heavy token/session work for logout endpoint(s)
+        if (path == "/api/auth/logout" || path.startsWith("/api/auth/logout/")) {
+            filterChain.doFilter(request, response)
+            return
         }
 
-        // Continue with the remaining filters
+        val authorizationHeader = request.getHeader("Authorization")
+
+        if (authorizationHeader?.startsWith("Bearer ") == true) {
+            val rawAccessToken = authorizationHeader.substringAfter("Bearer ").trim()
+            try {
+                if (jwtUtility.validateAccessToken(rawAccessToken)) {
+                    val tokenIdentifier = jwtUtility.getTokenIdentifier(rawAccessToken)
+
+                    userSessionService.getSession(tokenIdentifier)
+                        ?.takeIf { it.expiresAtEpochMillis > System.currentTimeMillis() }
+                        ?.also { session ->
+                            val username = jwtUtility.getUsername(rawAccessToken)
+
+                            /**
+                             * Get user details as a [UserSecurity] object from the
+                             * security authentication object to get access to the id.
+                             * `as UserDetails` also works, but you will not be able
+                             * to access the id.
+                             */
+                            val loadedUserDetails = userDetailService.loadUserByUsername(username) as UserSecurity
+
+                            // Prepare the authorities exposed by the UserDetails
+                            val authorities = if (loadedUserDetails.authorities.isEmpty()) {
+
+                                // fallback: build from stored userType (ensure prefix)
+                                val normalizedUserType = session.userType.uppercase().removePrefix("ROLE_")
+                                listOf(SimpleGrantedAuthority("ROLE_$normalizedUserType"))
+                            } else {
+                                loadedUserDetails.authorities.toList()
+                            }
+
+                            val authentication = UsernamePasswordAuthenticationToken(
+                                loadedUserDetails,
+                                null,
+                                authorities
+                            )
+
+                            SecurityContextHolder.getContext().authentication = authentication
+
+                        } ?: run {
+                        // session missing or expired -> unauthenticated
+                        filterChain.doFilter(request, response)
+                        return
+                    }
+                }
+            } catch (e: Exception) {
+                filterChain.doFilter(request, response)
+                throw Exception("An error occurred while logging in. ${e.message}")
+            }
+        }
         filterChain.doFilter(request, response)
     }
 }
+

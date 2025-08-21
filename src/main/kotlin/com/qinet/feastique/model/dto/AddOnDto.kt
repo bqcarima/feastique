@@ -1,7 +1,9 @@
 package com.qinet.feastique.model.dto
 
+import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotNull
 
 data class AddOnDto (
 
@@ -11,6 +13,8 @@ data class AddOnDto (
     @field:NotEmpty(message = "AddOn name cannot be empty.")
     var addOnName: String?,
 
+    @field:NotNull(message = "Price cannot be null.")
+    @field:Min(value = 1, message = "Price cannot be 0.")
     var price: Long?
 )
 

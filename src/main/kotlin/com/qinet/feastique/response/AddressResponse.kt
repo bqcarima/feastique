@@ -8,5 +8,5 @@ data class AddressResponse(
     val neighbourhood: String,
     val streetName: String?,
     val directions: String,
-    //val location: MutableSet<String?>
+    val location: List<String>?
 )

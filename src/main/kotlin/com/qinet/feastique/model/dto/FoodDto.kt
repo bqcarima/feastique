@@ -1,7 +1,9 @@
 package com.qinet.feastique.model.dto
 
+import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotNull
 
 data class FoodDto(
 
@@ -19,6 +21,8 @@ data class FoodDto(
     @field:NotEmpty(message = "Description cannot be empty.")
     var description: String?,
 
+    @field:NotNull(message = "Price cannot be null.")
+    @field:Min(value = 1, message = "Base price cannot be 0.")
     var basePrice: Long?,
     var foodImage: List<String>,
     var foodSize: List<String>,

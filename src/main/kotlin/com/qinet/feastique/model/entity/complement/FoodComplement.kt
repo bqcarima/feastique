@@ -26,3 +26,4 @@ class FoodComplement {
     lateinit var food: Food
 
 }
+

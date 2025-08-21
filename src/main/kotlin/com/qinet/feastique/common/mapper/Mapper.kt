@@ -1,12 +1,17 @@
 package com.qinet.feastique.common.mapper
 
+import com.qinet.feastique.model.entity.Beverage
+import com.qinet.feastique.model.entity.Vendor
 import com.qinet.feastique.model.entity.addOn.AddOn
 import com.qinet.feastique.model.entity.addOn.FoodAddOn
+import com.qinet.feastique.model.entity.address.Address
 import com.qinet.feastique.model.entity.complement.Complement
 import com.qinet.feastique.model.entity.complement.FoodComplement
 import com.qinet.feastique.model.entity.discount.Discount
 import com.qinet.feastique.model.entity.discount.FoodDiscount
 import com.qinet.feastique.model.entity.food.*
+import com.qinet.feastique.model.entity.phoneNumber.PhoneNumber
+import com.qinet.feastique.model.entity.phoneNumber.VendorPhoneNumber
 import com.qinet.feastique.response.*
 import com.qinet.feastique.response.food.FoodAvailabilityResponse
 import com.qinet.feastique.response.food.FoodDiscountResponse
@@ -18,15 +23,76 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 /**
+ * Maps an [AddOn] entity to its API DTO [AddOnResponse].
+ *
+ * @receiver AddOn entity to map from.
+ * @return AddOnResponse DTO with id, name, and price.
+ */
+fun AddOn.toResponse() = AddOnResponse(
+    id = this.id ?: 0,
+    addOnName = this.addOnName.orEmpty(),
+    price = this.price ?: 0
+)
+
+/**
+ * Maps an [Address] entity to its API DTO [AddressResponse].
+ *
+ * @receiver Address entity to map from.
+ * @return Address DTO with id, country, region, city, neighbourhood, street name, directions and location.
+ */
+fun Address.toResponse(): AddressResponse = AddressResponse(
+    id = id ?: 0,
+    country = country,
+    region = region ?: "Not selected",
+    city = city ?: "Not selected",
+    neighbourhood = neighbourhood ?: "Not selected",
+    streetName = streetName ?: "None",
+    directions = directions ?: "None",
+    location = listOf(longitude ?: "0.0", latitude ?: "0.0")
+)
+
+/**
+ * Converts a [Beverage] entity to its API response DTO [BeverageResponse].
+ *
+ * @receiver Beverage entity to map from.
+ * @return BeverageResponse DTO with id, name, and price.
+ */
+fun Beverage.toResponse() = BeverageResponse(
+    id = id ?: 0,
+    beverageName = beverageName.orEmpty(),
+    alcoholic = alcoholic ?: false,
+    beverageGroup = beverageName.orEmpty(),
+    percentage = percentage ?: 0,
+    price = price ?: 0,
+    delivery = delivery ?: false,
+)
+
+/**
  * Converts a [Complement] entity to its API response DTO [ComplementResponse].
  *
  * @receiver Complement entity to map from.
  * @return ComplementResponse DTO with id, name, and price.
  */
 fun Complement.toResponse() = ComplementResponse(
-    id = this.id ?: 0,
-    name = this.complementName.orEmpty(),
-    price = this.price ?: 0
+    id = id ?: 0,
+    name = complementName.orEmpty(),
+    price = price ?: 0
+)
+
+val dateFormatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+
+/**
+ * Converts a [Discount] entity to its response DTO.
+ *
+ * @receiver Discount entity to map from.
+ * @return DiscountResponse DTO with id, discount name, percentage, start date, end date, and parent food id.
+ */
+fun Discount.toResponse(): DiscountResponse = DiscountResponse(
+    id = id ?: 0,
+    discountName = discountName.orEmpty(),
+    percentage = percentage ?: 0,
+    startDate = startDate ?: dateFormatter.parse("00-00-000"),
+    endDate = endDate ?: dateFormatter.parse("00-00-0000")
 )
 
 /**
@@ -43,53 +109,41 @@ fun Complement.toResponse() = ComplementResponse(
  * @return FoodResponse DTO representing full food details for API.
  */
 fun Food.toResponse() = FoodResponse(
-    id = this.id ?: 0,
-    foodName = this.foodName.orEmpty(),
-    vendorId = this.vendor.id ?: 0,
-    vendorName = this.vendor.chefName.orEmpty(),
-    mainCourse = this.mainCourse.orEmpty(),
-    description = this.description.orEmpty(),
-    basePrice = this.basePrice ?: 0,
+    id = id ?: 0,
+    foodName = foodName.orEmpty(),
+    vendorId = vendor.id ?: 0,
+    vendorName = vendor.chefName.orEmpty(),
+    mainCourse = mainCourse.orEmpty(),
+    description = description.orEmpty(),
+    basePrice = basePrice ?: 0,
 
     // Map each related entity collection to its response DTO
     images = this.foodImage.map { image ->
         FoodImageResponse(
             id = image.id ?: 0,
             imageUrl = image.imageUrl.orEmpty(),
-            foodId = this.id ?: 0 // use parent food id, not image.food.id
+            foodId = id ?: 0 // use parent food id, not image.food.id
         )
     },
-    size = this.foodSize.map { it.toResponse() },
-    complements = this.foodComplement.map { it.toResponse() },
-    addOn = this.foodAddOn.map { it.toResponse() },
-    orderType = this.foodOrderType.map { it.toResponse() },
-    availability = this.foodAvailability.map { it.toResponse() },
-    discount = this.foodDiscount.map { it.toResponse() }
-)
-
-/**
- * Maps an [AddOn] entity to its API DTO [AddOnResponse].
- *
- * @receiver AddOn entity to map from.
- * @return AddOnResponse DTO with id, name, and price.
- */
-fun AddOn.toResponse() = AddOnResponse(
-    id = this.id ?: 0,
-    addOnName = this.addOnName.orEmpty(),
-    price = this.price ?: 0
+    size = foodSize.map { it.toResponse() },
+    complements = foodComplement.map { it.toResponse() },
+    addOn = foodAddOn.map { it.toResponse() },
+    orderType = foodOrderType.map { it.toResponse() },
+    availability = foodAvailability.map { it.toResponse() },
+    discount = foodDiscount.map { it.toResponse() }
 )
 
 fun FoodAddOn.toResponse() = AddOnResponse(
-    id = this.addOn.id ?: 0,
-    addOnName = this.addOn.addOnName.orEmpty(),
-    price = this.addOn.price ?: 0
+    id = addOn.id ?: 0,
+    addOnName = addOn.addOnName.orEmpty(),
+    price = addOn.price ?: 0
 )
 
 /**
  * Maps a [FoodAvailability] entity to its API DTO [com.qinet.feastique.response.food.FoodAvailabilityResponse].
  *
  * @receiver FoodAvailability entity to map from.
- * @return FoodAvailabilityResponse DTO with id, and name..
+ * @return FoodAvailabilityResponse DTO with id, and name.
  */
 fun FoodAvailability.toResponse() = FoodAvailabilityResponse(
     id = this.id ?: 0,
@@ -104,26 +158,10 @@ fun FoodAvailability.toResponse() = FoodAvailabilityResponse(
  * @return ComplementResponse DTO.
  */
 fun FoodComplement.toResponse() = ComplementResponse(
-    id = this.complement.id ?: 0,
-    name = this.complement.complementName.orEmpty(),
-    price = this.complement.price ?: 0,
+    id = complement.id ?: 0,
+    name = complement.complementName.orEmpty(),
+    price = complement.price ?: 0,
 
-)
-
-val dateFormatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-
-/**
- * Converts a [Discount] entity to its response DTO.
- *
- * @receiver Discount entity to map from.
- * @return DiscountResponse DTO with id, discount name, percentage, start date, end date, and parent food id.
- */
-fun Discount.toResponse(): DiscountResponse = DiscountResponse(
-    id = this.id ?: 0,
-    discountName = this.discountName.orEmpty(),
-    percentage = this.percentage ?: 0,
-    startDate = this.startDate ?: dateFormatter.parse("00-00-000"),
-    endDate = this.endDate ?: dateFormatter.parse("00-00-0000")
 )
 
 /**
@@ -133,12 +171,12 @@ fun Discount.toResponse(): DiscountResponse = DiscountResponse(
  * @return FoodDiscountResponse DTO with id, discount name, percentage, start date, end date,  and active status.
  */
 fun FoodDiscount.toResponse(): FoodDiscountResponse = FoodDiscountResponse(
-    id = this.id ?: 0,
-    discountName = this.discount.discountName.orEmpty(),
-    percentage = this.discount.percentage ?: 0,
-    startDate = this.discount.startDate ?: dateFormatter.parse("00-00-000"),
-    endDate = this.discount.endDate ?: dateFormatter.parse("00-00-0000"),
-    active = this.active ?: false
+    id = id ?: 0,
+    discountName = discount.discountName.orEmpty(),
+    percentage = discount.percentage ?: 0,
+    startDate = discount.startDate ?: dateFormatter.parse("00-00-000"),
+    endDate = discount.endDate ?: dateFormatter.parse("00-00-0000"),
+    active = active ?: false
 )
 
 
@@ -149,9 +187,9 @@ fun FoodDiscount.toResponse(): FoodDiscountResponse = FoodDiscountResponse(
  * @return FoodImageResponse DTO with id, URL, and parent food id.
  */
 fun FoodImage.toResponse(): FoodImageResponse = FoodImageResponse(
-    id = this.id ?: 0,
-    imageUrl = this.imageUrl.orEmpty(),
-    foodId = this.food.id ?: 0
+    id = id ?: 0,
+    imageUrl = imageUrl.orEmpty(),
+    foodId = food.id ?: 0
 )
 
 /**
@@ -161,9 +199,9 @@ fun FoodImage.toResponse(): FoodImageResponse = FoodImageResponse(
  * @return FoodOrderTypeResponse DTO with id, parent food id, and order type string.
  */
 fun FoodOrderType.toResponse(): FoodOrderTypeResponse = FoodOrderTypeResponse(
-    id = this.id ?: 0,
-    foodId = this.food.id ?: 0,
-    orderType = this.orderType.orEmpty()
+    id = id ?: 0,
+    foodId = food.id ?: 0,
+    orderType = orderType.orEmpty()
 )
 
 /**
@@ -173,7 +211,39 @@ fun FoodOrderType.toResponse(): FoodOrderTypeResponse = FoodOrderTypeResponse(
  * @return FoodSizeResponse DTO with id and size string.
  */
 fun FoodSize.toResponse(): FoodSizeResponse = FoodSizeResponse(
-    id = this.id ?: 0,
-    size = this.size.orEmpty()
+    id = id ?: 0,
+    size = size.orEmpty()
+)
+
+/**
+ * Maps a [PhoneNumber] entity to its response DTO.
+ *
+ * @receiver `PhoneNumber` entity to map from.
+ * @return `PhoneNumberResponse` DTO with id and size string, and its default status.
+ */
+fun VendorPhoneNumber.toResponse(): PhoneNumberResponse = PhoneNumberResponse(
+    id = id ?: 0,
+    phoneNumber = phoneNumber.orEmpty(),
+    default = default ?: false
+)
+
+fun Vendor.toResponse() : VendorResponse = VendorResponse(
+    id = id ?: 0,
+    username = username,
+    firstName = firstName.orEmpty(),
+    lastName = lastName.orEmpty(),
+    chefName = chefName.orEmpty(),
+    restaurantName = restaurantName.orEmpty(),
+    balance = balance,
+    verified = verified,
+    accountType = accountType!!,
+    imageUrl = image.orEmpty(),
+    registrationDate = registrationDate ?: dateFormatter.parse("00-00-0000"),
+    phoneNumber = vendorPhoneNumber.map { it.toResponse() },
+    address = address!!.toResponse(),
+    food = food.map { it.toResponse() },
+    addOn = addOn.map { it.toResponse() },
+    complement = complement.map { it.toResponse() },
+    discount = discount.map { it.toResponse() },
 )
 

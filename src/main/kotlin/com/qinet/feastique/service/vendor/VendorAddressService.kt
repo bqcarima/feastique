@@ -2,35 +2,49 @@ package com.qinet.feastique.service.vendor
 
 import com.qinet.feastique.model.dto.AddressDto
 import com.qinet.feastique.model.entity.address.VendorAddress
+import com.qinet.feastique.exception.RequestedEntityNotFoundException
+import com.qinet.feastique.exception.PermissionDeniedException
+import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.repository.vendor.VendorAddressRepository
 import com.qinet.feastique.repository.vendor.VendorRepository
 import com.qinet.feastique.security.UserSecurity
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
-import java.util.*
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class VendorAddressService(
     private val vendorRepository: VendorRepository,
-    private val vendorAddressRepository: VendorAddressRepository,
+    private val vendorAddressRepository: VendorAddressRepository
 ) {
-    fun getAddress(addressId: Long): Optional<VendorAddress> {
-        return vendorAddressRepository.findById(addressId)
+    @Transactional(readOnly = true)
+    fun getAddress(id: Long, vendorDetails: UserSecurity): VendorAddress {
+        val vendorAddress = vendorAddressRepository.findById(id)
+            .orElseThrow { IllegalArgumentException("No discount found for id: $id") }
+            .also {
+                if (it.vendor.id != vendorDetails.id) {
+                    throw IllegalArgumentException("You do not have permission to delete discount: $id")
+                }
+            }
+        return vendorAddress
     }
 
-    fun getAllAddresses(vendorId: Long): List<VendorAddress> {
-        return vendorAddressRepository.findAllByVendorId(vendorId)
+    @Transactional
+    fun saveAddress(vendorAddress: VendorAddress): VendorAddress {
+        return vendorAddressRepository.save(vendorAddress)
     }
 
-    fun saveAddress(vendorAddress: VendorAddress) {
-        vendorAddressRepository.save(vendorAddress)
-    }
+    @Transactional
+    fun updateAddress(addressDto: AddressDto, vendorDetails: UserSecurity): VendorAddress {
+        val vendor = vendorRepository.findById(vendorDetails.id)
+            .orElseThrow { UserNotFoundException("Vendor not found.") }
 
-    fun addAddress(addressDto: AddressDto) {
-        val vendorDetails = SecurityContextHolder.getContext().authentication.principal as UserSecurity
-        val vendor = vendorRepository.findById(vendorDetails.id).get()
+        var address: VendorAddress = vendorAddressRepository.findById(addressDto.id!!)
+                .orElseThrow { RequestedEntityNotFoundException("No address with ${addressDto.id} found") }
+                .also {
+                    if (it.vendor.id != vendorDetails.id)
+                        throw PermissionDeniedException("You do not have the permission to view address.")
+                }
 
-        val address = VendorAddress()
         address.country = addressDto.country
         address.region = addressDto.region ?: throw IllegalArgumentException("Please select a region.")
         address.city = addressDto.city ?: throw IllegalArgumentException("Please enter a city.")
@@ -41,12 +55,9 @@ class VendorAddressService(
         address.latitude = addressDto.latitude
         address.vendor = vendor
 
-        saveAddress(address)
+        address = saveAddress(address)
         vendorRepository.save(vendor)
-    }
-
-    fun deleteAddress(vendorAddress: VendorAddress) {
-        vendorAddressRepository.delete(vendorAddress)
+        return address
     }
 }
 

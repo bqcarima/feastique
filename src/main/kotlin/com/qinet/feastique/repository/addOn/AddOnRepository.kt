@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository
 interface AddOnRepository : JpaRepository<AddOn, Long> {
     fun findAllByVendorId(vendorId: Long): List<AddOn>
     fun findAllByIdInAndVendorId(addOnIds: List<Long>, vendorId: Long): List<AddOn>
-    fun findByAddOnNameIgnoreCaseAndVendorId(addOnName: String, vendorId: Long): AddOn?
+    fun findFirstByAddOnNameIgnoreCaseAndVendorId(addOnName: String, vendorId: Long): AddOn?
 }

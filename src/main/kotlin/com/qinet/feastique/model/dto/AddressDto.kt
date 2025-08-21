@@ -1,12 +1,12 @@
 package com.qinet.feastique.model.dto
 
-import com.qinet.feastique.model.enums.Region
 import jakarta.persistence.Column
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 
 data class AddressDto(
 
+    var id: Long? = null,
     var country: String = "Cameroon",
 
     @field:NotBlank(message = "Region cannot be null.")
@@ -30,6 +30,5 @@ data class AddressDto(
 
     var longitude: String?,
     var latitude: String?
-
-
 )
+

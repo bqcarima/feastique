@@ -2,8 +2,8 @@ package com.qinet.feastique.utility
 
 import com.qinet.feastique.model.entity.RefreshToken
 import com.qinet.feastique.model.enums.AccountType
-import com.qinet.feastique.response.TokenResponse
-import com.qinet.feastique.response.TokenPairResponse
+import com.qinet.feastique.response.token.AccessTokenResponse
+import com.qinet.feastique.response.token.TokenPairResponse
 import com.qinet.feastique.security.HashEncoder
 import com.qinet.feastique.service.RefreshTokenService
 import io.jsonwebtoken.Claims
@@ -11,13 +11,12 @@ import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpStatusCode
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import java.util.*
-import java.lang.IllegalArgumentException
 
 /**
  * This class handles token generation and token refresh.
@@ -65,14 +64,17 @@ class JwtUtility(
         userType: String,
         expiry: Long
     ): String {
+
         val now = Date()
         val expiryDate = Date(now.time + expiry)
+        val tokenIdentifier = UUID.randomUUID().toString()
 
         return Jwts.builder()
             .subject(id.toString())
             .claim("username", username)
             .claim("type", type)
             .claim("userType", userType)
+            .claim("tokenIdentifier", tokenIdentifier)
             .issuedAt(now)
             .expiration(expiryDate)
             .signWith(SECRET, Jwts.SIG.HS256)
@@ -86,7 +88,7 @@ class JwtUtility(
      * @return String
      */
     fun generateAccessToken(id: Long, username: String, userType: String): String {
-        return generateToken(id, username, "access", userType ,ACCESS_TOKEN_VALIDITY_MS)
+        return generateToken(id, username, "access", userType, ACCESS_TOKEN_VALIDITY_MS)
     }
 
     /**
@@ -96,7 +98,7 @@ class JwtUtility(
      * @return String
      */
     fun generateRefreshToken(id: Long, username: String, userType: String): String {
-        return generateToken(id, username, "refresh", userType,  REFRESH_TOKEN_VALIDITY_MS)
+        return generateToken(id, username, "refresh", userType, REFRESH_TOKEN_VALIDITY_MS)
     }
 
     /**
@@ -124,12 +126,10 @@ class JwtUtility(
             return null
 
         } catch (e: IllegalArgumentException) {
-            print(e)
-            return null
+            throw IllegalArgumentException("Invalid token. ${e.message}")
 
         } catch (e: Exception) {
-            print(e)
-            return null
+            throw Exception("An unexpected error occurred. ${e.message}")
         }
     }
 
@@ -139,9 +139,8 @@ class JwtUtility(
      * @return Boolean
      */
     fun validateAccessToken(token: String): Boolean {
-
         val claims = getClaims(token) ?: return false
-        val tokenType = claims["type"] as? String?:return false
+        val tokenType = claims["type"] as? String ?: return false
         return tokenType == "access"
     }
 
@@ -159,7 +158,7 @@ class JwtUtility(
 
     /**
      * This function gets the id from a valid token.
-     * "fun getUserId(token: String): Long = getClaims(token)?.get("subject") as Long"
+     * fun getUserId(token: String): Long = getClaims(token)?.get("subject") as Long
      * generates a null pointer exception because the "subject" is a standard JWT claim
      * and not a custom claim.
      *
@@ -186,68 +185,55 @@ class JwtUtility(
      */
     fun getUserType(token: String): String = getClaims(token)?.get("userType") as String
 
+    /**
+     * This function gets the tokenIdentifier from a valid token
+     * @param token
+     * @return String
+     */
 
+    fun getTokenIdentifier(token: String): String {
+        val claims = Jwts.parser()
+            .verifyWith(SECRET)
+            .build()
+            .parseSignedClaims(token)
+            .payload
+        return claims.get("tokenIdentifier", String::class.java)
+    }
+
+    /**
+     * This function gets the token expiration from a valid token as epoch millis
+     * @param token
+     * @return String
+     */
+    fun getExpirationEpochMillis(token: String): Long {
+        return try {
+            val claims = Jwts.parser()
+                .verifyWith(SECRET)
+                .build()
+                .parseSignedClaims(token)
+                .payload
+            claims.expiration?.time
+                ?: throw Exception("Token expiration claim is missing.")
+        } catch (ex: Exception) {
+            throw Exception("Token expiration cannot be verified.", ex)
+        }
+    }
     /**
      * This function generates a refresh token object from a raw token
      * @param id
      * @param userType
-     * @param refreshToken
+     * @param rawRefreshToken
      * @return String
      */
-    fun parseToken(id: Long, userType: String, refreshToken: String): RefreshToken {
+    fun parseToken(id: Long, userType: String, rawRefreshToken: String): RefreshToken {
 
         return RefreshToken(
             customerId = if(userType == AccountType.CUSTOMER.name) id else null,
             vendorId = if(userType == AccountType.VENDOR.name) id else null,
-            expiresAt = Date(Date().time + 30L * 24 * 60 * 60L * 1000L),
-            hashedToken = hashEncoder.encode(refreshToken),
+            expiresAt = Date(System.currentTimeMillis() + REFRESH_TOKEN_VALIDITY_MS),
+            hashedToken = hashEncoder.encode(rawRefreshToken),
             createdAt = Instant.now(),
         )
-    }
-
-    /**
-     * This function generated a new valid access token from a valid
-     * refresh token.
-     * @param refreshToken
-     * @return TokenResponse
-     * @throws ResponseStatusException
-     * @throws IllegalArgumentException
-     */
-    @Transactional
-    fun refresh(refreshToken: String): TokenResponse {
-        if(!validateRefreshToken(refreshToken)) {
-            throw ResponseStatusException(HttpStatusCode.valueOf(401), "Invalid refresh token.")
-        }
-
-        val id = getUserId(refreshToken)
-        val username = getUsername(refreshToken)
-        val userType = getUserType(refreshToken)
-
-        val validTypes = setOf(AccountType.CUSTOMER.name, AccountType.VENDOR.name)
-        if(userType !in validTypes) {
-            throw ResponseStatusException(HttpStatusCode.valueOf(401),"Invalid refresh token.")
-        }
-
-        if(userType == AccountType.CUSTOMER.name) {
-            refreshTokenService.getTokenByCustomerId(id)
-                ?: throw ResponseStatusException(HttpStatusCode.valueOf(401), "Invalid refresh token.")
-
-        } else {
-            refreshTokenService.getTokenByVendorId(id)
-                ?: throw ResponseStatusException(HttpStatusCode.valueOf(401), "Invalid refresh token.")
-        }
-
-        val newAccessToken = generateAccessToken(
-            id = id,
-            username = username,
-            userType = when(userType) {
-                "CUSTOMER" -> AccountType.CUSTOMER.name
-                "VENDOR" -> AccountType.VENDOR.name
-                else -> { throw IllegalArgumentException("Invalid userType")}
-            }
-        )
-
-        return TokenResponse(newAccessToken)
     }
 
     /**
@@ -260,30 +246,55 @@ class JwtUtility(
      * @throws IllegalArgumentException
      */
     fun generateTokenPair(id: Long, username: String, userType: String): TokenPairResponse {
-        val accessToken = generateAccessToken(
-            id = id,
-            username = username,
-            userType = when(userType) {
-                "CUSTOMER" -> AccountType.CUSTOMER.name
-                "VENDOR" -> AccountType.VENDOR.name
-                else -> { throw IllegalArgumentException("Invalid userType")
-                }
-            }
-        )
 
-        val refreshToken = generateRefreshToken(
-            id = id,
-            username = username,
-            userType = when(userType) {
-                "CUSTOMER" -> AccountType.CUSTOMER.name
-                "VENDOR" -> AccountType.VENDOR.name
-                else -> { throw IllegalArgumentException("Invalid")}
-            }
-        )
+        val accessToken = generateAccessToken(id, username, userType)
+        val refreshToken = generateRefreshToken(id, username, userType)
+        // val parsedToken = parseToken(id, userType, refreshToken)
 
-        val parsedToken = parseToken(id, userType, hashEncoder.encode(refreshToken))
-
-        refreshTokenService.storeRefreshToken(parsedToken)
+        // refreshTokenService.storeRefreshToken(parsedToken)
         return TokenPairResponse(accessToken, refreshToken)
     }
+
+    /**
+     * This function generated a new valid access token from a valid
+     * refresh token.
+     * @param rawRefreshToken
+     * @return AccessTokenResponse
+     * @throws ResponseStatusException
+     * @throws IllegalArgumentException
+     */
+    @Transactional
+    fun refresh(rawRefreshToken: String): AccessTokenResponse {
+        if(!validateRefreshToken(rawRefreshToken)) {
+            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token.")
+        }
+
+        val id = getUserId(rawRefreshToken)
+        val username = getUsername(rawRefreshToken)
+        val userType = getUserType(rawRefreshToken)
+        getTokenIdentifier(rawRefreshToken)
+
+        // get stored record (customer or vendor)
+        val storedRefreshToken = when (userType) {
+            AccountType.CUSTOMER.name -> refreshTokenService.getTokenByCustomerId(id)
+            AccountType.VENDOR.name -> refreshTokenService.getTokenByVendorId(id)
+            else -> null
+        } ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token.")
+
+        // Compare hashed token
+        if (!hashEncoder.matches(rawRefreshToken, storedRefreshToken.hashedToken)) {
+            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token.")
+        }
+
+        // server-side expiry check
+        if (storedRefreshToken.expiresAt.before(Date())) {
+            // delete stored token
+            refreshTokenService.deleteToken(storedRefreshToken)
+            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token expired.")
+        }
+
+        val newAccessToken = generateAccessToken(id, username, userType)
+        return AccessTokenResponse(newAccessToken)
+    }
 }
+

@@ -1,92 +1,63 @@
 package com.qinet.feastique.service
 
-import com.qinet.feastique.common.mapper.toResponse
+import com.qinet.feastique.exception.PermissionDeniedException
+import com.qinet.feastique.exception.RequestedEntityNotFoundException
+import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.model.dto.DiscountDto
 import com.qinet.feastique.model.entity.discount.Discount
 import com.qinet.feastique.repository.discount.DiscountRepository
 import com.qinet.feastique.repository.vendor.VendorRepository
-import com.qinet.feastique.response.DiscountResponse
 import com.qinet.feastique.security.UserSecurity
-import com.qinet.feastique.security.UserVerification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class DiscountService(
     private val discountRepository: DiscountRepository,
-    private val vendorRepository: VendorRepository,
-    private val userVerification: UserVerification
+    private val vendorRepository: VendorRepository
 ) {
 
     @Transactional(readOnly = true)
-    fun getDiscount(
-        id: Long,
-        vendorId: Long,
-        vendorDetails: UserSecurity
-
-    ): Discount {
-        userVerification.verifyVendor(vendorId, vendorDetails)
+    fun getDiscount(id: Long, vendorDetails: UserSecurity): Discount {
         val discount = discountRepository.findById(id)
-            .orElseThrow { IllegalArgumentException("No discount found for id: $id") }
+            .orElseThrow { RequestedEntityNotFoundException("No discount found for id: $id") }
             .also {
                 if (it.vendor.id != vendorDetails.id) {
-                    throw IllegalArgumentException("You do not have permission to delete discount: $id")
+                    throw PermissionDeniedException("You do not have permission to delete discount: $id")
                 }
             }
         return discount
     }
 
     @Transactional(readOnly = true)
-    fun getAllDiscounts(vendorId: Long, vendorDetails: UserSecurity): List<Discount> {
+    fun getAllDiscounts(vendorDetails: UserSecurity): List<Discount> {
 
-        val vendor = userVerification.verifyVendor(vendorId, vendorDetails)
-        val discounts = discountRepository.findAllByVendorId(vendor.id!!)
+        val discounts = discountRepository.findAllByVendorId(vendorDetails.id)
             .takeIf { it.isNotEmpty() }
-            ?: throw IllegalArgumentException("No discounts found for the vendor $vendorId")
+            ?: throw RequestedEntityNotFoundException("No discounts found for the vendor ${vendorDetails.id}")
 
         require(discounts.all { it ->
             it.vendor.id == vendorDetails.id
         }) {
-            throw IllegalArgumentException("You (vendor ${vendorDetails.id}) does not have the permission to access these discounts.")
+            throw PermissionDeniedException("You (vendor ${vendorDetails.id}) does not have the permission to access these discounts.")
         }
         return discounts
     }
 
     @Transactional(readOnly = true)
-    fun getDuplicates(discountName: String, vendorId: Long): Boolean =
-        discountRepository.findByDiscountNameIgnoreCaseAndVendorId(discountName, vendorId) != null
-
+    fun getDuplicates(discountName: String, vendorDetails: UserSecurity): Boolean =
+        discountRepository.findFirstByDiscountNameIgnoreCaseAndVendorId(discountName, vendorDetails.id) != null
 
     @Transactional
-    fun deleteDiscount(
-        id: Long,
-        vendorId: Long,
-        vendorDetails: UserSecurity
-    ) {
-        userVerification.verifyVendor(vendorId, vendorDetails)
-        val discount = getDiscount(id, vendorId, vendorDetails)
-        if (discount.vendor.id != vendorDetails.id) {
-            throw IllegalArgumentException("You do not have the permission to delete this discount.")
-        }
+    fun deleteDiscount(id: Long, vendorDetails: UserSecurity) {
+        val discount = getDiscount(id, vendorDetails)
         discountRepository.delete(discount)
     }
 
     @Transactional
-    fun deleteAllDiscounts(
-        vendorId: Long,
-        vendorDetails: UserSecurity
-    ) {
-        val vendor = userVerification.verifyVendor(vendorId, vendorDetails)
-        val discounts = getAllDiscounts(vendor.id!!, vendorDetails)
-            .takeIf { it.isNotEmpty() }
-            ?: throw IllegalArgumentException("No discounts found for the vendor $vendorId")
-
-        require(discounts.all { it ->
-            it.vendor.id == vendorDetails.id
-        }) {
-            throw IllegalArgumentException("You do not have the permission to delete these discounts.")
-        }
-        discountRepository.deleteAllByVendorId(vendor.id!!)
+    fun deleteAllDiscounts( vendorDetails: UserSecurity) {
+        getAllDiscounts(vendorDetails)
+        discountRepository.deleteAllByVendorId(vendorDetails.id)
     }
 
     @Transactional
@@ -95,19 +66,16 @@ class DiscountService(
     }
 
     @Transactional
-    fun addOrUpdateDiscount(
-        discountDto: DiscountDto,
-        vendorDetails: UserSecurity
-    ): DiscountResponse {
+    fun addOrUpdateDiscount(discountDto: DiscountDto, vendorDetails: UserSecurity): Discount {
         val vendor = vendorRepository.findById(vendorDetails.id)
-            .orElseThrow { IllegalArgumentException("Vendor not found.") }
+            .orElseThrow { UserNotFoundException("Vendor not found.") }
 
         var discount: Discount = if (discountDto.id != null) {
             discountRepository.findById(discountDto.id!!)
-                .orElseThrow { IllegalArgumentException("Discount not found.") }
+                .orElseThrow { RequestedEntityNotFoundException("Discount not found.") }
                 .also {
                     if (it.vendor.id != vendor.id) {
-                        throw IllegalArgumentException("You do not have permission to update this discount.")
+                        throw PermissionDeniedException("You do not have permission to update this discount.")
                     }
                 }
         } else {
@@ -116,7 +84,7 @@ class DiscountService(
             }
         }
 
-        if (!getDuplicates(discountDto.discountName, vendorDetails.id)) {
+        if (!getDuplicates(discountDto.discountName, vendorDetails)) {
             discount.discountName = discountDto.discountName
         } else {
             discount.discountName = discountDto.discountName
@@ -128,6 +96,7 @@ class DiscountService(
         discount = saveDiscount(discount)
         vendorRepository.save(vendor)
 
-        return discount.toResponse()
+        return discount
     }
 }
+

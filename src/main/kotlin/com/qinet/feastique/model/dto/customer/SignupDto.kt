@@ -1,4 +1,4 @@
-package com.qinet.feastique.model.dto
+package com.qinet.feastique.model.dto.customer
 
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty

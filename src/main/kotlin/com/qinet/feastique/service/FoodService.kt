@@ -1,15 +1,14 @@
 package com.qinet.feastique.service
 
-import com.qinet.feastique.common.mapper.toResponse
+import com.qinet.feastique.exception.DuplicateFoundException
+import com.qinet.feastique.exception.PermissionDeniedException
+import com.qinet.feastique.exception.RequestedEntityNotFoundException
+import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.model.dto.FoodDto
 import com.qinet.feastique.model.entity.addOn.FoodAddOn
 import com.qinet.feastique.model.entity.complement.FoodComplement
 import com.qinet.feastique.model.entity.discount.FoodDiscount
-import com.qinet.feastique.model.entity.food.Food
-import com.qinet.feastique.model.entity.food.FoodAvailability
-import com.qinet.feastique.model.entity.food.FoodImage
-import com.qinet.feastique.model.entity.food.FoodOrderType
-import com.qinet.feastique.model.entity.food.FoodSize
+import com.qinet.feastique.model.entity.food.*
 import com.qinet.feastique.model.enums.Day
 import com.qinet.feastique.model.enums.OrderType
 import com.qinet.feastique.model.enums.Size
@@ -18,13 +17,9 @@ import com.qinet.feastique.repository.complement.ComplementRepository
 import com.qinet.feastique.repository.discount.DiscountRepository
 import com.qinet.feastique.repository.food.FoodRepository
 import com.qinet.feastique.repository.vendor.VendorRepository
-import com.qinet.feastique.response.food.FoodResponse
 import com.qinet.feastique.security.UserSecurity
-import com.qinet.feastique.security.UserVerification
-import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import kotlin.collections.iterator
 
 @Service
 class FoodService(
@@ -32,62 +27,42 @@ class FoodService(
     private val vendorRepository: VendorRepository,
     private val complementRepository: ComplementRepository,
     private val addOnRepository: AddOnRepository,
-    private val discountRepository: DiscountRepository,
-    private val userVerification: UserVerification
+    private val discountRepository: DiscountRepository
 ) {
 
     @Transactional(readOnly = true)
-    fun getFoodById(
-        id: Long,
-        vendorId: Long,
-        vendorDetails: UserSecurity
-
-    ): Food {
-        userVerification.verifyVendor(vendorId, vendorDetails)
+    fun getFoodById(id: Long, vendorDetails: UserSecurity): Food {
         val food = foodRepository.findById(id)
-            .orElseThrow { IllegalArgumentException("No discount found for id: $id") }
+            .orElseThrow { RequestedEntityNotFoundException("No food found for id: $id") }
             .also {
                 if (it.vendor.id != vendorDetails.id) {
-                    throw IllegalArgumentException("You do not have permission to delete discount: $id")
+                    throw IllegalArgumentException("You do not have permission to access discount: $id")
                 }
             }
         return food
     }
 
     @Transactional(readOnly = true)
-    fun getAllFoods(vendorId: Long, vendorDetails: UserSecurity): List<Food> {
-
-        val vendor = userVerification.verifyVendor(vendorId, vendorDetails)
-        val foods = foodRepository.findAllByVendorId(vendor.id!!)
+    fun getAllFoods(vendorDetails: UserSecurity): List<Food> {
+        val foods = foodRepository.findAllByVendorId(vendorDetails.id)
             .takeIf { it.isNotEmpty() }
-            ?: throw IllegalArgumentException("No food found for the vendor: $vendorId")
+            ?: throw RequestedEntityNotFoundException("No food found for the vendor: ${vendorDetails.id}")
 
-        require(foods.all { it ->
-            it.vendor.id == vendorDetails.id
-        }) {
-            throw IllegalArgumentException("You (vendor ${vendorDetails.id}) does not have the permission to access these foods.")
+        foods.also { list ->
+            if (list.any { it.vendor.id != vendorDetails.id}) {
+                throw PermissionDeniedException("You do not have the permission to access these foods.")
+            }
         }
         return foods
     }
 
     @Transactional(readOnly = true)
-    fun getDuplicate(foodName: String, vendorId: Long): Boolean =
-        foodRepository.findByFoodNameIgnoreCaseAndVendorId(foodName, vendorId) != null
+    fun getDuplicate(foodName: String, vendorDetails: UserSecurity): Boolean =
+        foodRepository.findFirstByFoodNameIgnoreCaseAndVendorId(foodName, vendorDetails.id) != null
 
     @Transactional
-    fun delete(
-        id: Long,
-        vendorId: Long,
-        vendorDetails: UserSecurity
-    ) {
-        if (vendorId != vendorDetails.id) {
-            throw IllegalArgumentException("You do not have permission to delete foods for vendor $vendorId")
-        }
-
-        val food = getFoodById(id, vendorId, vendorDetails)
-        if (food.vendor.id != vendorDetails.id) {
-            throw IllegalArgumentException("You do not have permission to update food ${food.id}")
-        }
+    fun deleteFood(id: Long, vendorDetails: UserSecurity) {
+        val food = getFoodById(id, vendorDetails)
         foodRepository.delete(food)
     }
 
@@ -97,21 +72,18 @@ class FoodService(
     }
 
     @Transactional
-    fun addOrUpdateFood(
-        foodDto: FoodDto,
-        vendorDetails: UserSecurity
-    ): FoodResponse {
+    fun addOrUpdateFood(foodDto: FoodDto, vendorDetails: UserSecurity): Food {
         val vendor = vendorRepository.findById(vendorDetails.id)
-            .orElseThrow { IllegalArgumentException("Vendor not found.") }
+            .orElseThrow { UserNotFoundException("Vendor not found.") }
 
         // Information meant for the food table
         // Determine if food is to be created or update an existing one
         var food: Food = if (foodDto.id != null) {
             foodRepository.findById(foodDto.id!!)
-                .orElseThrow { IllegalArgumentException("Food not found.") }
+                .orElseThrow { RequestedEntityNotFoundException("Food not found.") }
                 .also {
                     if (it.vendor.id != vendorDetails.id) {
-                        throw IllegalArgumentException("You do not have permission to update food ${it.foodName}")
+                        throw PermissionDeniedException("You do not have permission to update food ${it.foodName}")
                     }
                 }
         } else {
@@ -123,10 +95,10 @@ class FoodService(
         if (foodDto.id == null) {
 
             // Check if the vendor has already added food with the same name
-            if (!getDuplicate(foodDto.foodName!!, vendorDetails.id)) {
+            if (!getDuplicate(foodDto.foodName!!, vendorDetails)) {
                 food.foodName = foodDto.foodName ?: throw IllegalArgumentException("Please enter a food name.")
             } else {
-                throw IllegalArgumentException("A food with the name: ${foodDto.foodName} already exist. Cannot add duplicate.")
+                throw DuplicateFoundException("A food with the name: ${foodDto.foodName} already exist. Cannot add duplicate.")
             }
         } else {
             food.foodName = foodDto.foodName ?: throw IllegalArgumentException("Please enter a food name.")
@@ -158,10 +130,15 @@ class FoodService(
         food.foodImage.addAll(foodImages)
 
         // Information meant for the food_complement table
-        val complements = complementRepository.findAllByIdInAndVendorId(
-            foodDto.complementIds,
-            vendor.id!!
-        )
+        val complements = complementRepository.findAllByIdInAndVendorId(foodDto.complementIds, vendor.id!!)
+            .takeIf { it.isNotEmpty() }
+            ?: throw RequestedEntityNotFoundException("No complements found for the vendor ${vendor.id}")
+
+        require(complements.all { it ->
+            it.vendor.id == vendorDetails.id
+        }) {
+            throw PermissionDeniedException("Vendor: ${vendorDetails.id}) does not have the permission to access these complements.")
+        }
 
         val foodComplements = complements.map { it ->
             FoodComplement().apply {
@@ -179,6 +156,14 @@ class FoodService(
         val discountsFromDb = if (!newDiscounts.isNullOrEmpty()) {
             discountRepository.findAllByIdInAndVendorId(newDiscounts, vendorDetails.id)
         } else emptyList()
+
+        if (discountsFromDb.isNotEmpty()) {
+            require(discountsFromDb.all {it ->
+                it.vendor.id == vendorDetails.id
+            }) {
+                throw PermissionDeniedException("Vendor: ${vendorDetails.id}) does not have the permission to access these discounts.")
+            }
+        }
 
         // Creating a mutable map of existing assigned discounts
         val existingDiscountsById = food.foodDiscount
@@ -236,7 +221,7 @@ class FoodService(
 
                 // Discount is not assigned, assign it.
                 val retrievedDiscount = discountRepository.findById(discountId)
-                    .orElseThrow { IllegalArgumentException("Discount not found") } // returns an Optional<Discount>
+                    .orElseThrow { RequestedEntityNotFoundException("Discount not found") } // returns an Optional<Discount>
 
                 if (retrievedDiscount.vendor.id == vendorDetails.id) {
                     val newFoodDiscount = FoodDiscount().apply {
@@ -248,7 +233,7 @@ class FoodService(
                     existingDiscountsById[discountId] = newFoodDiscount
 
                 } else {
-                    throw IllegalArgumentException("You do not have the permission to assign discount.")
+                    throw PermissionDeniedException("You do not have the permission to assign discount.")
                 }
             }
         }
@@ -287,6 +272,14 @@ class FoodService(
         val addOns = if (!foodDto.addOnIds.isNullOrEmpty()) {
             addOnRepository.findAllByIdInAndVendorId(foodDto.addOnIds!!, vendorDetails.id)
         } else emptyList()
+
+        if (addOns.isNotEmpty()) {
+            require(addOns.all {it ->
+                it.vendor.id == vendorDetails.id
+            }) {
+                throw PermissionDeniedException("Vendor: ${vendorDetails.id}) does not have the permission to access these add-ons.")
+            }
+        }
 
         if (!addOns.isEmpty()) {
             val foodAddOns =
@@ -336,9 +329,9 @@ class FoodService(
 
         // Reload the saved food with all relationships
         val savedFood = foodRepository.findByIdWithAllRelations(food.id!!)
-            .orElseThrow { EntityNotFoundException("Food not found.") }
+            .orElseThrow { RequestedEntityNotFoundException("Food not found.") }
 
-        return savedFood.toResponse()
-
+        return savedFood
     }
 }
+

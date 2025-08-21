@@ -1,66 +1,62 @@
 package com.qinet.feastique.controller
 
-import com.qinet.feastique.model.dto.LoginDto
-import com.qinet.feastique.model.dto.SignupDto
-import com.qinet.feastique.model.dto.VendorSignupDto
-import com.qinet.feastique.response.TokenResponse
-import com.qinet.feastique.response.TokenPairResponse
-import com.qinet.feastique.service.customer.CustomerService
-import com.qinet.feastique.service.vendor.VendorService
-import com.qinet.feastique.utility.JwtUtility
+import com.qinet.feastique.common.mapper.toResponse
+import com.qinet.feastique.model.dto.customer.LoginDto
+import com.qinet.feastique.model.dto.LogoutDto
+import com.qinet.feastique.model.dto.customer.SignupDto
+import com.qinet.feastique.model.dto.vendor.VendorSignupDto
+import com.qinet.feastique.response.VendorResponse
+import com.qinet.feastique.response.token.AccessTokenResponse
+import com.qinet.feastique.response.token.TokenPairResponse
+import com.qinet.feastique.service.AuthenticationService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
-data class RefreshRequest(val refreshToken: String)
 
 @RestController
 @RequestMapping("/api/auth")
 class AuthenticationController(
-    val customerService: CustomerService,
-    private val vendorService: VendorService,
-    private val jwtUtility: JwtUtility
+    private val authenticationService: AuthenticationService,
 ) {
     @PostMapping("/signup")
-    fun signup(
-        @RequestBody
-        @Valid signupDTO: SignupDto
-    ): ResponseEntity<String> {
-        customerService.signupCustomer(signupDTO)
-        return ResponseEntity("Account created for ${signupDTO.username}", HttpStatus.CREATED)
+    fun signup(@RequestBody @Valid signupDto: SignupDto): ResponseEntity<String> {
+        authenticationService.handleCustomerSignup(signupDto)
+        return ResponseEntity("Account created for ${signupDto.username}", HttpStatus.CREATED)
     }
 
     @PostMapping("/login")
     fun login(@RequestBody @Valid loginDto: LoginDto): TokenPairResponse {
-        return customerService.login(loginDto)
+        return authenticationService.handleCustomerLogin(loginDto)
     }
 
     @PostMapping("/vendor/signup")
-    fun vendorSignup(
-        @RequestBody
-        @Valid vendorSignupDTO: VendorSignupDto
-        ): ResponseEntity<String> {
-            vendorService.signup(vendorSignupDTO)
-            return ResponseEntity("Account created for: ${vendorSignupDTO.username}", HttpStatus.CREATED)
-        }
+    fun vendorSignup(@RequestBody @Valid vendorSignupDto: VendorSignupDto): ResponseEntity<VendorResponse> {
+        val vendor = authenticationService.handleVendorSignup(vendorSignupDto)
+        return ResponseEntity(vendor.toResponse(), HttpStatus.CREATED)
+    }
 
 
     @PostMapping("/vendor/login")
     fun vendorLogin(
-        @RequestBody
-        @Valid
-        loginDto: LoginDto): TokenPairResponse {
-        return vendorService.login(loginDto)
+        @RequestBody @Valid loginDto: LoginDto): TokenPairResponse {
+        return authenticationService.handleVendorLogin(loginDto)
     }
 
     @PostMapping("/refresh")
-    fun refresh(@RequestBody refreshToken: RefreshRequest): TokenResponse {
-        val rawRefreshToken = refreshToken.refreshToken.trim()
-        return jwtUtility.refresh(rawRefreshToken)
+    fun refresh(@RequestBody refreshRequestDto: RefreshRequestDto): ResponseEntity<AccessTokenResponse> {
+        val accessTokenResponse = authenticationService.handleRefresh(refreshRequestDto.refreshToken.trim())
+        return ResponseEntity.ok(accessTokenResponse)
     }
 
+    @PostMapping("/logout")
+    fun logout(
+        @RequestHeader("Authorization", required = false) authorizationHeader: String?,
+        @RequestBody(required = false) logoutRequestDto: LogoutDto?
+    ): ResponseEntity<Map<String, String>> {
+        authenticationService.handleLogout(authorizationHeader, logoutRequestDto)
+        return ResponseEntity.ok(mapOf("message" to "Successfully logged out"))
+    }
+    data class RefreshRequestDto(val refreshToken: String)
 }

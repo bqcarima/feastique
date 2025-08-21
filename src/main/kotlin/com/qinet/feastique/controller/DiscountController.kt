@@ -6,6 +6,8 @@ import com.qinet.feastique.response.DiscountResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.DiscountService
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -28,8 +30,9 @@ class DiscountController(
         @Valid discountDto: DiscountDto,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
-    ): DiscountResponse {
-        return discountService.addOrUpdateDiscount(discountDto, vendorDetails)
+    ): ResponseEntity<DiscountResponse> {
+        val discount =  discountService.addOrUpdateDiscount(discountDto, vendorDetails)
+        return ResponseEntity(discount.toResponse(), HttpStatus.CREATED)
     }
 
     @GetMapping("/all")
@@ -37,8 +40,9 @@ class DiscountController(
         @PathVariable vendorId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
-    ): List<DiscountResponse> {
-        return discountService.getAllDiscounts(vendorId, vendorDetails).map { it.toResponse() }
+    ): ResponseEntity<List<DiscountResponse>> {
+        val discounts =  discountService.getAllDiscounts(vendorDetails)
+        return ResponseEntity(discounts.map { it.toResponse() }, HttpStatus.OK)
     }
 
     @DeleteMapping("/delete/{id}")
@@ -47,8 +51,9 @@ class DiscountController(
         @PathVariable id: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
-    ) {
-        discountService.deleteDiscount(id, vendorId, vendorDetails)
+    ) : ResponseEntity<String> {
+        discountService.deleteDiscount(id, vendorDetails)
+        return ResponseEntity("Discount deleted successfully." ,HttpStatus.NO_CONTENT)
     }
 
     @DeleteMapping("/delete/all")
@@ -56,7 +61,9 @@ class DiscountController(
         @PathVariable vendorId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
-    ) {
-        discountService.deleteAllDiscounts(vendorId, vendorDetails)
+    ): ResponseEntity<String> {
+        discountService.deleteAllDiscounts(vendorDetails)
+        return ResponseEntity("Discount deleted successfully." ,HttpStatus.NO_CONTENT)
     }
 }
+

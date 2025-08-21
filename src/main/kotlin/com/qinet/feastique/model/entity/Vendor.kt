@@ -7,20 +7,42 @@ import com.qinet.feastique.model.entity.address.VendorAddress
 import com.qinet.feastique.model.entity.complement.Complement
 import com.qinet.feastique.model.entity.discount.Discount
 import com.qinet.feastique.model.entity.food.Food
-import com.qinet.feastique.model.enums.AccountType
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.Id
-import jakarta.persistence.OneToMany
-import jakarta.persistence.Table
+import com.qinet.feastique.model.entity.phoneNumber.VendorPhoneNumber
+import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import org.hibernate.annotations.CreationTimestamp
-import java.util.Date
-import java.util.UUID
+import java.util.*
+
+@NamedEntityGraphs(
+    value = [
+        NamedEntityGraph(
+            name = "Vendor.withAddressAndPhoneNumbers",
+            attributeNodes = [
+                NamedAttributeNode("address"),
+                NamedAttributeNode("vendorPhoneNumber")
+            ]
+        ),
+        NamedEntityGraph(
+            name = "Vendor.withFoodAndDiscounts",
+            attributeNodes = [
+                NamedAttributeNode("food"),
+                NamedAttributeNode("discount")
+            ]
+        ),
+        NamedEntityGraph(
+            name = "Vendor.withAllRelations",
+            attributeNodes = [
+                NamedAttributeNode("address"),
+                NamedAttributeNode("vendorPhoneNumber"),
+                NamedAttributeNode("food"),
+                NamedAttributeNode("discount"),
+                NamedAttributeNode("addOn"),
+                NamedAttributeNode("complement")
+            ]
+        )
+    ]
+)
 
 @Entity
 @Table(name = "vendor")
@@ -44,11 +66,6 @@ class Vendor {
     @NotEmpty(message = "Last name cannot be empty.")
     var lastName: String? = ""
 
-    @Column(name = "default_phone_number")
-    @NotBlank(message = "Phone number cannot be null.")
-    @NotEmpty(message = "Phone number cannot be empty.")
-    var defaultPhoneNumber: String? = ""
-
     @Column(name = "chef_name")
     @NotBlank(message = "Chef name cannot be null.")
     @NotEmpty(message = "Chef name cannot be empty.")
@@ -65,9 +82,9 @@ class Vendor {
     var verified: Boolean = false
     var image: String? = ""
 
-    @Column(name  = "account_type", nullable = false)
-    @Enumerated(EnumType.STRING)
-    var accountType: AccountType? = null
+    @NotBlank(message = "Password cannot be null.")
+    @NotEmpty(message = "Password cannot be empty.")
+    var accountType: String? = ""
 
     @Column(name = "registration_date")
     @CreationTimestamp
@@ -76,36 +93,49 @@ class Vendor {
     @JsonManagedReference // prevent infinite recursion for extra protection
     @OneToMany(
         mappedBy = "vendor",
+        cascade = [CascadeType.ALL],
         orphanRemoval = true // Automatic removal of addresses if removed from the vendor
     )
-    var addOn: MutableSet<AddOn> = mutableSetOf()
+    var addOn: MutableList<AddOn> = mutableListOf()
 
     @JsonManagedReference
-    @OneToMany(
+    @OneToOne(
         mappedBy = "vendor",
+        cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var addresses: MutableSet<VendorAddress> = mutableSetOf()
+    var address: VendorAddress? = null
 
     @JsonBackReference
     @OneToMany(
         mappedBy = "vendor",
+        cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var complement: MutableSet<Complement> = mutableSetOf()
+    var complement: MutableList<Complement> = mutableListOf()
 
     @JsonManagedReference
     @OneToMany(
         mappedBy = "vendor",
+        cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var discount: MutableSet<Discount> = mutableSetOf()
+    var discount: MutableList<Discount> = mutableListOf()
 
     @JsonManagedReference
     @OneToMany(
         mappedBy = "vendor",
+        cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var food: MutableSet<Food> = mutableSetOf()
+    var food: MutableList<Food> = mutableListOf()
+
+    @JsonManagedReference
+    @OneToMany(
+        mappedBy = "vendor",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    var vendorPhoneNumber: MutableList<VendorPhoneNumber> = mutableListOf()
 }
 

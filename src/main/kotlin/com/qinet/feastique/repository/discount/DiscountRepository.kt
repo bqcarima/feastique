@@ -7,7 +7,7 @@ interface DiscountRepository : JpaRepository<Discount, Long> {
 
     fun findAllByVendorId(vendorId: Long): List<Discount>
     fun findAllByIdInAndVendorId(discountIds: List<Long>, vendorId: Long): List<Discount>
-    fun findByDiscountNameIgnoreCaseAndVendorId(discountName: String, vendorId: Long): Discount?
+    fun findFirstByDiscountNameIgnoreCaseAndVendorId(discountName: String, vendorId: Long): Discount?
     fun deleteAllByVendorId(vendorId: Long)
 
 }

@@ -1,13 +1,24 @@
 package com.qinet.feastique.repository.vendor
 
 import com.qinet.feastique.model.entity.Vendor
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
-import java.util.Optional
 
 @Repository
 interface VendorRepository : JpaRepository<Vendor, Long> {
+    fun findFirstByUsernameIgnoreCase(username: String): Vendor?
 
-    fun findByUsername(vendorId: String): Vendor?
-    fun findByDefaultPhoneNumber(phoneNumber: String): Vendor?
+    @EntityGraph("Vendor.withAddressAndPhoneNumber")
+    @Query("SELECT v FROM Vendor v WHERE v.id = :id")
+    fun findVendorByIdWithAddressAndPhoneNumber(id: Long): Vendor?
+
+    @EntityGraph("Vendor.withFoodAndDiscounts")
+    @Query("SELECT v FROM Vendor v WHERE v.id = :id")
+    fun findByIdAndLoadFoodAndDiscounts(id: Long): Vendor?
+    @EntityGraph("Vendor.withAllRelations")
+    @Query("SELECT v FROM Vendor v WHERE v.id = :id")
+    fun findByIdWithAllRelations(id: Long): Vendor?
 }
+

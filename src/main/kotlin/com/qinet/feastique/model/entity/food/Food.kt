@@ -10,8 +10,39 @@ import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 
+@Suppress("JpaEntityGraphsInspection")
 @Entity
 @Table(name = "food")
+@NamedEntityGraphs(
+    value = [
+        NamedEntityGraph(
+            name = "Food.withAllRelations",
+            attributeNodes = [
+                NamedAttributeNode("foodImage"),
+                NamedAttributeNode(value = "foodAddOn", subgraph = "addOn-subgraph"),
+                NamedAttributeNode("foodSize"),
+                NamedAttributeNode(value = "foodComplement", subgraph = "foodComplement-subgraph"),
+                NamedAttributeNode(value = "foodDiscount", subgraph = "discount-subgraph"),
+                NamedAttributeNode("foodOrderType"),
+                NamedAttributeNode("foodAvailability")
+            ],
+            subgraphs = [
+                NamedSubgraph(
+                    name = "addOn-subgraph",
+                    attributeNodes = [NamedAttributeNode("addOn")]
+                ),
+                NamedSubgraph(
+                    name = "foodComplement-subgraph",
+                    attributeNodes = [NamedAttributeNode("complement")]
+                ),
+                NamedSubgraph(
+                    name = "discount-subgraph",
+                    attributeNodes = [NamedAttributeNode("discount")]
+                )
+            ]
+        )
+    ]
+)
 class Food {
     @Id
     @GeneratedValue

@@ -6,6 +6,8 @@ import com.qinet.feastique.response.AddOnResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.AddOnService
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -28,14 +30,9 @@ class AddOnController(
         @Valid addOnDto: AddOnDto,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
-    ): AddOnResponse {
+    ): ResponseEntity<AddOnResponse> {
         val addOn = addOnService.addOrUpdateAddOn(addOnDto, vendorDetails)
-
-        return AddOnResponse(
-            id = addOn.id!!,
-            addOnName = addOn.addOnName!!,
-            price = addOn.price!!
-        )
+        return ResponseEntity(addOn.toResponse(), HttpStatus.CREATED)
     }
 
     @DeleteMapping("/delete/{id}")
@@ -43,8 +40,10 @@ class AddOnController(
         @PathVariable id: Long,
         @PathVariable vendorId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity
-    ) {
-        addOnService.deleteAddOn(id, vendorId, vendorDetails)
+
+    ) : ResponseEntity<String> {
+        addOnService.deleteAddOn(id, vendorDetails)
+        return ResponseEntity("Add-on deleted successfully.", HttpStatus.NO_CONTENT)
     }
 
     @GetMapping("/all")
@@ -52,7 +51,8 @@ class AddOnController(
         @PathVariable vendorId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
-    ): List<AddOnResponse> {
-        return addOnService.getAllAddOns(vendorId, vendorDetails).map { it.toResponse() }
+    ): ResponseEntity<List<AddOnResponse>> {
+        val addOns = addOnService.getAllAddOns(vendorDetails)
+        return ResponseEntity(addOns.map {  it.toResponse() }, HttpStatus.OK)
     }
 }

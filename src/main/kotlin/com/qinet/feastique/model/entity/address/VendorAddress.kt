@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.qinet.feastique.model.entity.Vendor
 import jakarta.persistence.Entity
 import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 
 @Entity
@@ -13,8 +13,9 @@ import jakarta.persistence.Table
 class VendorAddress : Address() {
 
     @JsonBackReference // prevent infinite recursion for extra protection
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "vendor_id", nullable = false)
     @JsonIgnore
     lateinit var vendor: Vendor
 }
+

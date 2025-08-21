@@ -1,5 +1,6 @@
 package com.qinet.feastique.model.entity
 
+//import com.qinet.feastique.model.entity.review.FoodReview
 import com.fasterxml.jackson.annotation.JsonManagedReference
 import com.qinet.feastique.model.entity.address.CustomerAddress
 import com.qinet.feastique.model.enums.AccountType
@@ -66,3 +67,4 @@ class Customer {
     )
     var addresses: MutableSet<CustomerAddress> = mutableSetOf()
 }
+

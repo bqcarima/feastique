@@ -1,4 +1,4 @@
-package com.qinet.feastique.model.dto
+package com.qinet.feastique.model.dto.vendor
 
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
@@ -20,7 +20,7 @@ data class VendorSignupDto(
 
     @field:NotBlank(message = "Phone number cannot be null.")
     @field:NotEmpty(message = "Phone number cannot be empty.")
-    var defaultPhoneNumber: String?,
+    var phoneNumber: String?,
 
     @field:NotBlank(message = "Chef name cannot be null.")
     @field:NotEmpty(message = "Chef name cannot be empty.")

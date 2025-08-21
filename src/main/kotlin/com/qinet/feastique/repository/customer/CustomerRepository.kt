@@ -8,8 +8,8 @@ import java.util.*
 @Repository
 interface CustomerRepository : JpaRepository<Customer, Long> {
 
-    fun findByUsername(username: String): Optional<Customer>
+    fun findFirstByUsername(username: String): Optional<Customer>
 
-    fun findByDefaultPhoneNumber(defaultPhoneNumber: String) : Optional<Customer>
+    fun findFirstByDefaultPhoneNumber(defaultPhoneNumber: String) : Optional<Customer>
 
 }

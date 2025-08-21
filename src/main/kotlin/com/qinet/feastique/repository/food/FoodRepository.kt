@@ -1,6 +1,7 @@
 package com.qinet.feastique.repository.food
 
 import com.qinet.feastique.model.entity.food.Food
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -10,9 +11,9 @@ import java.util.Optional
 @Repository
 interface FoodRepository : JpaRepository<Food, Long> {
     fun findAllByVendorId(vendorId: Long): List<Food>
-    fun findByFoodNameIgnoreCaseAndVendorId(foodName: String, vendorId: Long): Food?
+    fun findFirstByFoodNameIgnoreCaseAndVendorId(foodName: String, vendorId: Long): Food?
 
-    @Query("""
+    /*@Query("""
         SELECT DISTINCT f 
         FROM Food f
         LEFT JOIN FETCH f.foodImage fi
@@ -24,7 +25,10 @@ interface FoodRepository : JpaRepository<Food, Long> {
         LEFT JOIN FETCH f.foodOrderType fo
         LEFT JOIN FETCH f.foodAvailability fv
         WHERE f.id = :id
-    """)
+    """)*/
+
+    @EntityGraph("Vendor.withAllRelations")
+    @Query("SELECT f FROM Food f WHERE f.id = :id")
     fun findByIdWithAllRelations(@Param("id") id: Long): Optional<Food>
 }
 

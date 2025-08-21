@@ -24,18 +24,19 @@ class FoodController(
         @Valid foodDto: FoodDto,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
-    ): FoodResponse {
-        return foodService.addOrUpdateFood(foodDto, vendorDetails)
+    ): ResponseEntity<FoodResponse> {
+        val food = foodService.addOrUpdateFood(foodDto, vendorDetails)
+        return ResponseEntity(food.toResponse(), HttpStatus.CREATED)
     }
 
-    @DeleteMapping("/delete/{foodId}")
+    @DeleteMapping("/delete/{id}")
     fun deleteFood(
+        @PathVariable id: Long,
         @PathVariable vendorId: Long,
-        @PathVariable foodId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<String> {
-        foodService.delete(vendorId, foodId, vendorDetails)
+        foodService.deleteFood(id, vendorDetails)
         return ResponseEntity("Food deleted successfully. All relationships will be deleted as well.", HttpStatus.OK)
     }
 
@@ -44,8 +45,9 @@ class FoodController(
         @PathVariable vendorId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
-    ): List<FoodResponse> {
-        return foodService.getAllFoods(vendorId, vendorDetails).map { it.toResponse() }
+    ): ResponseEntity<List<FoodResponse>> {
+        val foods= foodService.getAllFoods(vendorDetails)
+        return ResponseEntity(foods.map { it.toResponse() }, HttpStatus.OK)
     }
 }
 

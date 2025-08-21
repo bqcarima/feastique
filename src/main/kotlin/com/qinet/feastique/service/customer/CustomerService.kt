@@ -1,12 +1,12 @@
 package com.qinet.feastique.service.customer
 
-import com.qinet.feastique.model.dto.LoginDto
-import com.qinet.feastique.model.dto.SignupDto
+import com.qinet.feastique.model.dto.customer.LoginDto
+import com.qinet.feastique.model.dto.customer.SignupDto
 import com.qinet.feastique.model.entity.Customer
 import com.qinet.feastique.model.entity.address.CustomerAddress
 import com.qinet.feastique.model.enums.AccountType
 import com.qinet.feastique.repository.customer.CustomerRepository
-import com.qinet.feastique.response.TokenPairResponse
+import com.qinet.feastique.response.token.TokenPairResponse
 import com.qinet.feastique.security.PasswordEncoder
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.RefreshTokenService
@@ -36,12 +36,12 @@ class CustomerService(
 
     @Transactional(readOnly = true)
     fun getCustomerByUsername(username: String): Optional<Customer> {
-        return customerRepository.findByUsername(username)
+        return customerRepository.findFirstByUsername(username)
     }
 
     @Transactional(readOnly = true)
     fun getCustomerByPhoneNumber(phoneNumber: String): Optional<Customer> {
-        return customerRepository.findByDefaultPhoneNumber(phoneNumber)
+        return customerRepository.findFirstByDefaultPhoneNumber(phoneNumber)
     }
 
     @Transactional
@@ -50,34 +50,34 @@ class CustomerService(
     }
 
     @Transactional
-    fun signupCustomer(signupDTO: SignupDto) {
-        if(signupDTO.username?.let {getCustomerByUsername(it).getOrNull()} == null) {
+    fun signupCustomer(signupDto: SignupDto) {
+        if(signupDto.username?.let {getCustomerByUsername(it).getOrNull()} == null) {
 
-            if(signupDTO.defaultPhoneNumber?.let { getCustomerByPhoneNumber(it).getOrNull() } == null) {
+            if(signupDto.defaultPhoneNumber?.let { getCustomerByPhoneNumber(it).getOrNull() } == null) {
 
 
                 // Information meant for the customer table
                 val customer = Customer()
-                customer.firstName = signupDTO.firstName ?: throw IllegalArgumentException("Please enter a first name.")
-                customer.lastName = signupDTO.lastName ?: throw IllegalArgumentException("Please enter a last name.")
-                customer.username = signupDTO.username ?: throw IllegalArgumentException("Please enter a username.")
-                customer.defaultPhoneNumber = signupDTO.defaultPhoneNumber ?: throw IllegalArgumentException("Please enter a phone number.")
-                customer.password = passwordEncoder.encode(signupDTO.password!!)
+                customer.firstName = signupDto.firstName ?: throw IllegalArgumentException("Please enter a first name.")
+                customer.lastName = signupDto.lastName ?: throw IllegalArgumentException("Please enter a last name.")
+                customer.username = signupDto.username ?: throw IllegalArgumentException("Please enter a username.")
+                customer.defaultPhoneNumber = signupDto.defaultPhoneNumber ?: throw IllegalArgumentException("Please enter a phone number.")
+                customer.password = passwordEncoder.encode(signupDto.password!!)
                 customer.accountType = AccountType.CUSTOMER
-                customer.firstName = signupDTO.firstName ?: throw IllegalArgumentException("Please enter a first name.")
+                customer.firstName = signupDto.firstName ?: throw IllegalArgumentException("Please enter a first name.")
 
                 saveCustomer(customer)
 
                 // Information meant for the address table
                 val address = CustomerAddress()
                 address.country = "Cameroon"
-                address.region = signupDTO.region ?: throw java.lang.IllegalArgumentException("Please select a region.")
-                address.city = signupDTO.city ?: throw IllegalArgumentException("Please enter a username.")
-                address.neighbourhood = signupDTO.neighbourhood ?: throw IllegalArgumentException("Please enter a neighbourhood.")
-                address.streetName = signupDTO.streetName
-                address.directions = signupDTO.directions ?: throw IllegalArgumentException("Please enter a neighbourhood.")
-                address.longitude = signupDTO.longitude
-                address.latitude = signupDTO.latitude
+                address.region = signupDto.region ?: throw java.lang.IllegalArgumentException("Please select a region.")
+                address.city = signupDto.city ?: throw IllegalArgumentException("Please enter a username.")
+                address.neighbourhood = signupDto.neighbourhood ?: throw IllegalArgumentException("Please enter a neighbourhood.")
+                address.streetName = signupDto.streetName
+                address.directions = signupDto.directions ?: throw IllegalArgumentException("Please enter a neighbourhood.")
+                address.longitude = signupDto.longitude
+                address.latitude = signupDto.latitude
                 address.customer = customer
 
                 customerAddressService.saveAddress(address)
@@ -95,11 +95,11 @@ class CustomerService(
     }
 
     @Transactional
-    fun login(loginDTO: LoginDto): TokenPairResponse {
+    fun login(loginDto: LoginDto): TokenPairResponse {
         // Create authentication token
         val authenticationToken = UsernamePasswordAuthenticationToken(
-            loginDTO.username,
-            loginDTO.password
+            loginDto.username,
+            loginDto.password
         )
 
         // Authenticate the customer
@@ -114,6 +114,7 @@ class CustomerService(
         */
         val userDetails = authentication.principal as UserSecurity
         val customerId = userDetails.id
+        val sessionTokenIdentifier = UUID.randomUUID().toString()
 
         if(refreshTokenService.getTokenByCustomerId(customerId) != null) {
             refreshTokenService.deleteTokenByCustomerId(customerId)

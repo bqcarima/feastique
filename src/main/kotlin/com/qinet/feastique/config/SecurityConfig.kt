@@ -58,7 +58,6 @@ class SecurityConfig(
     @Bean
     fun filterChain(httpSecurity: HttpSecurity): SecurityFilterChain {
         httpSecurity
-            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
@@ -67,6 +66,7 @@ class SecurityConfig(
                     .requestMatchers("/api/vendor/**").hasRole("VENDOR")
                     .anyRequest().authenticated()
             }
+            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter::class.java)
 
         return httpSecurity.build()

@@ -2,66 +2,57 @@ package com.qinet.feastique.service
 
 import com.qinet.feastique.model.dto.ComplementDto
 import com.qinet.feastique.model.entity.complement.Complement
+import com.qinet.feastique.exception.DuplicateFoundException
+import com.qinet.feastique.exception.RequestedEntityNotFoundException
+import com.qinet.feastique.exception.PermissionDeniedException
+import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.repository.complement.ComplementRepository
 import com.qinet.feastique.repository.vendor.VendorRepository
 import com.qinet.feastique.security.UserSecurity
-import com.qinet.feastique.security.UserVerification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ComplementService(
     private val complementRepository: ComplementRepository,
-    private val vendorRepository: VendorRepository,
-    private val userVerification: UserVerification
+    private val vendorRepository: VendorRepository
 ) {
 
     @Transactional(readOnly = true)
-    fun getComplement(
-        id: Long,
-        vendorId: Long,
-        vendorDetails: UserSecurity
-
-    ): Complement {
-        userVerification.verifyVendor(vendorId, vendorDetails)
+    fun getComplement(id: Long, vendorDetails: UserSecurity): Complement {
         val complement = complementRepository.findById(id)
-            .orElseThrow { IllegalArgumentException("No discount found for id: $id") }
+            .orElseThrow { RequestedEntityNotFoundException("No discount found for id: $id") }
             .also {
                 if (it.vendor.id != vendorDetails.id) {
-                    throw IllegalArgumentException("You do not have permission to delete discount: $id")
+                    throw PermissionDeniedException("You do not have permission to access discount: $id")
                 }
             }
         return complement
     }
+
     @Transactional(readOnly = true)
-    fun getAllComplements(vendorId: Long, vendorDetails: UserSecurity): List<Complement> {
-        val vendor = userVerification.verifyVendor(vendorId, vendorDetails)
-        val complements = complementRepository.findAllByVendorId(vendor.id!!)
+    fun getAllComplements(vendorDetails: UserSecurity): List<Complement> {
+        val complements = complementRepository.findAllByVendorId(vendorDetails.id)
             .takeIf { it.isNotEmpty() }
-            ?: throw IllegalArgumentException("No complements found for the vendor $vendorId")
+            ?: throw RequestedEntityNotFoundException("No complements found for the vendor ${vendorDetails.id}")
         require(complements.all { it ->
             it.vendor.id == vendorDetails.id
         }) {
-            throw IllegalArgumentException("Vendor: ${vendorDetails.id}) does not have the permission to access these complements.")
+            throw PermissionDeniedException("Vendor: ${vendorDetails.id}) does not have the permission to access these complements.")
         }
         return complements
     }
 
     @Transactional(readOnly = true)
-    fun getDuplicates(complementName: String, vendorId: Long): Boolean =
-        complementRepository.findByComplementNameIgnoreCaseAndVendorId(complementName, vendorId) != null
+    fun getDuplicates(complementName: String, vendorDetails: UserSecurity): Boolean =
+        complementRepository.findFirstByComplementNameIgnoreCaseAndVendorId(complementName, vendorDetails.id) != null
 
 
     @Transactional
-    fun deleteComplement(
-        id: Long,
-        vendorId: Long,
-        vendorDetails: UserSecurity
-    ) {
-        userVerification.verifyVendor(vendorId, vendorDetails)
-        val complement = getComplement(id, vendorId, vendorDetails)
+    fun deleteComplement(id: Long, vendorDetails: UserSecurity) {
+        val complement = getComplement(id, vendorDetails)
         if (complement.vendor.id != vendorDetails.id) {
-            throw IllegalArgumentException("You do not have the permission to delete this complement.")
+            throw PermissionDeniedException("You do not have the permission to delete this complement.")
         }
         complementRepository.delete(complement)
     }
@@ -72,19 +63,16 @@ class ComplementService(
     }
 
     @Transactional
-    fun addOrUpdateComplement(
-        complementDto: ComplementDto,
-        vendorDetails: UserSecurity
-    ): Complement {
+    fun addOrUpdateComplement(complementDto: ComplementDto, vendorDetails: UserSecurity): Complement {
         val vendor = vendorRepository.findById(vendorDetails.id)
-            .orElseThrow { IllegalArgumentException("Vendor not found.") }
+            .orElseThrow { UserNotFoundException("Vendor not found.") }
 
         var complement: Complement = if(complementDto.id != null) {
             complementRepository.findById(complementDto.id!!)
-                .orElseThrow { IllegalArgumentException("Food not found.") }
+                .orElseThrow { RequestedEntityNotFoundException("Complement not found.") }
                 .also {
                     if(it.vendor.id != vendorDetails.id) {
-                        throw IllegalArgumentException("You do not have permission to update food ${it.complementName}")
+                        throw PermissionDeniedException("You do not have permission to update food ${it.complementName}")
                     }
                 }
 
@@ -96,11 +84,11 @@ class ComplementService(
 
         if(complementDto.id == null) {
 
-            // Check if a vendor has already added a complement with the same name
-            if(!getDuplicates(complementDto.complementName!!, vendorDetails.id)) {
+            // Check if the vendor has already added a complement with the same name
+            if(!getDuplicates(complementDto.complementName!!, vendorDetails)) {
                 complement.complementName = complementDto.complementName ?: throw IllegalArgumentException("Please enter a complement name")
             } else {
-                throw Exception("A complement with the name ${complementDto.complementName} already exist. Unable add a duplicate.")
+                throw DuplicateFoundException("A complement with the name ${complementDto.complementName} already exist. Unable add a duplicate.")
             }
         } else {
             complement.complementName = complementDto.complementName ?: throw IllegalArgumentException("Please enter a complement name")
@@ -112,5 +100,5 @@ class ComplementService(
 
         return complement
     }
-
 }
+
