@@ -36,7 +36,7 @@ class FoodService(
             .orElseThrow { RequestedEntityNotFoundException("No food found for id: $id") }
             .also {
                 if (it.vendor.id != vendorDetails.id) {
-                    throw IllegalArgumentException("You do not have permission to access discount: $id")
+                    throw PermissionDeniedException("You do not have permission to access discount.")
                 }
             }
         return food

@@ -13,15 +13,16 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/vendor/{vendorId}/complement")
+@RequestMapping("/api/vendors/{vendorId}/complements")
 class ComplementController(private val complementService: ComplementService) {
 
-    @PostMapping("/add")
+    @PutMapping
     fun addOrUpdateComplement(
         @PathVariable vendorId: Long,
         @RequestBody @Valid complementDto: ComplementDto,
@@ -32,7 +33,7 @@ class ComplementController(private val complementService: ComplementService) {
         return ResponseEntity(complement.toResponse(), HttpStatus.CREATED)
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     fun deleteComplement(
         @PathVariable id: Long,
         @PathVariable vendorId: Long,
@@ -54,7 +55,7 @@ class ComplementController(private val complementService: ComplementService) {
         return ResponseEntity(complement.toResponse(), HttpStatus.OK)
     }
 
-    @GetMapping("/all")
+    @GetMapping
     fun getAllComplements(
         @PathVariable vendorId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity

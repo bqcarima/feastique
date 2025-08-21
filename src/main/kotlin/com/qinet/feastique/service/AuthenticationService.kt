@@ -35,7 +35,7 @@ class AuthenticationService(
      * - extract tokenIdentifier and expiry from access token
      * - create a server-side session so logout is trivial
      * @param LoginDto
-     * @return TokenPairResponse
+     * @return [TokenPairResponse]
      */
     fun handleCustomerLogin(loginDto: LoginDto): TokenPairResponse {
         val tokenPair = customerService.login(loginDto)
@@ -72,7 +72,7 @@ class AuthenticationService(
      * - extract tokenIdentifier and expiry from access token
      * - create a server-side session so logout is trivial
      * @param LoginDto
-     * @return TokenPairResponse
+     * @return [TokenPairResponse]
      */
     fun handleVendorLogin(loginDto: LoginDto): TokenPairResponse {
         val tokenPair = vendorService.login(loginDto)
@@ -105,7 +105,7 @@ class AuthenticationService(
      * - persist a session for the new access token
      * - optionally revoke previous sessions if you track them
      * @param String
-     * @return AccessTokenResponse
+     * @return [AccessTokenResponse]
      */
     fun handleRefresh(rawRefreshToken: String): AccessTokenResponse {
         val accessTokenResponse = jwtUtility.refresh(rawRefreshToken)

@@ -13,17 +13,18 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/vendor/{vendorId}/add_on")
+@RequestMapping("/api/vendors/{vendorId}/add_on")
 class AddOnController(
     private val addOnService: AddOnService
 ) {
 
-    @PostMapping("/add")
+    @PutMapping
     fun addAddOn (
         @PathVariable vendorId: Long,
         @RequestBody
@@ -35,7 +36,7 @@ class AddOnController(
         return ResponseEntity(addOn.toResponse(), HttpStatus.CREATED)
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     fun deleteAddOn(
         @PathVariable id: Long,
         @PathVariable vendorId: Long,
@@ -46,7 +47,7 @@ class AddOnController(
         return ResponseEntity("Add-on deleted successfully.", HttpStatus.NO_CONTENT)
     }
 
-    @GetMapping("/all")
+    @GetMapping
     fun getAllAddOns(
         @PathVariable vendorId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity

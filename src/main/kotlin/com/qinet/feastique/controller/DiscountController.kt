@@ -9,21 +9,15 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/vendor/{vendorId}/discount")
+@RequestMapping("/api/vendors/{vendorId}/discounts")
 class DiscountController(
     private val discountService: DiscountService
 ) {
 
-    @PostMapping("/add")
+    @PutMapping
     fun addOrUpdateDiscount(
         @PathVariable vendorId: Long,
         @RequestBody
@@ -35,7 +29,18 @@ class DiscountController(
         return ResponseEntity(discount.toResponse(), HttpStatus.CREATED)
     }
 
-    @GetMapping("/all")
+    @GetMapping("/{id}")
+    fun getDiscount(
+        @PathVariable id: Long,
+        @PathVariable vendorId: Long,
+        @AuthenticationPrincipal vendorDetails: UserSecurity
+
+    ) : ResponseEntity<DiscountResponse> {
+        val discount = discountService.getDiscount(id, vendorDetails)
+        return ResponseEntity(discount.toResponse(), HttpStatus.OK)
+    }
+
+    @GetMapping
     fun getAllDiscounts(
         @PathVariable vendorId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity
@@ -45,7 +50,7 @@ class DiscountController(
         return ResponseEntity(discounts.map { it.toResponse() }, HttpStatus.OK)
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     fun deleteDiscount(
         @PathVariable vendorId: Long,
         @PathVariable id: Long,
@@ -56,7 +61,7 @@ class DiscountController(
         return ResponseEntity("Discount deleted successfully." ,HttpStatus.NO_CONTENT)
     }
 
-    @DeleteMapping("/delete/all")
+    @DeleteMapping("/all")
     fun deleteAllDiscounts(
         @PathVariable vendorId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity

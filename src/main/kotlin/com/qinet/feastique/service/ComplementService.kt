@@ -68,13 +68,7 @@ class ComplementService(
             .orElseThrow { UserNotFoundException("Vendor not found.") }
 
         var complement: Complement = if(complementDto.id != null) {
-            complementRepository.findById(complementDto.id!!)
-                .orElseThrow { RequestedEntityNotFoundException("Complement not found.") }
-                .also {
-                    if(it.vendor.id != vendorDetails.id) {
-                        throw PermissionDeniedException("You do not have permission to update food ${it.complementName}")
-                    }
-                }
+            getComplement(complementDto.id!!, vendorDetails)
 
         } else {
             Complement().apply {

@@ -8,6 +8,7 @@ import com.qinet.feastique.model.entity.complement.Complement
 import com.qinet.feastique.model.entity.discount.Discount
 import com.qinet.feastique.model.entity.food.Food
 import com.qinet.feastique.model.entity.phoneNumber.VendorPhoneNumber
+import com.qinet.feastique.model.entity.post.Post
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
@@ -137,5 +138,13 @@ class Vendor {
         orphanRemoval = true
     )
     var vendorPhoneNumber: MutableList<VendorPhoneNumber> = mutableListOf()
+
+    @JsonManagedReference
+    @OneToMany(
+        mappedBy = "vendor",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    var post: MutableList<Post> = mutableListOf()
 }
 

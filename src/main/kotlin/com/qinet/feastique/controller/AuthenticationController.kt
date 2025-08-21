@@ -5,7 +5,7 @@ import com.qinet.feastique.model.dto.customer.LoginDto
 import com.qinet.feastique.model.dto.LogoutDto
 import com.qinet.feastique.model.dto.customer.SignupDto
 import com.qinet.feastique.model.dto.vendor.VendorSignupDto
-import com.qinet.feastique.response.VendorResponse
+import com.qinet.feastique.response.vendor.VendorResponse
 import com.qinet.feastique.response.token.AccessTokenResponse
 import com.qinet.feastique.response.token.TokenPairResponse
 import com.qinet.feastique.service.AuthenticationService
@@ -31,14 +31,14 @@ class AuthenticationController(
         return authenticationService.handleCustomerLogin(loginDto)
     }
 
-    @PostMapping("/vendor/signup")
+    @PostMapping("/vendors/signup")
     fun vendorSignup(@RequestBody @Valid vendorSignupDto: VendorSignupDto): ResponseEntity<VendorResponse> {
         val vendor = authenticationService.handleVendorSignup(vendorSignupDto)
         return ResponseEntity(vendor.toResponse(), HttpStatus.CREATED)
     }
 
 
-    @PostMapping("/vendor/login")
+    @PostMapping("/vendors/login")
     fun vendorLogin(
         @RequestBody @Valid loginDto: LoginDto): TokenPairResponse {
         return authenticationService.handleVendorLogin(loginDto)

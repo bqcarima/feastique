@@ -12,12 +12,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/vendor/{vendorId}/food")
+@RequestMapping("/api/vendors/{vendorId}/foods")
 class FoodController(
     private val foodService: FoodService
 ) {
 
-    @PostMapping("/add")
+    @PutMapping
     fun addOrUpdateFood(
         @PathVariable vendorId: Long,
         @RequestBody
@@ -29,7 +29,7 @@ class FoodController(
         return ResponseEntity(food.toResponse(), HttpStatus.CREATED)
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     fun deleteFood(
         @PathVariable id: Long,
         @PathVariable vendorId: Long,
@@ -40,7 +40,18 @@ class FoodController(
         return ResponseEntity("Food deleted successfully. All relationships will be deleted as well.", HttpStatus.OK)
     }
 
-    @GetMapping("/all")
+    @GetMapping("/{id}")
+    fun getFood(
+        @PathVariable id: Long,
+        @PathVariable vendorId: Long,
+        @AuthenticationPrincipal vendorDetails: UserSecurity
+
+    ) : ResponseEntity<FoodResponse> {
+        val food = foodService.getFoodById(id, vendorDetails)
+        return ResponseEntity(food.toResponse(), HttpStatus.OK)
+    }
+
+    @GetMapping
     fun getAllFood(
         @PathVariable vendorId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity

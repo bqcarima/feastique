@@ -12,10 +12,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/vendor/{vendorId}/beverage")
+@RequestMapping("/api/vendors/{vendorId}/beverages")
 class BeverageController(private val beverageService: BeverageService) {
 
-    @PostMapping("/add")
+    @PutMapping
     fun addOrUpdateBeverage(
         @PathVariable("vendorId") vendorId: Long,
         @RequestBody @Valid beverageDto: BeverageDto,
@@ -26,7 +26,7 @@ class BeverageController(private val beverageService: BeverageService) {
         return ResponseEntity(beverage.toResponse(), HttpStatus.CREATED)
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     fun deleteBeverage(
         @PathVariable("id") id: Long,
         @PathVariable("vendorId") vendorId: Long,
@@ -48,7 +48,7 @@ class BeverageController(private val beverageService: BeverageService) {
         return ResponseEntity(beverage.toResponse(), HttpStatus.OK)
     }
 
-    @GetMapping("/all")
+    @GetMapping
     fun getAllBeverages(
         @PathVariable("vendorId") vendorId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity

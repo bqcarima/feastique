@@ -2,6 +2,7 @@ package com.qinet.feastique.service.vendor
 
 import com.qinet.feastique.exception.DuplicateFoundException
 import com.qinet.feastique.exception.PhoneNumberUnavailableException
+import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.exception.UsernameUnavailableException
 import com.qinet.feastique.model.dto.PasswordDto
@@ -49,6 +50,15 @@ class VendorService(
     }
 
     @Transactional(readOnly = true)
+    fun getVendorByIdWithAddressAndPhoneNumber(vendorDetails: UserSecurity): Vendor {
+        val vendor = vendorRepository.findVendorByIdWithAddressAndPhoneNumber(vendorDetails.id)
+        if (vendor == null) {
+            throw RequestedEntityNotFoundException("Vendor not found.")
+        }
+        return vendor
+    }
+
+    @Transactional(readOnly = true)
     fun isDuplicateFound(username: String? = null, phoneNumber: String? = null): Boolean {
         return when {
             username != null -> vendorRepository.findFirstByUsernameIgnoreCase(username) != null
@@ -65,16 +75,20 @@ class VendorService(
 
     @Transactional
     fun signup(vendorSignupDto: VendorSignupDto): Vendor {
-        if(!isDuplicateFound(username = vendorSignupDto.username!!)) {
-            if(!isDuplicateFound(phoneNumber = vendorSignupDto.phoneNumber  )) {
+        if (!isDuplicateFound(username = vendorSignupDto.username!!)) {
+            if (!isDuplicateFound(phoneNumber = vendorSignupDto.phoneNumber)) {
                 // Information meant for the vendor table
                 val vendor = Vendor()
                 vendor.username = vendorSignupDto.username ?: throw IllegalArgumentException("Please enter a username")
-                vendor.firstName = vendorSignupDto.firstName ?: throw IllegalArgumentException("Please enter a first name.")
-                vendor.lastName = vendorSignupDto.lastName ?: throw IllegalArgumentException("Please enter a last name.")
+                vendor.firstName =
+                    vendorSignupDto.firstName ?: throw IllegalArgumentException("Please enter a first name.")
+                vendor.lastName =
+                    vendorSignupDto.lastName ?: throw IllegalArgumentException("Please enter a last name.")
                 vendor.username = vendorSignupDto.username ?: throw IllegalArgumentException("Please enter a username.")
-                vendor.chefName = vendorSignupDto.chefName ?: throw IllegalArgumentException("Please enter your a restaurant name.")
-                vendor.restaurantName = vendorSignupDto.restaurantName ?: throw IllegalArgumentException("Please enter your a chef name.")
+                vendor.chefName =
+                    vendorSignupDto.chefName ?: throw IllegalArgumentException("Please enter your a restaurant name.")
+                vendor.restaurantName =
+                    vendorSignupDto.restaurantName ?: throw IllegalArgumentException("Please enter your a chef name.")
                 vendor.password = passwordEncoder.encode(vendorSignupDto.password!!)
                 vendor.accountType = AccountType.VENDOR.type
                 var savedVendor = saveVendor(vendor)
@@ -90,11 +104,14 @@ class VendorService(
                 // Information meant for the address table
                 val address = VendorAddress()
                 address.country = "Cameroon"
-                address.region = vendorSignupDto.region ?: throw java.lang.IllegalArgumentException("Please select a region.")
+                address.region =
+                    vendorSignupDto.region ?: throw java.lang.IllegalArgumentException("Please select a region.")
                 address.city = vendorSignupDto.city ?: throw IllegalArgumentException("Please enter a username.")
-                address.neighbourhood = vendorSignupDto.neighbourhood ?: throw IllegalArgumentException("Please enter a neighbourhood.")
+                address.neighbourhood =
+                    vendorSignupDto.neighbourhood ?: throw IllegalArgumentException("Please enter a neighbourhood.")
                 address.streetName = vendorSignupDto.streetName
-                address.directions = vendorSignupDto.directions ?: throw IllegalArgumentException("Please enter a neighbourhood.")
+                address.directions =
+                    vendorSignupDto.directions ?: throw IllegalArgumentException("Please enter a neighbourhood.")
                 address.longitude = vendorSignupDto.longitude
                 address.latitude = vendorSignupDto.latitude
                 address.vendor = savedVendor
@@ -103,7 +120,7 @@ class VendorService(
                 savedVendor.address = savedAddress
 
                 // Update the vendor with a foreign key reference in the address table
-                 savedVendor = saveVendor(vendor)
+                savedVendor = saveVendor(vendor)
                 return savedVendor
             } else {
                 throw PhoneNumberUnavailableException("Phone number: ${vendorSignupDto.password} is already taken.")
@@ -147,7 +164,8 @@ class VendorService(
         vendor.firstName = vendorUpdateDto.firstName ?: throw IllegalArgumentException("Please enter a first name.")
         vendor.lastName = vendorUpdateDto.lastName ?: throw IllegalArgumentException("Please enter a last name.")
         vendor.chefName = vendorUpdateDto.chefName ?: throw IllegalArgumentException("Please enter a chef name.")
-        vendor.restaurantName = vendorUpdateDto.restaurantName ?: throw IllegalArgumentException("Please enter a restaurant name.")
+        vendor.restaurantName =
+            vendorUpdateDto.restaurantName ?: throw IllegalArgumentException("Please enter a restaurant name.")
         vendor.image = vendorUpdateDto.image ?: throw IllegalArgumentException("Please enter am image url.")
         val savedVendor = saveVendor(vendor)
 
@@ -157,7 +175,11 @@ class VendorService(
             sessionManager.resetSessions(savedVendor.id!!, savedVendor.accountType.toString())
 
             // Generate a new token par.
-            val newTokenPair = jwtUtility.generateTokenPair(savedVendor.id!!, savedVendor.username, savedVendor.accountType ?: AccountType.VENDOR.name)
+            val newTokenPair = jwtUtility.generateTokenPair(
+                savedVendor.id!!,
+                savedVendor.username,
+                savedVendor.accountType ?: AccountType.VENDOR.name
+            )
 
             // Extract tokenIdentifier and expiry from the access token
             val accessToken = newTokenPair.accessToken
@@ -179,7 +201,7 @@ class VendorService(
             )
             return newTokenPair
         } else {
-            return null // TokenPairResponse("", "")
+            return savedVendor
         }
     }
 
@@ -193,7 +215,7 @@ class VendorService(
             throw IllegalArgumentException("Passwords do not match.")
 
         vendor.password = passwordEncoder.encode(passwordDto.confirmedNewPassword)
-       saveVendor(vendor)
+        saveVendor(vendor)
     }
 }
 

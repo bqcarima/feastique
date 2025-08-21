@@ -1,5 +1,10 @@
-package com.qinet.feastique.response
+package com.qinet.feastique.response.vendor
 
+import com.qinet.feastique.response.AddOnResponse
+import com.qinet.feastique.response.AddressResponse
+import com.qinet.feastique.response.ComplementResponse
+import com.qinet.feastique.response.DiscountResponse
+import com.qinet.feastique.response.PhoneNumberResponse
 import com.qinet.feastique.response.food.FoodResponse
 import java.util.Date
 
@@ -22,4 +27,3 @@ data class VendorResponse(
     val complement: List<ComplementResponse>,
     val discount: List<DiscountResponse>,
     )
-
