@@ -1,6 +1,6 @@
 package com.qinet.feastique.response.vendor
 
-import com.qinet.feastique.response.AddressResponse
+import com.qinet.feastique.response.address.AddressResponse
 import com.qinet.feastique.response.PhoneNumberResponse
 import java.util.Date
 

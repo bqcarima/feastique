@@ -1,6 +1,7 @@
 package com.qinet.feastique.model.entity
 
 import com.fasterxml.jackson.annotation.JsonBackReference
+import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonManagedReference
 import com.qinet.feastique.model.entity.addOn.AddOn
 import com.qinet.feastique.model.entity.address.VendorAddress
@@ -88,6 +89,7 @@ class Vendor {
     var accountType: String? = ""
 
     @Column(name = "registration_date")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH-mm-ss-dd-MM-yyyy")
     @CreationTimestamp
     var registrationDate: Date? = null
 

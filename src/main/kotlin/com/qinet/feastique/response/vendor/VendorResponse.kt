@@ -1,7 +1,7 @@
 package com.qinet.feastique.response.vendor
 
 import com.qinet.feastique.response.AddOnResponse
-import com.qinet.feastique.response.AddressResponse
+import com.qinet.feastique.response.address.AddressResponse
 import com.qinet.feastique.response.ComplementResponse
 import com.qinet.feastique.response.DiscountResponse
 import com.qinet.feastique.response.PhoneNumberResponse

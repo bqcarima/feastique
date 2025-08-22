@@ -35,3 +35,4 @@ class Address {
     var longitude: String? = ""
     var latitude: String? = ""
 }
+

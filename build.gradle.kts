@@ -45,6 +45,8 @@ dependencies {
 	implementation("jakarta.xml.bind:jakarta.xml.bind-api:3.0.1") // JAXB API
 	implementation("org.glassfish.jaxb:jaxb-runtime:3.0.1")       // JAXB runtime
 	implementation("javax.activation:javax.activation-api:1.2.0") // Activation framework (optional)
+	implementation("com.fasterxml.jackson.module:jackson-module-parameter-names")
+	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
 	implementation("com.google.code.gson:gson:2.10.1")
 

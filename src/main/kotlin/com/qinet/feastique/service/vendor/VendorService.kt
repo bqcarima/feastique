@@ -6,19 +6,19 @@ import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.exception.UsernameUnavailableException
 import com.qinet.feastique.model.dto.PasswordDto
-import com.qinet.feastique.model.dto.customer.LoginDto
+import com.qinet.feastique.model.dto.LoginDto
 import com.qinet.feastique.model.dto.vendor.VendorSignupDto
 import com.qinet.feastique.model.dto.vendor.VendorUpdateDto
 import com.qinet.feastique.model.entity.Vendor
 import com.qinet.feastique.model.entity.address.VendorAddress
 import com.qinet.feastique.model.entity.phoneNumber.VendorPhoneNumber
 import com.qinet.feastique.model.enums.AccountType
+import com.qinet.feastique.repository.customer.CustomerPhoneNumberRepository
 import com.qinet.feastique.repository.phoneNumber.VendorPhoneNumberRepository
 import com.qinet.feastique.repository.vendor.VendorAddressRepository
 import com.qinet.feastique.repository.vendor.VendorRepository
 import com.qinet.feastique.response.token.TokenPairResponse
 import com.qinet.feastique.security.PasswordEncoder
-import com.qinet.feastique.security.SessionManager
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.RefreshTokenService
 import com.qinet.feastique.service.UserSessionService
@@ -34,11 +34,11 @@ class VendorService(
     private val vendorRepository: VendorRepository,
     private val vendorAddressRepository: VendorAddressRepository,
     private val vendorPhoneNumberRepository: VendorPhoneNumberRepository,
+    private val customerPhoneNumberRepository: CustomerPhoneNumberRepository,
     private val passwordEncoder: PasswordEncoder,
     private val jwtUtility: JwtUtility,
     private val userSessionService: UserSessionService,
-    private val refreshTokenService: RefreshTokenService,
-    private val sessionManager: SessionManager
+    private val refreshTokenService: RefreshTokenService
 ) {
 
     @Transactional(readOnly = true)
@@ -61,8 +61,8 @@ class VendorService(
     @Transactional(readOnly = true)
     fun isDuplicateFound(username: String? = null, phoneNumber: String? = null): Boolean {
         return when {
-            username != null -> vendorRepository.findFirstByUsernameIgnoreCase(username) != null
-            phoneNumber != null -> vendorPhoneNumberRepository.findFirstByPhoneNumber(phoneNumber) != null
+            username != null -> vendorRepository.existsByUsernameIgnoreCase(username)
+            phoneNumber != null -> (vendorPhoneNumberRepository.existsByPhoneNumber(phoneNumber) && customerPhoneNumberRepository.existsByPhoneNumber(phoneNumber))
             else -> throw IllegalArgumentException("Either username or phone must be provided")
         }
     }
@@ -105,7 +105,7 @@ class VendorService(
                 val address = VendorAddress()
                 address.country = "Cameroon"
                 address.region =
-                    vendorSignupDto.region ?: throw java.lang.IllegalArgumentException("Please select a region.")
+                    vendorSignupDto.region ?: throw IllegalArgumentException("Please select a region.")
                 address.city = vendorSignupDto.city ?: throw IllegalArgumentException("Please enter a username.")
                 address.neighbourhood =
                     vendorSignupDto.neighbourhood ?: throw IllegalArgumentException("Please enter a neighbourhood.")
@@ -123,10 +123,10 @@ class VendorService(
                 savedVendor = saveVendor(vendor)
                 return savedVendor
             } else {
-                throw PhoneNumberUnavailableException("Phone number: ${vendorSignupDto.password} is already taken.")
+                throw PhoneNumberUnavailableException()
             }
         } else {
-            throw UsernameUnavailableException("Error creating, username: ${vendorSignupDto.username} is unavailable.")
+            throw UsernameUnavailableException()
         }
     }
 
@@ -172,7 +172,7 @@ class VendorService(
         if (oldUsername != savedVendor.username) {
 
             // delete old refresh token and old session
-            sessionManager.resetSessions(savedVendor.id!!, savedVendor.accountType.toString())
+            userSessionService.resetSessions(savedVendor.id!!, savedVendor.accountType.toString())
 
             // Generate a new token par.
             val newTokenPair = jwtUtility.generateTokenPair(
@@ -211,8 +211,9 @@ class VendorService(
         if (!passwordEncoder.matches(passwordDto.currentPassword, vendor.password!!))
             throw IllegalArgumentException("Invalid password.")
 
-        if (passwordDto.newPassword != passwordDto.confirmedNewPassword)
+        if (passwordDto.newPassword != passwordDto.confirmedNewPassword) {
             throw IllegalArgumentException("Passwords do not match.")
+        }
 
         vendor.password = passwordEncoder.encode(passwordDto.confirmedNewPassword)
         saveVendor(vendor)

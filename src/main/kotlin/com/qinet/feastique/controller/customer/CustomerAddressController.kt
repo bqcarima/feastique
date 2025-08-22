@@ -1,0 +1,68 @@
+package com.qinet.feastique.controller.customer
+
+import com.qinet.feastique.common.mapper.toResponse
+import com.qinet.feastique.model.dto.AddressDto
+import com.qinet.feastique.response.address.CustomerAddressResponse
+import com.qinet.feastique.security.UserSecurity
+import com.qinet.feastique.service.customer.CustomerAddressService
+import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
+
+@RestController
+@RequestMapping("/api/customers/{customerId}/address")
+class CustomerAddressController(
+    private val customerAddressService: CustomerAddressService
+) {
+
+    @PutMapping
+    fun addOrUpdateAddress(
+        @PathVariable("customerId") customerId: Long,
+        @RequestBody @Valid addressDto: AddressDto,
+        @AuthenticationPrincipal customerDetails: UserSecurity
+
+    ) : ResponseEntity<List<CustomerAddressResponse>> {
+        val address = customerAddressService.addAddress(addressDto, customerDetails)
+        return ResponseEntity(address.map { it.toResponse() }, HttpStatus.OK)
+    }
+
+    @DeleteMapping("/{id}")
+    fun deleteAddress(
+        @PathVariable("id") id: Long,
+        @PathVariable("customerId") customerId: Long,
+        @AuthenticationPrincipal customerDetails: UserSecurity
+
+    ) : ResponseEntity<String> {
+        customerAddressService.deleteAddress(id, customerDetails)
+        return ResponseEntity("Address deleted successfully.", HttpStatus.OK)
+    }
+
+    @GetMapping("/{id}")
+    fun getAddress(
+        @PathVariable("id") id: Long,
+        @PathVariable("customerId") customerId: Long,
+        @AuthenticationPrincipal customerDetails: UserSecurity
+
+    ) : ResponseEntity<CustomerAddressResponse> {
+        val address = customerAddressService.getAddressById(id, customerDetails)
+        return ResponseEntity(address.toResponse(), HttpStatus.OK)
+    }
+
+    @GetMapping
+    fun getAddresses(
+        @PathVariable("customerId") customerId: Long,
+        @AuthenticationPrincipal customerDetails: UserSecurity
+
+    ) : ResponseEntity<List<CustomerAddressResponse>> {
+        val addresses = customerAddressService.getAllAddresses(customerDetails)
+        return ResponseEntity(addresses.map { it.toResponse() }, HttpStatus.OK)
+    }
+}

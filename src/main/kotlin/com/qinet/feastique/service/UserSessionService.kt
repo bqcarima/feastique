@@ -8,7 +8,11 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.Date
 
 @Service
-class UserSessionService(private val userSessionRepository: UserSessionRepository) {
+class UserSessionService(
+    private val userSessionRepository: UserSessionRepository,
+    private val refreshTokenService: RefreshTokenService,
+
+) {
     fun createSession(
         tokenIdentifier: String,
         userId: Long,
@@ -51,6 +55,17 @@ class UserSessionService(private val userSessionRepository: UserSessionRepositor
 
     fun deleteAllSessionsForUser(userId: Long, userType: String ) {
         userSessionRepository.deleteByUserIdAndUserType(userId, userType)
+    }
+
+    fun resetSessions(userId: Long, userType: String) {
+
+        // Remove refresh tokens
+        when(userType) {
+            "CUSTOMER" -> refreshTokenService.deleteTokenByCustomerId(userId)
+            "VENDOR" -> refreshTokenService.deleteTokenByVendorId(userId)
+        }
+        // Clear all sessions
+        deleteAllSessionsForUser(userId, userType)
     }
 
     /**

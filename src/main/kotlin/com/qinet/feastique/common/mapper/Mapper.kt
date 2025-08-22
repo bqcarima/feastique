@@ -1,10 +1,12 @@
 package com.qinet.feastique.common.mapper
 
 import com.qinet.feastique.model.entity.Beverage
+import com.qinet.feastique.model.entity.Customer
 import com.qinet.feastique.model.entity.Vendor
 import com.qinet.feastique.model.entity.addOn.AddOn
 import com.qinet.feastique.model.entity.addOn.FoodAddOn
 import com.qinet.feastique.model.entity.address.Address
+import com.qinet.feastique.model.entity.address.CustomerAddress
 import com.qinet.feastique.model.entity.complement.Complement
 import com.qinet.feastique.model.entity.complement.FoodComplement
 import com.qinet.feastique.model.entity.discount.Discount
@@ -14,6 +16,8 @@ import com.qinet.feastique.model.entity.phoneNumber.PhoneNumber
 import com.qinet.feastique.model.entity.phoneNumber.VendorPhoneNumber
 import com.qinet.feastique.model.entity.post.Post
 import com.qinet.feastique.response.*
+import com.qinet.feastique.response.address.AddressResponse
+import com.qinet.feastique.response.address.CustomerAddressResponse
 import com.qinet.feastique.response.food.FoodAvailabilityResponse
 import com.qinet.feastique.response.food.FoodDiscountResponse
 import com.qinet.feastique.response.food.FoodImageResponse
@@ -38,7 +42,7 @@ fun AddOn.toResponse() = AddOnResponse(
 )
 
 /**
- * Maps an [Address] entity to its API DTO [AddressResponse].
+ * Maps an [Address] entity to its API DTO [com.qinet.feastique.response.address.AddressResponse].
  *
  * @receiver `Address` entity to map from.
  * @return [Address] DTO with id, country, region, city, neighbourhood, street name, directions and location.
@@ -52,6 +56,18 @@ fun Address.toResponse(): AddressResponse = AddressResponse(
     streetName = streetName ?: "None",
     directions = directions ?: "None",
     location = listOf(longitude ?: "0.0", latitude ?: "0.0")
+)
+
+fun CustomerAddress.toResponse(): CustomerAddressResponse = CustomerAddressResponse(
+    id = id ?: 0,
+    country = country,
+    region = region ?: "Not selected",
+    city = city ?: "Not selected",
+    neighbourhood = neighbourhood ?: "Not selected",
+    streetName = streetName ?: "None",
+    directions = directions ?: "None",
+    location = listOf(longitude ?: "0.0", latitude ?: "0.0"),
+    default = default ?: false
 )
 
 /**
@@ -80,6 +96,27 @@ fun Complement.toResponse() = ComplementResponse(
     id = id ?: 0,
     name = complementName.orEmpty(),
     price = price ?: 0
+)
+
+/**
+ * Converts a [Customer] entity to its API response DTO [CustomerResponse].
+ *
+ * @receiver `Customer` entity to map from.
+ * @return [CustomerResponse] DTO with id, name, etc.
+ */
+fun Customer.toResponse(): CustomerResponse = CustomerResponse(
+    id = id ?: 0,
+    username = username,
+    firstName = firstName.orEmpty(),
+    lastName = lastName.orEmpty(),
+    dob = dob,
+    phoneNumber = phoneNumber.map { it.toResponse() },
+    address = address.map { it.toResponse() },
+    anniversary = anniversary,
+    verified = verified ?: false,
+    accountType = accountType.toString(),
+    registrationDate = registrationDate ?: dateFormatter.parse("00-00-0000"),
+    imageUrl = image.orEmpty()
 )
 
 val dateFormatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
@@ -165,7 +202,7 @@ fun FoodComplement.toResponse() = ComplementResponse(
     name = complement.complementName.orEmpty(),
     price = complement.price ?: 0,
 
-)
+    )
 
 /**
  * Converts a [FoodDiscount] entity to its response DTO.
@@ -218,6 +255,12 @@ fun FoodSize.toResponse(): FoodSizeResponse = FoodSizeResponse(
     size = size.orEmpty()
 )
 
+fun PhoneNumber.toResponse(): PhoneNumberResponse = PhoneNumberResponse(
+    id = id ?: 0,
+    phoneNumber = phoneNumber.orEmpty(),
+    default = default ?: false
+)
+
 /**
  * Maps a [Post] entity to its response DTO.
  *
@@ -245,7 +288,7 @@ fun VendorPhoneNumber.toResponse(): PhoneNumberResponse = PhoneNumberResponse(
     default = default ?: false
 )
 
-fun Vendor.toResponse() : VendorResponse = VendorResponse(
+fun Vendor.toResponse(): VendorResponse = VendorResponse(
     id = id ?: 0,
     username = username,
     firstName = firstName.orEmpty(),
@@ -265,7 +308,7 @@ fun Vendor.toResponse() : VendorResponse = VendorResponse(
     discount = discount.map { it.toResponse() },
 )
 
-fun Vendor.toMinimalResponse() : VendorMinimalResponse = VendorMinimalResponse(
+fun Vendor.toMinimalResponse(): VendorMinimalResponse = VendorMinimalResponse(
     username = username,
     firstName = firstName.orEmpty(),
     lastName = lastName.orEmpty(),

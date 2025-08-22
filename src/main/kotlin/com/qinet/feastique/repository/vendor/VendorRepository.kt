@@ -8,7 +8,8 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface VendorRepository : JpaRepository<Vendor, Long> {
-    fun findFirstByUsernameIgnoreCase(username: String): Vendor?
+    fun findFirstByUsername(username: String): Vendor?
+    fun existsByUsernameIgnoreCase(username: String): Boolean
 
     @EntityGraph("Vendor.withAddressAndPhoneNumber")
     @Query("SELECT v FROM Vendor v WHERE v.id = :id")

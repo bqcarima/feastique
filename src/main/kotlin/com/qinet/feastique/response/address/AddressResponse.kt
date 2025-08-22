@@ -1,4 +1,4 @@
-package com.qinet.feastique.response
+package com.qinet.feastique.response.address
 
 data class AddressResponse(
     val id: Long,

@@ -1,55 +1,54 @@
 package com.qinet.feastique.model.dto.customer
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonFormat
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotEmpty
+import java.time.LocalDate
 
-data class SignupDto (
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class SignupDto(
 
-    // Information meant for the customers table
-    @field:NotBlank(message = "Username cannot be null.")
-    @field:NotEmpty(message = "Username cannot be empty.")
-    var username: String?,
+    @field:NotBlank(message = "Username cannot be null or empty.")
+    var username: String,
 
-    @field:NotBlank(message = "First name cannot be null.")
-    @field:NotEmpty(message = "First name cannot be empty.")
-    var firstName: String?,
+    @field:NotBlank(message = "First name cannot be null or empty.")
+    var firstName: String,
 
-    @field:NotBlank(message = "Last name cannot be null.")
-    @field:NotEmpty(message = "Last name cannot be empty.")
-    var lastName: String?,
+    @field:NotBlank(message = "Last name cannot be null or empty.")
+    var lastName: String,
 
-    @field:NotBlank(message = "Phone number cannot be null.")
-    @field:NotEmpty(message = "Phone number cannot be empty.")
-    var defaultPhoneNumber: String?,
+    @JsonFormat(pattern = "dd-MM-yyyy")
+    var dob: LocalDate? = null,
 
-    @field:NotBlank(message = "Password cannot be null.")
-    @field:NotEmpty(message = "Password cannot be empty.")
-    var password: String?,
+    @JsonFormat(pattern = "dd-MM-yyyy")
+    var anniversary: LocalDate? = null,
 
-    @field:NotBlank(message = "Account type cannot be null.")
-    @field:NotEmpty(message = "Account type cannot be empty.")
-    var accountType: String?,
+    @field:NotBlank(message = "Phone number cannot be null or empty.")
+    var phoneNumber: String,
 
-    // information meant for the address table
-    @field:NotBlank(message = "Region cannot be null.")
-    @field:NotEmpty(message = "Region cannot be empty.")
-    var region: String?,
+    @field:NotBlank(message = "Password cannot be null or empty.")
+    var password: String,
 
-    @field:NotBlank(message = "City cannot be null.")
-    @field:NotEmpty(message = "City cannot be empty.")
-    var city: String?,
+    @field:NotBlank(message = "Account type cannot be null or empty.")
+    var accountType: String,
 
-    @field:NotBlank(message = "Neighbourhood cannot be null.")
-    @field:NotEmpty(message = "Neighbourhood cannot be empty.")
-    var neighbourhood: String?,
+    var country: String? = "Cameroon",
 
-    var streetName: String?,
+    @field:NotBlank(message = "Region cannot be null or empty.")
+    var region: String,
 
-    @field:NotBlank(message = "Directions cannot be null.")
-    @field:NotEmpty(message = "Directions cannot be empty.")
-    var directions: String?,
+    @field:NotBlank(message = "City cannot be null or empty.")
+    var city: String,
 
-    var longitude: String?,
-    var latitude: String?
+    @field:NotBlank(message = "Neighbourhood cannot be null or empty.")
+    var neighbourhood: String,
 
+    var streetName: String? = null,
+
+    @field:NotBlank(message = "Directions cannot be null or empty.")
+    var directions: String,
+
+    var longitude: String? = null,
+    var latitude: String? = null
 )
+

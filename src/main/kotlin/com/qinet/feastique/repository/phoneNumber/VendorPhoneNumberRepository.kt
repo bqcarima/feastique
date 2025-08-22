@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository
 interface VendorPhoneNumberRepository : JpaRepository<VendorPhoneNumber, String> {
 
     fun findAllByVendorId(vendorId: Long): List<VendorPhoneNumber>
-    fun findFirstByPhoneNumber(phoneNumber: String): VendorPhoneNumber?
+    fun existsByPhoneNumber(phoneNumber: String): Boolean
 }

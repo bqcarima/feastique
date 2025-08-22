@@ -29,6 +29,8 @@ data class AddressDto(
     var directions: String?,
 
     var longitude: String?,
-    var latitude: String?
+    var latitude: String?,
+
+    var default: Boolean? = false,
 )
 

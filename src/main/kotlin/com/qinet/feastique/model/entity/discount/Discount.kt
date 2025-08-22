@@ -1,6 +1,7 @@
 package com.qinet.feastique.model.entity.discount
 
 import com.fasterxml.jackson.annotation.JsonBackReference
+import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.qinet.feastique.model.entity.Vendor
 import jakarta.persistence.*
@@ -25,7 +26,9 @@ class Discount {
     @NotNull(message = "Percentage cannot be null.")
     var percentage: Int? = 1
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     var startDate: Date? = null
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     var endDate: Date? = null
 
     @JsonBackReference // prevent infinite recursion for extra protection

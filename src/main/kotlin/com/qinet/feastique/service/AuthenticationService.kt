@@ -1,9 +1,10 @@
 package com.qinet.feastique.service
 
-import com.qinet.feastique.model.dto.customer.LoginDto
+import com.qinet.feastique.model.dto.LoginDto
 import com.qinet.feastique.model.dto.LogoutDto
 import com.qinet.feastique.model.dto.customer.SignupDto
 import com.qinet.feastique.model.dto.vendor.VendorSignupDto
+import com.qinet.feastique.model.entity.Customer
 import com.qinet.feastique.model.entity.Vendor
 import com.qinet.feastique.response.token.AccessTokenResponse
 import com.qinet.feastique.response.token.TokenPairResponse
@@ -25,8 +26,8 @@ class AuthenticationService(
     /**
      * Delegate signup to customer service
      */
-    fun handleCustomerSignup(signupDto: SignupDto) {
-        customerService.signupCustomer(signupDto)
+    fun handleCustomerSignup(signupDto: SignupDto): Customer {
+        return customerService.signupCustomer(signupDto)
     }
 
     /**
@@ -48,6 +49,9 @@ class AuthenticationService(
         // Persist server-side session
         val customerId = jwtUtility.getUserId(accessToken)
         val userType = jwtUtility.getUserType(accessToken)
+
+        val refreshTokenEntity = jwtUtility.parseToken(customerId, userType, tokenPair.refreshToken)
+        refreshTokenService.storeRefreshToken(refreshTokenEntity)
 
         userSessionService.createSession(
             tokenIdentifier = tokenIdentifier,
@@ -158,3 +162,4 @@ class AuthenticationService(
     }
 
 }
+

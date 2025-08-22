@@ -2,7 +2,7 @@ package com.qinet.feastique.controller.vendor
 
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.AddressDto
-import com.qinet.feastique.response.AddressResponse
+import com.qinet.feastique.response.address.AddressResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.vendor.VendorAddressService
 import jakarta.validation.Valid

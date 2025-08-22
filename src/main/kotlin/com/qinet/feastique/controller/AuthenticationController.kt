@@ -1,10 +1,11 @@
 package com.qinet.feastique.controller
 
 import com.qinet.feastique.common.mapper.toResponse
-import com.qinet.feastique.model.dto.customer.LoginDto
+import com.qinet.feastique.model.dto.LoginDto
 import com.qinet.feastique.model.dto.LogoutDto
 import com.qinet.feastique.model.dto.customer.SignupDto
 import com.qinet.feastique.model.dto.vendor.VendorSignupDto
+import com.qinet.feastique.response.CustomerResponse
 import com.qinet.feastique.response.vendor.VendorResponse
 import com.qinet.feastique.response.token.AccessTokenResponse
 import com.qinet.feastique.response.token.TokenPairResponse
@@ -21,9 +22,9 @@ class AuthenticationController(
     private val authenticationService: AuthenticationService,
 ) {
     @PostMapping("/signup")
-    fun signup(@RequestBody @Valid signupDto: SignupDto): ResponseEntity<String> {
-        authenticationService.handleCustomerSignup(signupDto)
-        return ResponseEntity("Account created for ${signupDto.username}", HttpStatus.CREATED)
+    fun signup(@RequestBody @Valid signupDto: SignupDto): ResponseEntity<CustomerResponse> {
+        val customer = authenticationService.handleCustomerSignup(signupDto)
+        return ResponseEntity(customer.toResponse(), HttpStatus.CREATED)
     }
 
     @PostMapping("/login")
@@ -60,3 +61,4 @@ class AuthenticationController(
     }
     data class RefreshRequestDto(val refreshToken: String)
 }
+

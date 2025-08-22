@@ -1,15 +1,18 @@
 package com.qinet.feastique.repository.customer
 
 import com.qinet.feastique.model.entity.Customer
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
-import java.util.*
 
 @Repository
 interface CustomerRepository : JpaRepository<Customer, Long> {
 
-    fun findFirstByUsername(username: String): Optional<Customer>
+    fun findFirstByUsername(username: String): Customer?
+    fun existsByUsernameIgnoreCase(username: String): Boolean
 
-    fun findFirstByDefaultPhoneNumber(defaultPhoneNumber: String) : Optional<Customer>
-
+    @EntityGraph("Customer.withPhoneNumberAndAddress")
+    @Query("SELECT c FROM Customer c WHERE c.id = :id")
+    fun findByCustomerByIdWithPhoneNumberAndAddress(id: Long): Customer?
 }

@@ -1,23 +1,106 @@
 package com.qinet.feastique.service.customer
 
+import com.qinet.feastique.exception.PermissionDeniedException
+import com.qinet.feastique.exception.RequestedEntityNotFoundException
+import com.qinet.feastique.model.dto.AddressDto
 import com.qinet.feastique.model.entity.address.CustomerAddress
 import com.qinet.feastique.repository.customer.CustomerAddressRepository
+import com.qinet.feastique.repository.customer.CustomerRepository
+import com.qinet.feastique.security.UserSecurity
 import org.springframework.stereotype.Service
-import java.util.*
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class CustomerAddressService(
-    private val customerAddressRepository: CustomerAddressRepository
+    private val customerAddressRepository: CustomerAddressRepository,
+    private val customerRepository: CustomerRepository
 ) {
-    fun getAddressById(addressId: Long): Optional<CustomerAddress> {
-        return customerAddressRepository.findById(addressId)
+    @Transactional(readOnly = true)
+    fun getAddressById(addressId: Long, customerDetails: UserSecurity): CustomerAddress {
+        val address = customerAddressRepository.findById(addressId)
+            .orElseThrow { throw RequestedEntityNotFoundException("Address Not Found.") }
+            .also {
+                if (it.customer.id != customerDetails.id) {
+                    throw PermissionDeniedException("You do not have permission to access this address.")
+                }
+            }
+        return address
     }
 
-    fun getAllAddress(customerId: Long): List<CustomerAddress> {
-        return customerAddressRepository.findAllByCustomerId(customerId)
+    @Transactional(readOnly = true)
+    fun getAllAddresses(customerDetails: UserSecurity): List<CustomerAddress> {
+        val addresses = customerAddressRepository.findAllByCustomerId(customerDetails.id)
+            .takeIf { it.isNotEmpty() }
+            ?: throw RequestedEntityNotFoundException("No address found for customer.")
+
+        require(addresses.all {
+            it.customer.id == customerDetails.id
+        }) {
+            throw PermissionDeniedException("You do not have permission to view these addresses.")
+        }
+        return addresses
     }
 
-    fun saveAddress(customerAddress: CustomerAddress) {
-        customerAddressRepository.save(customerAddress)
+    @Transactional
+    fun saveAddress(customerAddress: CustomerAddress): CustomerAddress {
+        return customerAddressRepository.save(customerAddress)
     }
+
+    @Transactional
+    fun deleteAddress(id: Long, customerDetails: UserSecurity) {
+        val address = getAddressById(id, customerDetails)
+        val addresses = getAllAddresses(customerDetails)
+
+        if (address.default == true) {
+            throw IllegalArgumentException("Cannot delete default address.")
+        }
+        if (addresses.size < 2) {
+            throw IllegalArgumentException("Cannot delete all addresses.")
+        }
+        customerAddressRepository.delete(address)
+    }
+
+    @Transactional
+    fun addAddress(addressDto: AddressDto, customerDetails: UserSecurity): List<CustomerAddress> {
+        val customer = customerRepository.findById(customerDetails.id)
+            .orElseThrow {
+                throw RequestedEntityNotFoundException("Customer not found.")
+            }
+
+        /**
+         * Perform an update if the [AddressDto] id is not null.
+         * Else create a new address.
+         */
+        val address: CustomerAddress = if (addressDto.id != null) {
+            getAddressById(addressDto.id!!, customerDetails)
+
+        } else {
+            CustomerAddress().apply {
+                this.customer = customer
+            }
+        }
+
+        address.country = addressDto.country
+        address.region = addressDto.region
+        address.city = addressDto.city
+        address.neighbourhood = addressDto.neighbourhood
+        address.streetName = addressDto.streetName
+        address.directions = addressDto.directions
+        address.longitude = addressDto.longitude
+        address.latitude = addressDto.latitude
+        address.default = addressDto.default
+
+
+        if (addressDto.default == true) {
+            val currentAddresses = customerAddressRepository.findAllByCustomerId(customer.id!!)
+            currentAddresses.forEach { it.default = false }
+            customerAddressRepository.saveAll(currentAddresses)
+            address.default = addressDto.default
+        } else{
+            address.default = addressDto.default
+        }
+        customerAddressRepository.save(address)
+        return getAllAddresses(customerDetails)
+    }
+
 }

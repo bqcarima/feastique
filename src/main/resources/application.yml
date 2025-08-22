@@ -1,0 +1,16 @@
+spring:
+  jackson:
+    # Default global format for all dates
+    date-format: "HH-mm-ss-dd-MM-yyyy"
+    time-zone: "UTC"
+
+# Profile-specific configs (optional)
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jackson:
+    # In dev, you can override to show only date if you want
+    date-format: "dd-MM-yyyy"
+    time-zone: "UTC"

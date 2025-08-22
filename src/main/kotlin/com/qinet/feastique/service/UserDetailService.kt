@@ -17,7 +17,7 @@ class UserDetailService(
 ) : UserDetailsService {
     override fun loadUserByUsername(username: String): UserDetails? {
 
-        val customer = customerRepository.findFirstByUsername(username).orElse(null)
+        val customer = customerRepository.findFirstByUsername(username)
         if (customer != null) {
             return UserSecurity(
                 id = customer.id!!,
@@ -27,7 +27,7 @@ class UserDetailService(
             )
         }
 
-        val vendor = vendorRepository.findFirstByUsernameIgnoreCase(username)
+        val vendor = vendorRepository.findFirstByUsername(username)
         if(vendor != null) {
             return UserSecurity(
                 id = vendor.id!!,
