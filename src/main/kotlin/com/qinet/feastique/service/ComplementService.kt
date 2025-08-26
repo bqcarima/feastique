@@ -9,13 +9,15 @@ import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.repository.complement.ComplementRepository
 import com.qinet.feastique.repository.vendor.VendorRepository
 import com.qinet.feastique.security.UserSecurity
+import com.qinet.feastique.utility.DuplicateUtility
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ComplementService(
     private val complementRepository: ComplementRepository,
-    private val vendorRepository: VendorRepository
+    private val vendorRepository: VendorRepository,
+    private val duplicateUtility: DuplicateUtility
 ) {
 
     @Transactional(readOnly = true)
@@ -35,7 +37,7 @@ class ComplementService(
         val complements = complementRepository.findAllByVendorId(vendorDetails.id)
             .takeIf { it.isNotEmpty() }
             ?: throw RequestedEntityNotFoundException("No complements found for the vendor ${vendorDetails.id}")
-        require(complements.all { it ->
+        require(complements.all {
             it.vendor.id == vendorDetails.id
         }) {
             throw PermissionDeniedException("Vendor: ${vendorDetails.id}) does not have the permission to access these complements.")
@@ -79,7 +81,7 @@ class ComplementService(
         if(complementDto.id == null) {
 
             // Check if the vendor has already added a complement with the same name
-            if(!getDuplicates(complementDto.complementName!!, vendorDetails)) {
+            if(!duplicateUtility.isDuplicationComplementFound(complementDto.complementName!!, vendorDetails.id)) {
                 complement.complementName = complementDto.complementName ?: throw IllegalArgumentException("Please enter a complement name")
             } else {
                 throw DuplicateFoundException("A complement with the name ${complementDto.complementName} already exist. Unable add a duplicate.")

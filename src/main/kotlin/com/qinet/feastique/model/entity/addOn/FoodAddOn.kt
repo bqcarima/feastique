@@ -31,3 +31,4 @@ class FoodAddOn {
     @JsonIgnore
     lateinit var food: Food
 }
+

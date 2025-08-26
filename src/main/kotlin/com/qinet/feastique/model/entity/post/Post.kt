@@ -3,7 +3,7 @@ package com.qinet.feastique.model.entity.post
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonManagedReference
-import com.qinet.feastique.model.entity.Vendor
+import com.qinet.feastique.model.entity.user.Vendor
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -41,6 +41,9 @@ class Post {
     @Column(name = "created_at")
     @CreationTimestamp
     var createdAt: Date? = null
+
+    @Column(name = "updated_at")
+    var updatedAt: Date? = null
 
     @JsonBackReference // prevent infinite recursion for extra protection
     @ManyToOne(fetch = FetchType.LAZY)

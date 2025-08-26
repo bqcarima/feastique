@@ -9,4 +9,5 @@ interface AddOnRepository : JpaRepository<AddOn, Long> {
     fun findAllByVendorId(vendorId: Long): List<AddOn>
     fun findAllByIdInAndVendorId(addOnIds: List<Long>, vendorId: Long): List<AddOn>
     fun findFirstByAddOnNameIgnoreCaseAndVendorId(addOnName: String, vendorId: Long): AddOn?
+    fun existsByAddOnNameIgnoreCaseAndVendorId(addOnName: String, vendorId: Long): Boolean
 }

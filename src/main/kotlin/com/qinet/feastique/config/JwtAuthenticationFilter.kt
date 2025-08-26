@@ -1,8 +1,8 @@
 package com.qinet.feastique.config
 
 import com.qinet.feastique.security.UserSecurity
-import com.qinet.feastique.service.UserDetailService
-import com.qinet.feastique.service.UserSessionService
+import com.qinet.feastique.service.user.UserDetailService
+import com.qinet.feastique.service.user.UserSessionService
 import com.qinet.feastique.utility.JwtUtility
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest

@@ -1,5 +1,6 @@
 package com.qinet.feastique.response.vendor
 
+import com.qinet.feastique.model.enums.AccountType
 import com.qinet.feastique.response.AddOnResponse
 import com.qinet.feastique.response.address.AddressResponse
 import com.qinet.feastique.response.ComplementResponse
@@ -17,7 +18,7 @@ data class VendorResponse(
     val restaurantName: String,
     val balance: Long,
     val verified: Boolean,
-    val accountType: String,
+    val accountType: AccountType?,
     val imageUrl: String,
     val registrationDate: Date,
     val phoneNumber: List<PhoneNumberResponse>,

@@ -8,7 +8,7 @@ import com.qinet.feastique.model.dto.LoginDto
 import com.qinet.feastique.model.dto.PasswordDto
 import com.qinet.feastique.model.dto.customer.SignupDto
 import com.qinet.feastique.model.dto.customer.UpdateDto
-import com.qinet.feastique.model.entity.Customer
+import com.qinet.feastique.model.entity.user.Customer
 import com.qinet.feastique.model.entity.address.CustomerAddress
 import com.qinet.feastique.model.entity.phoneNumber.CustomerPhoneNumber
 import com.qinet.feastique.model.enums.AccountType
@@ -19,13 +19,14 @@ import com.qinet.feastique.response.token.TokenPairResponse
 import com.qinet.feastique.security.PasswordEncoder
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.RefreshTokenService
-import com.qinet.feastique.service.UserSessionService
+import com.qinet.feastique.service.user.UserSessionService
 import com.qinet.feastique.utility.JwtUtility
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.security.core.userdetails.UserDetails
 
 @Service
 class CustomerService(
@@ -52,9 +53,7 @@ class CustomerService(
     @Transactional(readOnly = true)
     fun getCustomerWithPhoneNumberAndAddress(customerDetails: UserSecurity): Customer {
         val customer = customerRepository.findByCustomerByIdWithPhoneNumberAndAddress(customerDetails.id)
-        if (customer == null) {
-            throw UserNotFoundException("Customer not found.")
-        }
+            ?: throw UserNotFoundException("Customer not found.")
         return customer
     }
 
@@ -144,15 +143,15 @@ class CustomerService(
         }
 
 
-        /*
-        Get user details as a UserSecurity object from the
-        security authentication object to get access to the id.
-        "as UserDetails" also works, but you will not be able
-        to access the customer id.
-        */
+        /**
+         * Get user details as a [UserSecurity] object from the
+         * security authentication object to get access to the id.
+         * "as [UserDetails]" also works, but you will not be able
+         * to access the customer id.
+         */
         val userDetails = authentication.principal as? UserSecurity
             ?: throw IllegalArgumentException("Unexpected principal type after authentication.")
-        val tokenPair = jwtUtility.generateTokenPair(userDetails.id, userDetails.username, AccountType.CUSTOMER.name)
+        val tokenPair = jwtUtility.generateTokenPair(userDetails.id, userDetails.username, AccountType.CUSTOMER)
 
         // Generate and return token pair
         return tokenPair
@@ -185,7 +184,7 @@ class CustomerService(
             val newTokenPair = jwtUtility.generateTokenPair(
                 savedCustomer.id!!,
                 savedCustomer.username,
-                AccountType.CUSTOMER.name
+                AccountType.CUSTOMER
             )
 
             // Extract token identifier and expiry from the access token

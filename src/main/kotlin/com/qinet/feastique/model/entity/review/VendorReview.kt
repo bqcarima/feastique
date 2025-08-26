@@ -2,8 +2,8 @@ package com.qinet.feastique.model.entity.review
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.qinet.feastique.model.entity.Customer
-import com.qinet.feastique.model.entity.Vendor
+import com.qinet.feastique.model.entity.user.Customer
+import com.qinet.feastique.model.entity.user.Vendor
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue

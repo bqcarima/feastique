@@ -1,6 +1,6 @@
 package com.qinet.feastique.repository.vendor
 
-import com.qinet.feastique.model.entity.Vendor
+import com.qinet.feastique.model.entity.user.Vendor
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query

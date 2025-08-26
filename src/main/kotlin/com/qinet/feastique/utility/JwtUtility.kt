@@ -61,7 +61,7 @@ class JwtUtility(
         id: Long,
         username: String,
         type: String,
-        userType: String,
+        userType: AccountType,
         expiry: Long
     ): String {
 
@@ -87,7 +87,7 @@ class JwtUtility(
      * @param userType is the type of user the token will be generated for.
      * @return String
      */
-    fun generateAccessToken(id: Long, username: String, userType: String): String {
+    fun generateAccessToken(id: Long, username: String, userType: AccountType): String {
         return generateToken(id, username, "access", userType, ACCESS_TOKEN_VALIDITY_MS)
     }
 
@@ -97,7 +97,7 @@ class JwtUtility(
      * @param userType is the type of user the token will be generated for.
      * @return String
      */
-    fun generateRefreshToken(id: Long, username: String, userType: String): String {
+    fun generateRefreshToken(id: Long, username: String, userType: AccountType): String {
         return generateToken(id, username, "refresh", userType, REFRESH_TOKEN_VALIDITY_MS)
     }
 
@@ -245,7 +245,7 @@ class JwtUtility(
      * @return TokenPairResponse
      * @throws IllegalArgumentException
      */
-    fun generateTokenPair(id: Long, username: String, userType: String): TokenPairResponse {
+    fun generateTokenPair(id: Long, username: String, userType: AccountType): TokenPairResponse {
 
         val accessToken = generateAccessToken(id, username, userType)
         val refreshToken = generateRefreshToken(id, username, userType)
@@ -271,7 +271,7 @@ class JwtUtility(
 
         val id = getUserId(rawRefreshToken)
         val username = getUsername(rawRefreshToken)
-        val userType = getUserType(rawRefreshToken)
+        val userType = getUserType(rawRefreshToken).uppercase()
         getTokenIdentifier(rawRefreshToken)
 
         // get stored record (customer or vendor)
@@ -293,7 +293,7 @@ class JwtUtility(
             throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token expired.")
         }
 
-        val newAccessToken = generateAccessToken(id, username, userType)
+        val newAccessToken = generateAccessToken(id, username, AccountType.valueOf(userType))
         return AccessTokenResponse(newAccessToken)
     }
 }

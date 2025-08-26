@@ -21,7 +21,6 @@ data class AddressDto(
     @field:NotEmpty(message = "Neighbourhood cannot be empty.")
     var neighbourhood: String?,
 
-    @Column(name = "street_name")
     var streetName: String?,
 
     @field:NotBlank(message = "Directions cannot be null.")

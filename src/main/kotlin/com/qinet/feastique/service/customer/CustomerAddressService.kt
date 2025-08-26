@@ -88,8 +88,6 @@ class CustomerAddressService(
         address.directions = addressDto.directions
         address.longitude = addressDto.longitude
         address.latitude = addressDto.latitude
-        address.default = addressDto.default
-
 
         if (addressDto.default == true) {
             val currentAddresses = customerAddressRepository.findAllByCustomerId(customer.id!!)

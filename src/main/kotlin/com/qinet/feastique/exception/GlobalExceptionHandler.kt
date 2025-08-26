@@ -65,11 +65,39 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             status
         )
     }
+    
+    @ExceptionHandler(MultipleRolesException::class)
+    fun handleMultipleRolesException(e: MultipleRolesException): ResponseEntity<ErrorResponse> {
+        val status = HttpStatus.MULTI_STATUS
+        val message = "Multiple roles forbidden."
+
+        return ResponseEntity(
+            ErrorResponse.fromMessage(
+                status,
+                e.message ?: message
+            ),
+            status
+        )
+    }
 
     @ExceptionHandler(PermissionDeniedException::class)
     fun handlePermissionDeniedException(e: PermissionDeniedException): ResponseEntity<ErrorResponse> {
         val status = HttpStatus.UNAUTHORIZED
         val message = "You do not have the permission to perform operation."
+
+        return ResponseEntity(
+            ErrorResponse.Companion.fromMessage(
+                status,
+                e.message ?: message
+            ),
+            status
+        )
+    }
+
+    @ExceptionHandler(PhoneNumberNotFoundException::class)
+    fun handlePhoneNumberNotFoundException(e: PhoneNumberNotFoundException): ResponseEntity<ErrorResponse> {
+        val status = HttpStatus.NOT_FOUND
+        val message = "The phone number not found."
 
         return ResponseEntity(
             ErrorResponse.Companion.fromMessage(

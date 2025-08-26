@@ -9,10 +9,10 @@ data class UpdateDto(
     val firstName: String,
     val lastName: String,
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    @param:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     val dob: LocalDate,
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    @param:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     val anniversary: LocalDate,
     val image: String
 )

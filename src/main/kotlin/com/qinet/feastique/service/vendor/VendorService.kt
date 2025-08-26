@@ -9,7 +9,7 @@ import com.qinet.feastique.model.dto.PasswordDto
 import com.qinet.feastique.model.dto.LoginDto
 import com.qinet.feastique.model.dto.vendor.VendorSignupDto
 import com.qinet.feastique.model.dto.vendor.VendorUpdateDto
-import com.qinet.feastique.model.entity.Vendor
+import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.entity.address.VendorAddress
 import com.qinet.feastique.model.entity.phoneNumber.VendorPhoneNumber
 import com.qinet.feastique.model.enums.AccountType
@@ -21,7 +21,7 @@ import com.qinet.feastique.response.token.TokenPairResponse
 import com.qinet.feastique.security.PasswordEncoder
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.RefreshTokenService
-import com.qinet.feastique.service.UserSessionService
+import com.qinet.feastique.service.user.UserSessionService
 import com.qinet.feastique.utility.JwtUtility
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -90,7 +90,7 @@ class VendorService(
                 vendor.restaurantName =
                     vendorSignupDto.restaurantName ?: throw IllegalArgumentException("Please enter your a chef name.")
                 vendor.password = passwordEncoder.encode(vendorSignupDto.password!!)
-                vendor.accountType = AccountType.VENDOR.type
+                vendor.accountType = AccountType.VENDOR
                 var savedVendor = saveVendor(vendor)
 
                 // Information meant for the vendor phone number table
@@ -146,7 +146,7 @@ class VendorService(
         val userDetails = authentication.principal as? UserSecurity
             ?: throw IllegalStateException("Unexpected principal type after authentication")
 
-        val tokenPair = jwtUtility.generateTokenPair(userDetails.id, userDetails.username, AccountType.VENDOR.name)
+        val tokenPair = jwtUtility.generateTokenPair(userDetails.id, userDetails.username, AccountType.valueOf("VENDOR"))
         return tokenPair
     }
 
@@ -178,7 +178,7 @@ class VendorService(
             val newTokenPair = jwtUtility.generateTokenPair(
                 savedVendor.id!!,
                 savedVendor.username,
-                savedVendor.accountType ?: AccountType.VENDOR.name
+                savedVendor.accountType ?: AccountType.VENDOR
             )
 
             // Extract tokenIdentifier and expiry from the access token

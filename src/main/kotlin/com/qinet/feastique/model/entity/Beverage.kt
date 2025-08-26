@@ -46,6 +46,6 @@ class Beverage {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vendor_id", nullable = false)
     @JsonIgnore
-    lateinit var vendor: Vendor
+    lateinit var vendor: com.qinet.feastique.model.entity.user.Vendor
 }
 

@@ -1,4 +1,4 @@
-package com.qinet.feastique.service
+package com.qinet.feastique.service.user
 
 import com.qinet.feastique.repository.customer.CustomerRepository
 import com.qinet.feastique.repository.vendor.VendorRepository

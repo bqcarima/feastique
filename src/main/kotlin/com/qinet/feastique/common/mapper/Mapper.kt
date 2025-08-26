@@ -1,8 +1,8 @@
 package com.qinet.feastique.common.mapper
 
 import com.qinet.feastique.model.entity.Beverage
-import com.qinet.feastique.model.entity.Customer
-import com.qinet.feastique.model.entity.Vendor
+import com.qinet.feastique.model.entity.user.Customer
+import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.entity.addOn.AddOn
 import com.qinet.feastique.model.entity.addOn.FoodAddOn
 import com.qinet.feastique.model.entity.address.Address
@@ -137,7 +137,7 @@ fun Discount.toResponse(): DiscountResponse = DiscountResponse(
 
 /**
  * Converts a [Food] entity along with all its related entities
- * into a comprehensive [com.qinet.feastique.response.food.FoodResponse] DTO.
+ * into a comprehensive [FoodResponse] DTO.
  *
  * This includes:
  * - Basic food properties (name, description, price)
@@ -296,8 +296,8 @@ fun Vendor.toResponse(): VendorResponse = VendorResponse(
     chefName = chefName.orEmpty(),
     restaurantName = restaurantName.orEmpty(),
     balance = balance,
-    verified = verified,
-    accountType = accountType!!,
+    verified = verified ?: false,
+    accountType = accountType,
     imageUrl = image.orEmpty(),
     registrationDate = registrationDate ?: dateFormatter.parse("00-00-0000"),
     phoneNumber = vendorPhoneNumber.map { it.toResponse() },
@@ -315,7 +315,7 @@ fun Vendor.toMinimalResponse(): VendorMinimalResponse = VendorMinimalResponse(
     chefName = chefName.orEmpty(),
     restaurantName = restaurantName.orEmpty(),
     balance = balance,
-    verified = verified,
+    verified = verified ?: false,
     phoneNumber = vendorPhoneNumber.map { it.toResponse() },
     address = address!!.toResponse(),
     registrationDate = registrationDate ?: dateFormatter.parse("00-00-0000"),

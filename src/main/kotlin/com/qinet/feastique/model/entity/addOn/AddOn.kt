@@ -2,7 +2,7 @@ package com.qinet.feastique.model.entity.addOn
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.qinet.feastique.model.entity.Vendor
+import com.qinet.feastique.model.entity.user.Vendor
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty

@@ -134,13 +134,13 @@ class FoodService(
             .takeIf { it.isNotEmpty() }
             ?: throw RequestedEntityNotFoundException("No complements found for the vendor ${vendor.id}")
 
-        require(complements.all { it ->
+        require(complements.all {
             it.vendor.id == vendorDetails.id
         }) {
             throw PermissionDeniedException("Vendor: ${vendorDetails.id}) does not have the permission to access these complements.")
         }
 
-        val foodComplements = complements.map { it ->
+        val foodComplements = complements.map {
             FoodComplement().apply {
                 this.food = food
                 this.complement = it
@@ -158,7 +158,7 @@ class FoodService(
         } else emptyList()
 
         if (discountsFromDb.isNotEmpty()) {
-            require(discountsFromDb.all {it ->
+            require(discountsFromDb.all {
                 it.vendor.id == vendorDetails.id
             }) {
                 throw PermissionDeniedException("Vendor: ${vendorDetails.id}) does not have the permission to access these discounts.")
@@ -174,8 +174,8 @@ class FoodService(
         if (foodDto.id != null) {
 
             // Remove all discount mappings not present in the incoming dto
-            val toRemove = food.foodDiscount.filter { fd ->
-                val discountId = fd.discount.id
+            val toRemove = food.foodDiscount.filter { foodDiscount ->
+                val discountId = foodDiscount.discount.id
                 discountId == null || newDiscounts?.contains(discountId) != true
             }
 
@@ -186,8 +186,8 @@ class FoodService(
                 food.foodDiscount.removeAll(toRemove)
 
                 // Removing discounts from the lookup map if present
-                toRemove.forEach { fd ->
-                    fd.discount.id?.let {
+                toRemove.forEach { foodDiscount ->
+                    foodDiscount.discount.id?.let {
                         existingDiscountsById.remove(it)
                     }
                 }

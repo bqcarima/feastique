@@ -2,7 +2,9 @@ package com.qinet.feastique.model.dto.customer
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonFormat
+import com.qinet.feastique.model.enums.AccountType
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import java.time.LocalDate
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -29,8 +31,8 @@ data class SignupDto(
     @field:NotBlank(message = "Password cannot be null or empty.")
     var password: String,
 
-    @field:NotBlank(message = "Account type cannot be null or empty.")
-    var accountType: String,
+    @field:NotNull(message = "Account type cannot be null or empty.")
+    var accountType: AccountType,
 
     var country: String? = "Cameroon",
 

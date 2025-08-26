@@ -10,5 +10,6 @@ interface ComplementRepository : JpaRepository<Complement, Long> {
     fun findAllByVendorId(vendorId: Long): List<Complement>
     fun findAllByIdInAndVendorId(complementIds: List<Long>, vendorId: Long): List<Complement>
     fun findFirstByComplementNameIgnoreCaseAndVendorId(complementName: String, vendorId: Long): Complement?
+    fun existsByComplementNameIgnoreCaseAndVendorId(complementName: String, vendorId: Long): Boolean
 }
 

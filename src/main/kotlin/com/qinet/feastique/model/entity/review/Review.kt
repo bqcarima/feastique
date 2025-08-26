@@ -2,7 +2,7 @@ package com.qinet.feastique.model.entity.review
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.qinet.feastique.model.entity.Customer
+import com.qinet.feastique.model.entity.user.Customer
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty

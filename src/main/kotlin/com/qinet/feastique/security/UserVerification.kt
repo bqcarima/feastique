@@ -1,7 +1,7 @@
 package com.qinet.feastique.security
 
-import com.qinet.feastique.model.entity.Customer
-import com.qinet.feastique.model.entity.Vendor
+import com.qinet.feastique.model.entity.user.Customer
+import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.repository.customer.CustomerRepository
 import com.qinet.feastique.repository.vendor.VendorRepository
 import org.springframework.stereotype.Component

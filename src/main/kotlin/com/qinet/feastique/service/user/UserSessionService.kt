@@ -1,7 +1,8 @@
-package com.qinet.feastique.service
+package com.qinet.feastique.service.user
 
 import com.qinet.feastique.model.entity.UserSession
 import com.qinet.feastique.repository.UserSessionRepository
+import com.qinet.feastique.service.RefreshTokenService
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -12,7 +13,7 @@ class UserSessionService(
     private val userSessionRepository: UserSessionRepository,
     private val refreshTokenService: RefreshTokenService,
 
-) {
+    ) {
     fun createSession(
         tokenIdentifier: String,
         userId: Long,

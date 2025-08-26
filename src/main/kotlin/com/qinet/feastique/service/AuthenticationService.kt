@@ -4,11 +4,12 @@ import com.qinet.feastique.model.dto.LoginDto
 import com.qinet.feastique.model.dto.LogoutDto
 import com.qinet.feastique.model.dto.customer.SignupDto
 import com.qinet.feastique.model.dto.vendor.VendorSignupDto
-import com.qinet.feastique.model.entity.Customer
-import com.qinet.feastique.model.entity.Vendor
+import com.qinet.feastique.model.entity.user.Customer
+import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.response.token.AccessTokenResponse
 import com.qinet.feastique.response.token.TokenPairResponse
 import com.qinet.feastique.service.customer.CustomerService
+import com.qinet.feastique.service.user.UserSessionService
 import com.qinet.feastique.service.vendor.VendorService
 import com.qinet.feastique.utility.JwtUtility
 import io.jsonwebtoken.MalformedJwtException

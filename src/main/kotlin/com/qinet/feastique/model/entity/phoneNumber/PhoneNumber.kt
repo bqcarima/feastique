@@ -4,10 +4,8 @@ import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 
-@Entity
-@Table(name = "phone_number")
-@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-class PhoneNumber {
+@MappedSuperclass
+abstract class PhoneNumber {
     @Id
     @GeneratedValue
     var id: Long? = null

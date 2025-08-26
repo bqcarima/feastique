@@ -2,7 +2,7 @@ package com.qinet.feastique.model.entity.food
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.qinet.feastique.model.entity.Vendor
+import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.entity.addOn.FoodAddOn
 import com.qinet.feastique.model.entity.complement.FoodComplement
 import com.qinet.feastique.model.entity.discount.FoodDiscount
