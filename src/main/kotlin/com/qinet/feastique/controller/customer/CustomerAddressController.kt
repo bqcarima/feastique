@@ -5,6 +5,7 @@ import com.qinet.feastique.model.dto.AddressDto
 import com.qinet.feastique.response.address.CustomerAddressResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.customer.CustomerAddressService
+import com.qinet.feastique.utility.SecurityUtility
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -20,7 +21,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/customers/{customerId}/address")
 class CustomerAddressController(
-    private val customerAddressService: CustomerAddressService
+    private val customerAddressService: CustomerAddressService,
+    private val securityUtility: SecurityUtility
 ) {
 
     @PutMapping
@@ -30,6 +32,7 @@ class CustomerAddressController(
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<List<CustomerAddressResponse>> {
+        securityUtility.validatePath(customerId, customerDetails)
         val address = customerAddressService.addAddress(addressDto, customerDetails)
         return ResponseEntity(address.map { it.toResponse() }, HttpStatus.OK)
     }
@@ -41,6 +44,7 @@ class CustomerAddressController(
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<String> {
+        securityUtility.validatePath(customerId, customerDetails)
         customerAddressService.deleteAddress(id, customerDetails)
         return ResponseEntity("Address deleted successfully.", HttpStatus.OK)
     }
@@ -52,6 +56,7 @@ class CustomerAddressController(
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<CustomerAddressResponse> {
+        securityUtility.validatePath(customerId, customerDetails)
         val address = customerAddressService.getAddressById(id, customerDetails)
         return ResponseEntity(address.toResponse(), HttpStatus.OK)
     }
@@ -62,6 +67,7 @@ class CustomerAddressController(
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<List<CustomerAddressResponse>> {
+        securityUtility.validatePath(customerId, customerDetails)
         val addresses = customerAddressService.getAllAddresses(customerDetails)
         return ResponseEntity(addresses.map { it.toResponse() }, HttpStatus.OK)
     }

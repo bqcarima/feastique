@@ -1,7 +1,10 @@
 package com.qinet.feastique.model.entity.food
 
 import com.fasterxml.jackson.annotation.JsonBackReference
+import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonManagedReference
+import com.qinet.feastique.model.entity.Menu
 import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.entity.addOn.FoodAddOn
 import com.qinet.feastique.model.entity.complement.FoodComplement
@@ -9,6 +12,9 @@ import com.qinet.feastique.model.entity.discount.FoodDiscount
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotNull
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 @Suppress("JpaEntityGraphsInspection")
 @Entity
@@ -64,6 +70,17 @@ class Food {
 
     @Column(name = "base_price")
     var basePrice: Long? = 0
+
+    @Column(name = "preparation_time")
+    @NotNull(message = "Preparation time cannot be empty.")
+    var preparationTime: Long? = 0
+
+    @Column(name = "delivery_time")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "hh:mm a")
+    var deliveryTime: LocalTime? = null
+
+    @Column(name = "delivery_fee")
+    var deliveryFee: Long? = 0
 
     @JsonBackReference // prevent infinite recursion for extra protection
     @ManyToOne(fetch = FetchType.LAZY)
@@ -133,5 +150,13 @@ class Food {
     )
     @OrderColumn(name = "order_index")
     var foodSize: MutableList<FoodSize> = mutableListOf()
+
+    @JsonManagedReference
+    @OneToOne(
+        mappedBy = "food",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    lateinit var menu: Menu
 }
 

@@ -1,9 +1,11 @@
 package com.qinet.feastique.model.dto
 
+import com.qinet.feastique.model.enums.Size
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
+import java.time.LocalTime
 
 data class FoodDto(
 
@@ -24,8 +26,13 @@ data class FoodDto(
     @field:NotNull(message = "Price cannot be null.")
     @field:Min(value = 1, message = "Base price cannot be 0.")
     var basePrice: Long?,
+
+    @field:NotNull(message = "Preparation time cannot be empty.")
+    var preparationTime: Long?,
+
+    var deliveryTime: LocalTime?,
     var foodImage: List<String>,
-    var foodSize: List<String>,
+    var foodSizeMap: Map<Size, Long>,
     var complementIds: List<Long>,
     var addOnIds: List<Long>?,
     var orderType: List<String>,

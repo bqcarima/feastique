@@ -2,6 +2,8 @@ package com.qinet.feastique.model.entity.addOn
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.qinet.feastique.model.entity.beverage.OrderBeverage
+import com.qinet.feastique.model.entity.order.FoodOrder
 import com.qinet.feastique.model.entity.user.Vendor
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
@@ -35,8 +37,29 @@ class AddOn {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    @OrderColumn(name = "order_index")
     var foodAddOn: MutableList<FoodAddOn> = mutableListOf()
 
+    // Food order relationships
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "food_order_id")
+    @JsonIgnore
+    lateinit var foodOrder: FoodOrder
+
+    @JsonBackReference
+    @OneToMany(
+        mappedBy = "addOn",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = false
+    )
+    var orderAddOn: MutableList<OrderAddOn> = mutableListOf()
+
+    @JsonBackReference
+    @OneToMany(
+        mappedBy = "addOn",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = false
+    )
+    var cartBeverage: MutableList<OrderAddOn> = mutableListOf()
 }
 

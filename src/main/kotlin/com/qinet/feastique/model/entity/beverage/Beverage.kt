@@ -1,7 +1,9 @@
-package com.qinet.feastique.model.entity
+package com.qinet.feastique.model.entity.beverage
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.qinet.feastique.model.entity.user.Vendor
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -9,6 +11,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
@@ -46,6 +49,21 @@ class Beverage {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vendor_id", nullable = false)
     @JsonIgnore
-    lateinit var vendor: com.qinet.feastique.model.entity.user.Vendor
-}
+    lateinit var vendor: Vendor
 
+    @JsonBackReference
+    @OneToMany(
+        mappedBy = "beverage",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = false
+    )
+    var orderBeverage: MutableList<OrderBeverage> = mutableListOf()
+
+    @JsonBackReference
+    @OneToMany(
+        mappedBy = "beverage",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    var cartBeverage: MutableList<OrderBeverage> = mutableListOf()
+}

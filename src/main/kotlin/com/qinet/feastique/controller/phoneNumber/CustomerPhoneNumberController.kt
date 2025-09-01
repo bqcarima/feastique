@@ -6,6 +6,7 @@ import com.qinet.feastique.model.entity.phoneNumber.CustomerPhoneNumber
 import com.qinet.feastique.response.PhoneNumberResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.PhoneNumberService
+import com.qinet.feastique.utility.SecurityUtility
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -14,7 +15,10 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/customers/{customerId}/numbers")
-class CustomerPhoneNumberController(private val phoneNumberService: PhoneNumberService) {
+class CustomerPhoneNumberController(
+    private val phoneNumberService: PhoneNumberService,
+    private val securityUtility: SecurityUtility
+) {
 
     @PutMapping
     fun addOrUpdatePhoneNumber(
@@ -23,6 +27,7 @@ class CustomerPhoneNumberController(private val phoneNumberService: PhoneNumberS
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<List<PhoneNumberResponse>> {
+        securityUtility.validatePath(customerId, customerDetails)
         val phoneNumbers = phoneNumberService.addOrUpdatePhoneNumber(phoneNumberDto, customerDetails)
         return ResponseEntity(phoneNumbers.map { it.toResponse() }, HttpStatus.CREATED)
     }
@@ -34,6 +39,7 @@ class CustomerPhoneNumberController(private val phoneNumberService: PhoneNumberS
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<String> {
+        securityUtility.validatePath(customerId, customerDetails)
         phoneNumberService.deletePhoneNumber(id, customerDetails)
         return ResponseEntity("Phone number deleted successfully.", HttpStatus.OK)
     }
@@ -45,6 +51,7 @@ class CustomerPhoneNumberController(private val phoneNumberService: PhoneNumberS
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<PhoneNumberResponse> {
+        securityUtility.validatePath(customerId, customerDetails)
         val phoneNumber = phoneNumberService.getPhoneNumber<CustomerPhoneNumber>(id, customerDetails)
         return ResponseEntity(phoneNumber.toResponse(), HttpStatus.OK)
     }
@@ -55,6 +62,7 @@ class CustomerPhoneNumberController(private val phoneNumberService: PhoneNumberS
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<List<PhoneNumberResponse>> {
+        securityUtility.validatePath(customerId, customerDetails)
         val phoneNumbers = phoneNumberService.getAllPhoneNumbers<CustomerPhoneNumber>(customerDetails)
         return ResponseEntity(phoneNumbers.map { it.toResponse() }, HttpStatus.OK)
     }

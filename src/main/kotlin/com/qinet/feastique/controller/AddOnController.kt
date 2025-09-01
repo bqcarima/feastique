@@ -5,33 +5,29 @@ import com.qinet.feastique.model.dto.AddOnDto
 import com.qinet.feastique.response.AddOnResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.AddOnService
+import com.qinet.feastique.utility.SecurityUtility
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/vendors/{vendorId}/add_on")
 class AddOnController(
-    private val addOnService: AddOnService
+    private val addOnService: AddOnService,
+    private val securityUtility: SecurityUtility
 ) {
 
     @PutMapping
-    fun addAddOn (
+    fun addOrUpdateAddOn (
         @PathVariable vendorId: Long,
         @RequestBody
         @Valid addOnDto: AddOnDto,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<AddOnResponse> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         val addOn = addOnService.addOrUpdateAddOn(addOnDto, vendorDetails)
         return ResponseEntity(addOn.toResponse(), HttpStatus.CREATED)
     }
@@ -43,6 +39,7 @@ class AddOnController(
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<String> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         addOnService.deleteAddOn(id, vendorDetails)
         return ResponseEntity("Add-on deleted successfully.", HttpStatus.NO_CONTENT)
     }
@@ -53,6 +50,7 @@ class AddOnController(
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<List<AddOnResponse>> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         val addOns = addOnService.getAllAddOns(vendorDetails)
         return ResponseEntity(addOns.map {  it.toResponse() }, HttpStatus.OK)
     }

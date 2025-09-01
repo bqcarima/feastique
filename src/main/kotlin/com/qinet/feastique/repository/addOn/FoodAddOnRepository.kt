@@ -4,4 +4,6 @@ import com.qinet.feastique.model.entity.addOn.FoodAddOn
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 @Repository
-interface FoodAddOnRepository : JpaRepository<FoodAddOn, Long>
+interface FoodAddOnRepository : JpaRepository<FoodAddOn, Long> {
+    fun findAllByFoodId(foodId: Long): List<FoodAddOn>
+}

@@ -5,6 +5,7 @@ import com.qinet.feastique.model.dto.FoodDto
 import com.qinet.feastique.response.food.FoodResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.FoodService
+import com.qinet.feastique.utility.SecurityUtility
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -14,7 +15,8 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/vendors/{vendorId}/foods")
 class FoodController(
-    private val foodService: FoodService
+    private val foodService: FoodService,
+    private val securityUtility: SecurityUtility
 ) {
 
     @PutMapping
@@ -25,6 +27,7 @@ class FoodController(
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<FoodResponse> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         val food = foodService.addOrUpdateFood(foodDto, vendorDetails)
         return ResponseEntity(food.toResponse(), HttpStatus.CREATED)
     }
@@ -36,6 +39,7 @@ class FoodController(
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<String> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         foodService.deleteFood(id, vendorDetails)
         return ResponseEntity("Food deleted successfully. All relationships will be deleted as well.", HttpStatus.OK)
     }
@@ -47,6 +51,7 @@ class FoodController(
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<FoodResponse> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         val food = foodService.getFoodById(id, vendorDetails)
         return ResponseEntity(food.toResponse(), HttpStatus.OK)
     }
@@ -57,6 +62,7 @@ class FoodController(
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<List<FoodResponse>> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         val foods= foodService.getAllFoods(vendorDetails)
         return ResponseEntity(foods.map { it.toResponse() }, HttpStatus.OK)
     }

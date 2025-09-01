@@ -29,7 +29,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         val message = "Entity not found."
 
         return ResponseEntity(
-            ErrorResponse.Companion.fromMessage(
+            ErrorResponse.fromMessage(
                 status,
                 e.message ?: message
             ),
@@ -44,7 +44,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         val message = "Cannot add duplicate with the same name."
 
         return ResponseEntity(
-            ErrorResponse.Companion.fromMessage(
+            ErrorResponse.fromMessage(
                 status,
                 e.message ?: message
             ),
@@ -58,9 +58,23 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         val message = "Please make sure all fields are filled properly."
 
         return ResponseEntity(
-            ErrorResponse.Companion.fromMessage(
+            ErrorResponse.fromMessage(
                 status,
                 e.message ?: message
+            ),
+            status
+        )
+    }
+
+    @ExceptionHandler(MalformedUrlException::class)
+    fun handleMalformedUrlException(e: MalformedUrlException): ResponseEntity<ErrorResponse> {
+        val status = HttpStatus.BAD_GATEWAY
+        val message = "Malformed URL, cannot process request."
+
+        return ResponseEntity(
+            ErrorResponse.fromMessage(
+                status,
+                e. message ?: message
             ),
             status
         )
@@ -86,7 +100,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         val message = "You do not have the permission to perform operation."
 
         return ResponseEntity(
-            ErrorResponse.Companion.fromMessage(
+            ErrorResponse.fromMessage(
                 status,
                 e.message ?: message
             ),
@@ -100,7 +114,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         val message = "The phone number not found."
 
         return ResponseEntity(
-            ErrorResponse.Companion.fromMessage(
+            ErrorResponse.fromMessage(
                 status,
                 e.message ?: message
             ),
@@ -114,7 +128,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         val message = "The phone number is already associated with a different account. Contact customer support to claim."
 
         return ResponseEntity(
-            ErrorResponse.Companion.fromMessage(
+            ErrorResponse.fromMessage(
                 status,
                 e.message ?: message
             ),
@@ -128,7 +142,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         val message = "User not found."
 
         return ResponseEntity(
-            ErrorResponse.Companion.fromMessage(
+            ErrorResponse.fromMessage(
                 status,
                 e.message ?: message
             ),
@@ -141,7 +155,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         val status = HttpStatus.INTERNAL_SERVER_ERROR
         val genericErrorMessage = "An unexpected error occurred. Please contact customer support. ${e.message} "
         return ResponseEntity(
-            ErrorResponse.Companion.fromMessage(status, genericErrorMessage),
+            ErrorResponse.fromMessage(status, genericErrorMessage),
             status
         )
     }
@@ -152,7 +166,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         val message = "Username is already taken."
 
         return ResponseEntity(
-            ErrorResponse.Companion.fromMessage(
+            ErrorResponse.fromMessage(
                 status,
                 e.message ?: message
             ),
@@ -172,7 +186,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             .associate { it.field to it.defaultMessage }
 
         return ResponseEntity(
-            ErrorResponse.Companion.fromErrors(status, errors),
+            ErrorResponse.fromErrors(status, errors),
             status
         )
     }

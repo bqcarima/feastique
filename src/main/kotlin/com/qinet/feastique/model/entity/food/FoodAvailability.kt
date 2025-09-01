@@ -30,3 +30,4 @@ class FoodAvailability {
     @JsonIgnore
     lateinit var food: Food
 }
+

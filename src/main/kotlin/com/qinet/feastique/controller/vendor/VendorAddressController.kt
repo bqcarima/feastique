@@ -5,6 +5,7 @@ import com.qinet.feastique.model.dto.AddressDto
 import com.qinet.feastique.response.address.AddressResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.vendor.VendorAddressService
+import com.qinet.feastique.utility.SecurityUtility
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/vendor/{vendorId}/address")
 class VendorAddressController(
     private val vendorAddressService: VendorAddressService,
+    private val securityUtility: SecurityUtility,
 ) {
     @PostMapping("/add")
     fun updateAddress(
@@ -24,6 +26,7 @@ class VendorAddressController(
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<AddressResponse> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         val address = vendorAddressService.updateAddress(addressDto, vendorDetails)
         return ResponseEntity(address.toResponse(), HttpStatus.CREATED)
     }
@@ -35,6 +38,7 @@ class VendorAddressController(
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<AddressResponse> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         val address = vendorAddressService.getAddress(vendorId, vendorDetails)
         return ResponseEntity(address.toResponse(), HttpStatus.OK)
     }

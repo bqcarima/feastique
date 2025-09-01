@@ -2,11 +2,15 @@ package com.qinet.feastique.model.entity.address
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonManagedReference
+import com.qinet.feastique.model.entity.order.FoodOrder
 import com.qinet.feastique.model.entity.user.Customer
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 
 @Entity
@@ -21,5 +25,14 @@ class CustomerAddress : Address() {
     @JoinColumn(name = "customer_id", nullable = false)
     @JsonIgnore
     lateinit var customer: Customer
+
+    // Food order relationship
+    @JsonManagedReference
+    @OneToMany(
+        mappedBy = "customerAddress",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    var foodOrder: MutableList<FoodOrder> = mutableListOf()
 }
 

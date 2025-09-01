@@ -1,6 +1,7 @@
 package com.qinet.feastique.repository.order
 
 import com.qinet.feastique.model.entity.order.FoodOrder
+import com.qinet.feastique.model.enums.OrderStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
@@ -8,5 +9,8 @@ import org.springframework.stereotype.Repository
 interface FoodOrderRepository : JpaRepository<FoodOrder, Long> {
     fun findAllByCustomerDeletedStatusAndCustomerId(customerDeletedStatus: Boolean, customerId: Long): List<FoodOrder>
     fun findAllByVendorDeletedStatusAndVendorId(vendorDeletedStatus: Boolean, vendorId: Long): List<FoodOrder>
+    fun findByIdAndCustomerIdAndOrderStatus(id: Long, customerId: Long, orderStatus: OrderStatus): FoodOrder?
+    fun findByIdAndCustomerIdAndCustomerDeletedStatus(id: Long, customerId: Long, customerDeletedStatus: Boolean): FoodOrder?
+    fun findByIdAndVendorIdAndCustomerDeletedStatus(id: Long, vendorId: Long, customerDeletedStatus: Boolean): FoodOrder?
 
 }

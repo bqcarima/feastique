@@ -1,6 +1,6 @@
 package com.qinet.feastique.repository
 
-import com.qinet.feastique.model.entity.Beverage
+import com.qinet.feastique.model.entity.beverage.Beverage
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 

@@ -5,6 +5,7 @@ import com.qinet.feastique.model.dto.BeverageDto
 import com.qinet.feastique.response.BeverageResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.BeverageService
+import com.qinet.feastique.utility.SecurityUtility
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/vendors/{vendorId}/beverages")
-class BeverageController(private val beverageService: BeverageService) {
+class BeverageController(private val beverageService: BeverageService, private val securityUtility: SecurityUtility) {
 
     @PutMapping
     fun addOrUpdateBeverage(
@@ -22,6 +23,7 @@ class BeverageController(private val beverageService: BeverageService) {
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<BeverageResponse> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         val beverage =  beverageService.addOrUpdateBeverage(beverageDto, vendorDetails)
         return ResponseEntity(beverage.toResponse(), HttpStatus.CREATED)
     }
@@ -33,6 +35,7 @@ class BeverageController(private val beverageService: BeverageService) {
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<String> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         beverageService.deleteBeverage(id, vendorDetails)
         return ResponseEntity("Beverage deleted successfully.", HttpStatus.NO_CONTENT)
     }
@@ -44,6 +47,7 @@ class BeverageController(private val beverageService: BeverageService) {
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<BeverageResponse> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         val beverage = beverageService.getBeverage(id, vendorDetails)
         return ResponseEntity(beverage.toResponse(), HttpStatus.OK)
     }
@@ -54,6 +58,7 @@ class BeverageController(private val beverageService: BeverageService) {
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<List<BeverageResponse>> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         val beverages = beverageService.getAllBeverages(vendorDetails)
         return ResponseEntity(beverages.map { it.toResponse() }, HttpStatus.OK)
     }

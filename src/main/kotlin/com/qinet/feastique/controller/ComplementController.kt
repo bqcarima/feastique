@@ -5,22 +5,19 @@ import com.qinet.feastique.model.dto.ComplementDto
 import com.qinet.feastique.response.ComplementResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.ComplementService
+import com.qinet.feastique.utility.SecurityUtility
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/vendors/{vendorId}/complements")
-class ComplementController(private val complementService: ComplementService) {
+class ComplementController(
+    private val complementService: ComplementService,
+    private val securityUtility: SecurityUtility
+) {
 
     @PutMapping
     fun addOrUpdateComplement(
@@ -28,7 +25,8 @@ class ComplementController(private val complementService: ComplementService) {
         @RequestBody @Valid complementDto: ComplementDto,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
-    ) : ResponseEntity<ComplementResponse> {
+    ): ResponseEntity<ComplementResponse> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         val complement = complementService.addOrUpdateComplement(complementDto, vendorDetails)
         return ResponseEntity(complement.toResponse(), HttpStatus.CREATED)
     }
@@ -39,9 +37,10 @@ class ComplementController(private val complementService: ComplementService) {
         @PathVariable vendorId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
-    ) : ResponseEntity<String> {
+    ): ResponseEntity<String> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         complementService.deleteComplement(id, vendorDetails)
-        return ResponseEntity("Complement deleted successfully.",HttpStatus.OK)
+        return ResponseEntity("Complement deleted successfully.", HttpStatus.OK)
     }
 
     @GetMapping("/{id}")
@@ -50,7 +49,8 @@ class ComplementController(private val complementService: ComplementService) {
         @PathVariable vendorId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
-    ) : ResponseEntity<ComplementResponse> {
+    ): ResponseEntity<ComplementResponse> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         val complement = complementService.getComplement(id, vendorDetails)
         return ResponseEntity(complement.toResponse(), HttpStatus.OK)
     }
@@ -60,7 +60,8 @@ class ComplementController(private val complementService: ComplementService) {
         @PathVariable vendorId: Long,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
-    ) : ResponseEntity<List<ComplementResponse>> {
+    ): ResponseEntity<List<ComplementResponse>> {
+        securityUtility.validatePath(vendorId, vendorDetails)
         val complements = complementService.getAllComplements(vendorDetails)
         return ResponseEntity(complements.map { it.toResponse() }, HttpStatus.OK)
     }

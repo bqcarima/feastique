@@ -6,6 +6,7 @@ import com.qinet.feastique.model.dto.customer.UpdateDto
 import com.qinet.feastique.response.CustomerResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.customer.CustomerService
+import com.qinet.feastique.utility.SecurityUtility
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/customers/{customerId}/account")
 class CustomerController(
     private val customerService: CustomerService,
+    private val securityUtility: SecurityUtility,
 ) {
 
     @PutMapping("/profile")
@@ -25,6 +27,7 @@ class CustomerController(
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<Any?> {
+        securityUtility.validatePath(customerId, customerDetails)
         val response = customerService.updateCustomer(updateDto, customerDetails)
         return ResponseEntity(response, HttpStatus.OK)
     }
@@ -36,6 +39,7 @@ class CustomerController(
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<String> {
+        securityUtility.validatePath(customerId, customerDetails)
         customerService.changePassword(passwordDto, customerDetails)
         return ResponseEntity("Password changed successfully.", HttpStatus.OK)
     }
@@ -46,6 +50,7 @@ class CustomerController(
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<CustomerResponse> {
+        securityUtility.validatePath(customerId, customerDetails)
         val customer = customerService.getCustomerWithPhoneNumberAndAddress(customerDetails)
         return ResponseEntity(customer.toResponse(), HttpStatus.OK)
     }

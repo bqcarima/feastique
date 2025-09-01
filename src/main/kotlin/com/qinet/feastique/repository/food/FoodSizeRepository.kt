@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface FoodSizeRepository : JpaRepository<FoodSize, Long>
+interface FoodSizeRepository : JpaRepository<FoodSize, Long> {
+    fun findAllByFoodId(foodId: Long): List<FoodSize>
+}

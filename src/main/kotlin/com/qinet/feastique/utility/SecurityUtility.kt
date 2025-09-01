@@ -1,5 +1,6 @@
 package com.qinet.feastique.utility
 
+import com.qinet.feastique.exception.MalformedUrlException
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.stereotype.Component
@@ -43,5 +44,20 @@ class SecurityUtility {
         }
 
         return roles.first()
+    }
+
+    /**
+     * Ensures the user is accessing a path applicable to them.
+     * Throws an exception if found to be false.
+     * This also doubles as a security check.
+     *
+     * @param userId
+     * @param [UserSecurity]
+     * @throws MalformedUrlException
+     */
+    fun validatePath(userId: Long, userDetails: UserSecurity) {
+        if(userId != userDetails.id) {
+            throw MalformedUrlException()
+        }
     }
 }

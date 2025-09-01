@@ -52,9 +52,7 @@ class VendorService(
     @Transactional(readOnly = true)
     fun getVendorByIdWithAddressAndPhoneNumber(vendorDetails: UserSecurity): Vendor {
         val vendor = vendorRepository.findVendorByIdWithAddressAndPhoneNumber(vendorDetails.id)
-        if (vendor == null) {
-            throw RequestedEntityNotFoundException("Vendor not found.")
-        }
+            ?: throw RequestedEntityNotFoundException("Vendor not found.")
         return vendor
     }
 
@@ -98,8 +96,8 @@ class VendorService(
                 vendorPhoneNumber.phoneNumber = vendorSignupDto.phoneNumber
                 vendorPhoneNumber.vendor = savedVendor
                 vendorPhoneNumber.default = true
-                vendorPhoneNumberRepository.save(vendorPhoneNumber)
-
+                val saveVendorPhoneNumber = vendorPhoneNumberRepository.save(vendorPhoneNumber)
+                savedVendor.vendorPhoneNumber.add(saveVendorPhoneNumber)
 
                 // Information meant for the address table
                 val address = VendorAddress()

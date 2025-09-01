@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface VendorAddressRepository : JpaRepository<VendorAddress, Long>
+interface VendorAddressRepository : JpaRepository<VendorAddress, Long> {
+    fun findByVendorId(vendorId: Long): VendorAddress?
+}

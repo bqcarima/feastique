@@ -4,6 +4,7 @@ package com.qinet.feastique.model.entity.user
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonManagedReference
 import com.qinet.feastique.model.entity.address.CustomerAddress
+import com.qinet.feastique.model.entity.order.FoodOrder
 import com.qinet.feastique.model.entity.phoneNumber.CustomerPhoneNumber
 import jakarta.persistence.*
 import java.time.LocalDate
@@ -46,5 +47,14 @@ class Customer : UserEntity() {
         orphanRemoval = true
     )
     var address: MutableSet<CustomerAddress> = mutableSetOf()
+
+    // Food order relationship
+    @JsonManagedReference
+    @OneToMany(
+        mappedBy = "customer",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    var foodOrder: MutableList<FoodOrder> = mutableListOf()
 }
 
