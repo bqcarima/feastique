@@ -35,7 +35,7 @@ class BeverageService(
         val beverages = beverageRepository.findAllByVendorId(vendorDetails.id)
             .takeIf { it.isNotEmpty() }
             ?: throw RequestedEntityNotFoundException("No beverages found for vendor: $vendorDetails.id")
-        require(beverages.all { it ->
+        require(beverages.all {
             it.vendor.id == vendorDetails.id
         }) {
             throw PermissionDeniedException("Vendor: ${vendorDetails.id} does not have permission to access these beverages.")

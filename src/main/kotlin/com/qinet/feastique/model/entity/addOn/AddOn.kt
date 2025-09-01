@@ -2,7 +2,6 @@ package com.qinet.feastique.model.entity.addOn
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.qinet.feastique.model.entity.beverage.OrderBeverage
 import com.qinet.feastique.model.entity.order.FoodOrder
 import com.qinet.feastique.model.entity.user.Vendor
 import jakarta.persistence.*

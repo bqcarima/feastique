@@ -1,23 +1,13 @@
 package com.qinet.feastique.model.entity.user
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonManagedReference
-import com.qinet.feastique.model.entity.order.FoodOrder
 import com.qinet.feastique.model.enums.AccountType
-import jakarta.persistence.CascadeType
-import jakarta.persistence.Column
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.Id
-import jakarta.persistence.MappedSuperclass
-import jakarta.persistence.OneToMany
+import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
-import java.util.Date
-import java.util.UUID
+import java.util.*
 
 @MappedSuperclass
 abstract class UserEntity {
