@@ -8,5 +8,4 @@ data class FoodDiscountResponse(
     val percentage: Int,
     val startDate: Date,
     val endDate: Date,
-    val active: Boolean
 )

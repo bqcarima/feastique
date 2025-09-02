@@ -1,9 +1,11 @@
 package com.qinet.feastique.response.order
 
+import com.qinet.feastique.model.enums.OrderStatus
 import com.qinet.feastique.model.enums.OrderType
 import com.qinet.feastique.response.AddOnResponse
 import com.qinet.feastique.response.BeverageResponse
 import com.qinet.feastique.response.ComplementResponse
+import com.qinet.feastique.response.DiscountResponse
 import com.qinet.feastique.response.address.AddressResponse
 import com.qinet.feastique.response.address.CustomerAddressResponse
 import com.qinet.feastique.response.food.FoodMinimalResponse
@@ -16,6 +18,7 @@ data class FoodOrderResponse(
     val customer: FoodOrderCustomerResponse,
     val vendor: FoodOrderVendorResponse,
     val food: FoodMinimalResponse,
+    val orderStatus: OrderStatus,
     val complement: ComplementResponse,
     val size: FoodSizeResponse,
     val orderAddOn: List<AddOnResponse>,
@@ -23,11 +26,9 @@ data class FoodOrderResponse(
     val customerAddress: CustomerAddressResponse,
     val vendorAddress: AddressResponse,
     val placementTime: LocalDateTime?,
-    val responseTime: LocalDateTime?,
     val deliveryTime: LocalTime?,
+    val discounts: List<DiscountResponse>,
     val totalAmount: Long,
     val orderType: OrderType?,
     val completedTime: LocalDateTime?,
-    val customerDeletedStatus: Boolean?,
-    val vendorDeletedStatus: Boolean?
 )

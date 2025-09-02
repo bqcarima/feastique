@@ -7,6 +7,7 @@ import com.qinet.feastique.model.entity.address.VendorAddress
 import com.qinet.feastique.model.entity.complement.Complement
 import com.qinet.feastique.model.entity.discount.Discount
 import com.qinet.feastique.model.entity.food.Food
+import com.qinet.feastique.model.entity.food.FoodSales
 import com.qinet.feastique.model.entity.order.FoodOrder
 import com.qinet.feastique.model.entity.phoneNumber.VendorPhoneNumber
 import com.qinet.feastique.model.entity.post.Post
@@ -132,5 +133,12 @@ class Vendor : UserEntity() {
         orphanRemoval = true
     )
     var foodOrder: MutableList<FoodOrder> = mutableListOf()
+
+    @JsonBackReference
+    @OneToMany(
+        mappedBy = "vendor",
+        orphanRemoval = false
+    )
+    var foodSales: MutableSet<FoodSales> = mutableSetOf()
 }
 

@@ -10,6 +10,7 @@ import com.qinet.feastique.repository.vendor.VendorRepository
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
 class VendorAddressService(
@@ -54,6 +55,7 @@ class VendorAddressService(
         address.longitude = addressDto.longitude
         address.latitude = addressDto.latitude
         address.vendor = vendor
+        vendor.accountUpdated = LocalDateTime.now()
 
         address = saveAddress(address)
         vendorRepository.save(vendor)

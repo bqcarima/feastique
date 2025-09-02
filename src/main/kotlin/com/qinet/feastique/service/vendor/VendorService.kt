@@ -27,6 +27,7 @@ import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
 class VendorService(
@@ -165,6 +166,7 @@ class VendorService(
         vendor.restaurantName =
             vendorUpdateDto.restaurantName ?: throw IllegalArgumentException("Please enter a restaurant name.")
         vendor.image = vendorUpdateDto.image ?: throw IllegalArgumentException("Please enter am image url.")
+        vendor.accountUpdated = LocalDateTime.now()
         val savedVendor = saveVendor(vendor)
 
         if (oldUsername != savedVendor.username) {
@@ -214,6 +216,7 @@ class VendorService(
         }
 
         vendor.password = passwordEncoder.encode(passwordDto.confirmedNewPassword)
+        vendor.accountUpdated = LocalDateTime.now()
         saveVendor(vendor)
     }
 }

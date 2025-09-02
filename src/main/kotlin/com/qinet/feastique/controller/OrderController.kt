@@ -2,6 +2,7 @@ package com.qinet.feastique.controller
 
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.order.FoodOrderDto
+import com.qinet.feastique.model.dto.order.FoodOrderUpdateDto
 import com.qinet.feastique.response.order.FoodOrderResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.order.FoodOrderService
@@ -30,16 +31,24 @@ class OrderController(
         return ResponseEntity(foodOrder.toResponse(), HttpStatus.CREATED)
     }
 
-    @DeleteMapping("/customers/{customerId}/orders/cancel/{id}")
-    fun cancelOrder(
+    @PutMapping(
+        path = [
+            "/customers/{customerId}/orders/cancel/{id}",
+            "/vendors/{vendorId}/orders/update/{id}"
+        ]
+    )
+    fun cancelOrUpdateOrder(
         @PathVariable id: Long,
-        @PathVariable customerId: Long,
-        @AuthenticationPrincipal customerDetails: UserSecurity
+        @PathVariable(required = false) customerId: Long?,
+        @PathVariable(required = false) vendorId: Long?,
+        @RequestBody @Valid foodOrderUpdateDto: FoodOrderUpdateDto,
+        @AuthenticationPrincipal userDetails: UserSecurity
 
     ) : ResponseEntity<String> {
-        securityUtility.validatePath(customerId, customerDetails)
-        foodOrderService.cancelOrder(id, customerDetails)
-        return ResponseEntity("Order cancelled successfully.", HttpStatus.OK)
+        val pathId = customerId ?:vendorId
+        securityUtility.validatePath(pathId!!, userDetails)
+        foodOrderService.cancelOrUpdateOrder(id, foodOrderUpdateDto, userDetails)
+        return ResponseEntity("Order updated successfully.", HttpStatus.OK)
     }
 
     @PutMapping(

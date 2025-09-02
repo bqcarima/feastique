@@ -27,6 +27,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.security.core.userdetails.UserDetails
+import java.time.LocalDateTime
 
 @Service
 class CustomerService(
@@ -173,6 +174,7 @@ class CustomerService(
         customer.dob = updateDto.dob
         customer.anniversary = updateDto.anniversary
         customer.image = updateDto.image
+        customer.accountUpdated = LocalDateTime.now()
         val savedCustomer = saveCustomer(customer)
 
         if (oldUsername != savedCustomer.username) {
@@ -220,7 +222,7 @@ class CustomerService(
         if (passwordDto.newPassword != passwordDto.confirmedNewPassword) {
             throw IllegalArgumentException("Passwords do not match.")
         }
-
+        customer.accountUpdated = LocalDateTime.now()
         customer.password = passwordEncoder.encode(passwordDto.confirmedNewPassword)
         saveCustomer(customer)
     }

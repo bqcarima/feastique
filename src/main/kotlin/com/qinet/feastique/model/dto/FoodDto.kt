@@ -38,6 +38,5 @@ data class FoodDto(
     var orderType: List<String>,
     var availability: List<String>,
     var discountIds: List<Long>?,
-    var discountActive: Map<Long, Boolean>? = null
 )
 

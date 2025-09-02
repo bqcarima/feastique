@@ -19,6 +19,7 @@ import com.qinet.feastique.model.entity.post.Post
 import com.qinet.feastique.model.entity.user.Customer
 import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.enums.BeverageGroup
+import com.qinet.feastique.model.enums.OrderStatus
 import com.qinet.feastique.model.enums.Size
 import com.qinet.feastique.response.*
 import com.qinet.feastique.response.address.AddressResponse
@@ -250,7 +251,6 @@ fun FoodDiscount.toResponse(): FoodDiscountResponse = FoodDiscountResponse(
     percentage = discount.percentage ?: 0,
     startDate = discount.startDate ?: dateFormatter.parse("00-00-000"),
     endDate = discount.endDate ?: dateFormatter.parse("00-00-0000"),
-    active = active ?: false
 )
 
 
@@ -289,6 +289,7 @@ fun FoodOrder.toResponse(): FoodOrderResponse = FoodOrderResponse(
     customer = customer.orderResponse(),
     vendor = vendor.orderResponse(),
     food = food.toMinimalResponse(),
+    orderStatus = orderStatus ?: OrderStatus.PENDING,
     complement = complement.toResponse(),
     size = size.toResponse(),
     orderAddOn = orderAddon.map { it.toResponse() },
@@ -296,13 +297,11 @@ fun FoodOrder.toResponse(): FoodOrderResponse = FoodOrderResponse(
     customerAddress = customerAddress.toResponse(),
     vendorAddress = vendorAddress.toResponse(),
     placementTime = placementTime,
-    responseTime = responseTime,
     deliveryTime = deliveryTime,
+    discounts = orderDiscount.map { it.discount.toResponse() },
     totalAmount = totalAmount ?: 0,
     orderType = orderType,
-    completedTime = completedTime,
-    customerDeletedStatus = customerDeletedStatus,
-    vendorDeletedStatus = vendorDeletedStatus
+    completedTime = completedTime
 )
 
 /**

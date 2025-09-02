@@ -7,6 +7,8 @@ import com.qinet.feastique.model.entity.addOn.OrderAddOn
 import com.qinet.feastique.model.entity.address.CustomerAddress
 import com.qinet.feastique.model.entity.address.VendorAddress
 import com.qinet.feastique.model.entity.beverage.OrderBeverage
+import com.qinet.feastique.model.entity.discount.OrderDiscount
+import com.qinet.feastique.model.entity.food.FoodSales
 import com.qinet.feastique.model.enums.OrderStatus
 import com.qinet.feastique.model.enums.OrderType
 import jakarta.persistence.*
@@ -53,6 +55,7 @@ class FoodOrder : OrderEntity() {
         cascade = [CascadeType.ALL],
         orphanRemoval = false
     )
+    @OrderColumn(name = "order_index")
     var orderAddon: MutableList<OrderAddOn> = mutableListOf()
 
     @JsonBackReference
@@ -61,6 +64,7 @@ class FoodOrder : OrderEntity() {
         cascade = [CascadeType.ALL],
         orphanRemoval = false
     )
+    @OrderColumn(name = "order_index")
     var orderBeverage: MutableList<OrderBeverage> = mutableListOf()
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
@@ -73,6 +77,24 @@ class FoodOrder : OrderEntity() {
     @JoinColumn(name = "vendor_address_id")
     @JsonIgnore
     lateinit var vendorAddress: VendorAddress
+
+    @JsonBackReference
+    @OneToMany(
+        mappedBy = "foodOrder",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = false
+    )
+    @OrderColumn(name = "order_index")
+    var orderDiscount: MutableList<OrderDiscount> = mutableListOf()
+
+    @JsonBackReference
+    @OneToMany(
+        mappedBy = "foodOrder",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = false
+    )
+    @OrderColumn(name = "order_index")
+    var foodSales: MutableList<FoodSales> = mutableListOf()
 
     @Column(name = "placement_time", nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
@@ -90,10 +112,10 @@ class FoodOrder : OrderEntity() {
     @Column(name = "delivery_fee", nullable = true)
     var deliveryFee: Long? = 0
 
-    @Column(name = "total_amount", nullable = false)
+    @Column(name = "total_amount")
     var totalAmount: Long? = 0
 
-    @Column(name = "order_type", nullable = false)
+    @Column(name = "order_type")
     @Enumerated(EnumType.STRING)
     var orderType: OrderType? = null
 

@@ -14,9 +14,6 @@ class FoodDiscount {
     @GeneratedValue
     var id: Long? = null
 
-    @NotNull(message = "Active status cannot be null.")
-    var active: Boolean? = null
-
     @JsonBackReference // prevent infinite recursion for extra protection
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "discount_id", nullable = false)

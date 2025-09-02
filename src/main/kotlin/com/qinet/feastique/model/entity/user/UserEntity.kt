@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
+import java.time.LocalDateTime
 import java.util.*
 
 @MappedSuperclass
@@ -49,6 +50,6 @@ abstract class UserEntity {
     @Column(name = "account_updated_date")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH-mm-ss-dd-MM-yyyy")
     @UpdateTimestamp
-    var accountUpdated: Date? = null
+    var accountUpdated: LocalDateTime? = null
 }
 

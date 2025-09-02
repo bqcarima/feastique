@@ -4,7 +4,7 @@ enum class Region(val type: String) {
     ADAMAWA("ADAMAWA"),
     CENTER("CENTRE"),
     EAST("EAST"),
-    FAR_NORTH("FAR NORTH"),
+    FAR_NORTH("FAR_NORTH"),
     LITTORAL("LITTORAL"),
     NORTH("NORTH"),
     NORTHWEST("NORTHWEST"),

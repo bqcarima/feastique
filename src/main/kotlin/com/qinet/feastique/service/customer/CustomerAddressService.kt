@@ -9,6 +9,7 @@ import com.qinet.feastique.repository.customer.CustomerRepository
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
 class CustomerAddressService(
@@ -48,6 +49,10 @@ class CustomerAddressService(
 
     @Transactional
     fun deleteAddress(id: Long, customerDetails: UserSecurity) {
+        val customer = customerRepository.findById(customerDetails.id)
+            .orElseThrow {
+                throw RequestedEntityNotFoundException("Customer not found.")
+            }
         val address = getAddressById(id, customerDetails)
         val addresses = getAllAddresses(customerDetails)
 
@@ -57,6 +62,8 @@ class CustomerAddressService(
         if (addresses.size < 2) {
             throw IllegalArgumentException("Cannot delete all addresses.")
         }
+
+        customer.accountUpdated = LocalDateTime.now()
         customerAddressRepository.delete(address)
     }
 
@@ -97,6 +104,7 @@ class CustomerAddressService(
         } else{
             address.default = addressDto.default
         }
+        customer.accountUpdated = LocalDateTime.now()
         customerAddressRepository.save(address)
         return getAllAddresses(customerDetails)
     }

@@ -157,5 +157,12 @@ class Food {
         orphanRemoval = true
     )
     lateinit var menu: Menu
+
+    @JsonBackReference
+    @OneToMany(
+        mappedBy = "food",
+        orphanRemoval = false
+    )
+    var foodSales: MutableSet<FoodSales> = mutableSetOf()
 }
 
