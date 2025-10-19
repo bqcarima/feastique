@@ -7,6 +7,7 @@ import com.qinet.feastique.repository.customer.CustomerRepository
 import com.qinet.feastique.repository.phoneNumber.VendorPhoneNumberRepository
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 @Component
 class DuplicateUtility(
@@ -26,10 +27,10 @@ class DuplicateUtility(
             else -> throw IllegalArgumentException("Either username or phone must be provided")
         }
     }
-    fun isDuplicationComplementFound(complementName: String, vendorId: Long): Boolean {
+    fun isDuplicationComplementFound(complementName: String, vendorId: UUID): Boolean {
         return complementRepository.existsByComplementNameIgnoreCaseAndVendorId(complementName, vendorId)
     }
-    fun isDuplicateAddOnFound(addOnName: String, vendorId: Long): Boolean {
+    fun isDuplicateAddOnFound(addOnName: String, vendorId: UUID): Boolean {
         return addOnRepository.existsByAddOnNameIgnoreCaseAndVendorId(addOnName, vendorId)
     }
 }

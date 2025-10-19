@@ -7,14 +7,15 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.util.Optional
+import java.util.UUID
 
 @Repository
-interface FoodRepository : JpaRepository<Food, Long> {
-    fun findAllByVendorId(vendorId: Long): List<Food>
-    fun findFirstByFoodNameIgnoreCaseAndVendorId(foodName: String, vendorId: Long): Food?
+interface FoodRepository : JpaRepository<Food, UUID> {
+    fun findAllByVendorId(vendorId: UUID): List<Food>
+    fun findFirstByFoodNameIgnoreCaseAndVendorId(foodName: String, vendorId: UUID): Food?
 
     @EntityGraph("Vendor.withAllRelations")
     @Query("SELECT f FROM Food f WHERE f.id = :id")
-    fun findByIdWithAllRelations(@Param("id") id: Long): Optional<Food>
+    fun findByIdWithAllRelations(@Param("id") id: UUID): Optional<Food>
 }
 

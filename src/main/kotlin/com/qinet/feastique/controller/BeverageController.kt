@@ -2,7 +2,7 @@ package com.qinet.feastique.controller
 
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.BeverageDto
-import com.qinet.feastique.response.BeverageResponse
+import com.qinet.feastique.response.beverage.BeverageResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.BeverageService
 import com.qinet.feastique.utility.SecurityUtility
@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/vendors/{vendorId}/beverages")
@@ -18,7 +19,7 @@ class BeverageController(private val beverageService: BeverageService, private v
 
     @PutMapping
     fun addOrUpdateBeverage(
-        @PathVariable("vendorId") vendorId: Long,
+        @PathVariable("vendorId") vendorId: UUID,
         @RequestBody @Valid beverageDto: BeverageDto,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
@@ -30,8 +31,8 @@ class BeverageController(private val beverageService: BeverageService, private v
 
     @DeleteMapping("/{id}")
     fun deleteBeverage(
-        @PathVariable("id") id: Long,
-        @PathVariable("vendorId") vendorId: Long,
+        @PathVariable("id") id: UUID,
+        @PathVariable("vendorId") vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<String> {
@@ -42,8 +43,8 @@ class BeverageController(private val beverageService: BeverageService, private v
 
     @GetMapping("/{id}")
     fun getBeverage(
-        @PathVariable("id") id: Long,
-        @PathVariable("vendorId") vendorId: Long,
+        @PathVariable("id") id: UUID,
+        @PathVariable("vendorId") vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<BeverageResponse> {
@@ -54,7 +55,7 @@ class BeverageController(private val beverageService: BeverageService, private v
 
     @GetMapping
     fun getAllBeverages(
-        @PathVariable("vendorId") vendorId: Long,
+        @PathVariable("vendorId") vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<List<BeverageResponse>> {

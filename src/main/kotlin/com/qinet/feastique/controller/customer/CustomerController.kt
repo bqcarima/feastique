@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/customers/{customerId}/account")
@@ -22,7 +23,7 @@ class CustomerController(
 
     @PutMapping("/profile")
     fun updateProfile(
-        @PathVariable("customerId") customerId: Long,
+        @PathVariable("customerId") customerId: UUID,
         @RequestBody @Valid updateDto: UpdateDto,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
@@ -34,7 +35,7 @@ class CustomerController(
 
     @PostMapping("/password")
     fun changePassword(
-        @PathVariable("customerId") customerId: Long,
+        @PathVariable("customerId") customerId: UUID,
         @RequestBody @Valid passwordDto: PasswordDto,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
@@ -46,7 +47,7 @@ class CustomerController(
 
     @GetMapping("/me")
     fun getAccountDetails(
-        @PathVariable("customerId") customerId: Long,
+        @PathVariable("customerId") customerId: UUID,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<CustomerResponse> {

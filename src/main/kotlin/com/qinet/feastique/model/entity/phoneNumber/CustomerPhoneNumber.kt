@@ -6,7 +6,7 @@ import com.qinet.feastique.model.entity.user.Customer
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "customer_phone_number")
+@Table(name = "customer_phone_numbers")
 class CustomerPhoneNumber : PhoneNumber() {
 
     @JsonBackReference

@@ -2,6 +2,8 @@ package com.qinet.feastique.model.dto.customer
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonFormat
+import com.qinet.feastique.common.validator.password.ValidPassword
+import com.qinet.feastique.common.validator.phoneNumber.ValidPhoneNumber
 import com.qinet.feastique.model.enums.AccountType
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -25,10 +27,10 @@ data class SignupDto(
     @JsonFormat(pattern = "dd-MM-yyyy")
     var anniversary: LocalDate? = null,
 
-    @field:NotBlank(message = "Phone number cannot be null or empty.")
+    @field:ValidPhoneNumber(message = "Phone number must start with 6 and be exactly 9 digits long.")
     var phoneNumber: String,
 
-    @field:NotBlank(message = "Password cannot be null or empty.")
+    @field:ValidPassword(message = "Password must be at least 8 characters long, contain at least one uppercase letter and one number.")
     var password: String,
 
     @field:NotNull(message = "Account type cannot be null or empty.")

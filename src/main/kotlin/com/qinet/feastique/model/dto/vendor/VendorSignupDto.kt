@@ -1,5 +1,8 @@
 package com.qinet.feastique.model.dto.vendor
 
+import com.qinet.feastique.common.validator.password.ValidPassword
+import com.qinet.feastique.common.validator.phoneNumber.ValidPhoneNumber
+import com.qinet.feastique.common.validator.username.ValidUsername
 import com.qinet.feastique.model.enums.AccountType
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
@@ -9,6 +12,7 @@ data class VendorSignupDto(
 
     // Information meant for the vendor table
     @field:NotBlank(message = "Error completing registration. Please try again.")
+    @ValidUsername
     var username: String?,
 
     @field:NotBlank(message = "First name cannot be empty.")
@@ -22,7 +26,7 @@ data class VendorSignupDto(
 
     var restaurantName: String?,
 
-    @field:NotBlank(message = "Password cannot be empty.")
+    @field:ValidPassword
     var password: String?,
 
     var balance: Long?,
@@ -33,7 +37,7 @@ data class VendorSignupDto(
     var accountType: AccountType?,
 
     // Information meant for the vendor phone number table
-    @field:NotBlank(message = "Phone number cannot be empty.")
+    @field:ValidPhoneNumber(message = "Phone number must start with 6 and be exactly 9 digits long.")
     var phoneNumber: String?,
 
     // information meant for the address table
@@ -54,3 +58,4 @@ data class VendorSignupDto(
     var longitude: String?,
     var latitude: String?
 )
+

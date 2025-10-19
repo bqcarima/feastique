@@ -5,6 +5,7 @@ import com.qinet.feastique.repository.RefreshTokenRepository
 import com.qinet.feastique.security.HashEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 @Service
 class RefreshTokenService(
@@ -18,17 +19,17 @@ class RefreshTokenService(
     }
 
     @Transactional(readOnly = true)
-    fun getTokenByCustomerId(customerId: Long): RefreshToken? {
+    fun getTokenByCustomerId(customerId: UUID): RefreshToken? {
         return refreshTokenRepository.findByCustomerId(customerId)
     }
 
     @Transactional
-    fun deleteTokenByCustomerId(customerId: Long) {
+    fun deleteTokenByCustomerId(customerId: UUID) {
         refreshTokenRepository.deleteByCustomerId(customerId)
     }
 
     @Transactional(readOnly = true)
-    fun getTokenByVendorId(vendorId: Long): RefreshToken? {
+    fun getTokenByVendorId(vendorId: UUID): RefreshToken? {
         return refreshTokenRepository.findByVendorId(vendorId)
     }
 
@@ -37,7 +38,7 @@ class RefreshTokenService(
         refreshTokenRepository.delete(refreshToken)
     }
     @Transactional
-    fun deleteTokenByVendorId(vendorId: Long) {
+    fun deleteTokenByVendorId(vendorId: UUID) {
         refreshTokenRepository.deleteByVendorId(vendorId)
     }
 

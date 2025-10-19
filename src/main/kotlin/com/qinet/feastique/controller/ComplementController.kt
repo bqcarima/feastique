@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/vendors/{vendorId}/complements")
@@ -21,7 +22,7 @@ class ComplementController(
 
     @PutMapping
     fun addOrUpdateComplement(
-        @PathVariable vendorId: Long,
+        @PathVariable vendorId: UUID,
         @RequestBody @Valid complementDto: ComplementDto,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
@@ -33,8 +34,8 @@ class ComplementController(
 
     @DeleteMapping("/{id}")
     fun deleteComplement(
-        @PathVariable id: Long,
-        @PathVariable vendorId: Long,
+        @PathVariable id: UUID,
+        @PathVariable vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<String> {
@@ -45,8 +46,8 @@ class ComplementController(
 
     @GetMapping("/{id}")
     fun getComplement(
-        @PathVariable id: Long,
-        @PathVariable vendorId: Long,
+        @PathVariable id: UUID,
+        @PathVariable vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<ComplementResponse> {
@@ -57,7 +58,7 @@ class ComplementController(
 
     @GetMapping
     fun getAllComplements(
-        @PathVariable vendorId: Long,
+        @PathVariable vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<List<ComplementResponse>> {

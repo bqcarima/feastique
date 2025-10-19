@@ -1,13 +1,8 @@
 package com.qinet.feastique.model.entity
 
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.Index
-import jakarta.persistence.Table
-import java.util.Date
+import com.github.f4b6a3.uuid.UuidCreator
+import jakarta.persistence.*
+import java.util.*
 
 /**
  * Persisted server-side session that represents a single valid access token.
@@ -24,22 +19,23 @@ import java.util.Date
  */
 @Entity
 @Table(
-    name = "user_session",
+    name = "user_sessions",
     indexes = [
         Index(name = "idx_user_session_token_identifier", columnList = "token_identifier"),
         Index(name = "idx_user_session_user_id", columnList = "user_id")
     ]
 )
 data class UserSession(
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,
+    @Column(name = "id", nullable = false, updatable = false, columnDefinition = "uuid")
+    val id: UUID = UuidCreator.getTimeOrdered(),
 
     @Column(name = "token_identifier", nullable = false, unique = true, length = 128)
     val tokenIdentifier: String,
 
     @Column(name = "user_id", nullable = false)
-    val userId: Long,
+    val userId: UUID,
 
     @Column(name = "user_type", nullable = false, length = 50)
     val userType: String,

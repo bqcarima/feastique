@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/vendors/{vendorId}/posts")
@@ -21,7 +22,7 @@ class PostController(
 
     @PutMapping
     fun addOrUpdatePost(
-        @PathVariable("vendorId") vendorId: Long,
+        @PathVariable("vendorId") vendorId: UUID,
         @RequestBody @Valid postDto: PostDto,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
@@ -33,8 +34,8 @@ class PostController(
 
     @DeleteMapping("/{id}")
     fun deletePost(
-        @PathVariable("id") id: Long,
-        @PathVariable("vendorId") vendorId: Long,
+        @PathVariable("id") id: UUID,
+        @PathVariable("vendorId") vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<String> {
@@ -45,8 +46,8 @@ class PostController(
 
     @GetMapping("/{id}")
     fun getPost(
-        @PathVariable("id") id: Long,
-        @PathVariable("vendorId") vendorId: Long,
+        @PathVariable("id") id: UUID,
+        @PathVariable("vendorId") vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<PostResponse> {
@@ -57,7 +58,7 @@ class PostController(
 
     @GetMapping
     fun getAllPosts(
-        @PathVariable("vendorId") vendorId: Long,
+        @PathVariable("vendorId") vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<List<PostResponse>> {

@@ -16,3 +16,4 @@ data class VendorMinimalResponse(
     val address: AddressResponse,
     val registrationDate: Date,
 )
+

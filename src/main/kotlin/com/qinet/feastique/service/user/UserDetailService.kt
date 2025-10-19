@@ -20,7 +20,7 @@ class UserDetailService(
         val customer = customerRepository.findFirstByUsername(username)
         if (customer != null) {
             return UserSecurity(
-                id = customer.id!!,
+                id = customer.id,
                 username = customer.username,
                 password = customer.password!!,
                 Collections.singleton(SimpleGrantedAuthority("ROLE_CUSTOMER"))
@@ -30,7 +30,7 @@ class UserDetailService(
         val vendor = vendorRepository.findFirstByUsername(username)
         if(vendor != null) {
             return UserSecurity(
-                id = vendor.id!!,
+                id = vendor.id,
                 username = vendor.username,
                 password = vendor.password!!,
                 Collections.singleton(SimpleGrantedAuthority("ROLE_VENDOR"))

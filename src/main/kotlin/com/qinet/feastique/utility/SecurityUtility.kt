@@ -4,6 +4,7 @@ import com.qinet.feastique.exception.MalformedUrlException
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.stereotype.Component
+import java.util.UUID
 
 @Component
 class SecurityUtility {
@@ -55,7 +56,7 @@ class SecurityUtility {
      * @param [UserSecurity]
      * @throws MalformedUrlException
      */
-    fun validatePath(userId: Long, userDetails: UserSecurity) {
+    fun validatePath(userId: UUID, userDetails: UserSecurity) {
         if(userId != userDetails.id) {
             throw MalformedUrlException()
         }

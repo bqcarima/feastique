@@ -1,12 +1,15 @@
 package com.qinet.feastique.model.dto
 
+import com.qinet.feastique.common.validator.phoneNumber.ValidPhoneNumber
 import jakarta.validation.constraints.NotBlank
+import java.util.UUID
 
 data class PhoneNumberDto(
-    var id: Long? = null,
+    var id: UUID? = null,
 
-    @field:NotBlank(message = "Beverage name cannot be empty.")
+    @field:ValidPhoneNumber
     var phoneNumber: String,
 
     val default: Boolean? = false,
 )
+

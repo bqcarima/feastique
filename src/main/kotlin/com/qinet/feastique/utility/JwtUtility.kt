@@ -58,7 +58,7 @@ class JwtUtility(
      * @return String
      */
     private fun generateToken(
-        id: Long,
+        id: UUID,
         username: String,
         type: String,
         userType: AccountType,
@@ -87,7 +87,7 @@ class JwtUtility(
      * @param userType is the type of user the token will be generated for.
      * @return String
      */
-    fun generateAccessToken(id: Long, username: String, userType: AccountType): String {
+    fun generateAccessToken(id: UUID, username: String, userType: AccountType): String {
         return generateToken(id, username, "access", userType, ACCESS_TOKEN_VALIDITY_MS)
     }
 
@@ -97,7 +97,7 @@ class JwtUtility(
      * @param userType is the type of user the token will be generated for.
      * @return String
      */
-    fun generateRefreshToken(id: Long, username: String, userType: AccountType): String {
+    fun generateRefreshToken(id: UUID, username: String, userType: AccountType): String {
         return generateToken(id, username, "refresh", userType, REFRESH_TOKEN_VALIDITY_MS)
     }
 
@@ -166,10 +166,16 @@ class JwtUtility(
      * @return Long
      *
      */
-    fun getUserId(token: String): Long {
+    fun getUserId(token: String): UUID {
         val claims = getClaims(token) ?: throw JwtException("Could not parse claims.")
-        return claims.subject.toLongOrNull() ?: throw JwtException("Invalid subject claim. NoN.")
+        val subject = claims.subject ?: throw JwtException("Invalid subject claim. None.")
+        return try {
+            UUID.fromString(subject)
+        } catch (ex: IllegalArgumentException) {
+            throw JwtException("Invalid UUID format in subject claim.", ex)
+        }
     }
+
 
     /**
      * This function gets the username from a valid token
@@ -225,7 +231,7 @@ class JwtUtility(
      * @param rawRefreshToken
      * @return String
      */
-    fun parseToken(id: Long, userType: String, rawRefreshToken: String): RefreshToken {
+    fun parseToken(id: UUID, userType: String, rawRefreshToken: String): RefreshToken {
 
         return RefreshToken(
             customerId = if(userType == AccountType.CUSTOMER.name) id else null,
@@ -245,7 +251,7 @@ class JwtUtility(
      * @return TokenPairResponse
      * @throws IllegalArgumentException
      */
-    fun generateTokenPair(id: Long, username: String, userType: AccountType): TokenPairResponse {
+    fun generateTokenPair(id: UUID, username: String, userType: AccountType): TokenPairResponse {
 
         val accessToken = generateAccessToken(id, username, userType)
         val refreshToken = generateRefreshToken(id, username, userType)

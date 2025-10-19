@@ -7,10 +7,7 @@ import com.qinet.feastique.model.entity.address.VendorAddress
 import com.qinet.feastique.model.entity.complement.Complement
 import com.qinet.feastique.model.entity.discount.Discount
 import com.qinet.feastique.model.entity.food.Food
-import com.qinet.feastique.model.entity.food.FoodSales
-import com.qinet.feastique.model.entity.order.FoodOrder
 import com.qinet.feastique.model.entity.phoneNumber.VendorPhoneNumber
-import com.qinet.feastique.model.entity.post.Post
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -55,7 +52,7 @@ import jakarta.validation.constraints.NotEmpty
 
 
 @Entity
-@Table(name = "vendor")
+@Table(name = "vendors")
 class Vendor : UserEntity() {
 
     @Column(name = "chef_name")
@@ -108,7 +105,6 @@ class Vendor : UserEntity() {
     )
     var complement: MutableList<Complement> = mutableListOf()
 
-
     @JsonManagedReference
     @OneToMany(
         mappedBy = "vendor",
@@ -116,29 +112,5 @@ class Vendor : UserEntity() {
         orphanRemoval = true
     )
     var discount: MutableList<Discount> = mutableListOf()
-
-    @JsonManagedReference
-    @OneToMany(
-        mappedBy = "vendor",
-        cascade = [CascadeType.ALL],
-        orphanRemoval = true
-    )
-    var post: MutableList<Post> = mutableListOf()
-
-    // Food order relationship
-    @JsonManagedReference
-    @OneToMany(
-        mappedBy = "vendor",
-        cascade = [CascadeType.ALL],
-        orphanRemoval = true
-    )
-    var foodOrder: MutableList<FoodOrder> = mutableListOf()
-
-    @JsonBackReference
-    @OneToMany(
-        mappedBy = "vendor",
-        orphanRemoval = false
-    )
-    var foodSales: MutableSet<FoodSales> = mutableSetOf()
 }
 

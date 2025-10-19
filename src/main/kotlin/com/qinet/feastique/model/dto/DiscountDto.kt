@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull
 import java.util.*
 
 data class DiscountDto(
-    var id: Long? = null,
+    var id: UUID? = null,
 
     @field:NotBlank(message = "Discount name cannot be blank")
     val discountName: String,

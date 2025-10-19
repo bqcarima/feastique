@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/customers/{customerId}/numbers")
@@ -22,7 +23,7 @@ class CustomerPhoneNumberController(
 
     @PutMapping
     fun addOrUpdatePhoneNumber(
-        @PathVariable("customerId") customerId: Long,
+        @PathVariable("customerId") customerId: UUID,
         @RequestBody @Valid phoneNumberDto: PhoneNumberDto,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
@@ -34,8 +35,8 @@ class CustomerPhoneNumberController(
 
     @DeleteMapping("/{id}")
     fun deletePhoneNumber(
-        @PathVariable("id") id: Long,
-        @PathVariable("customerId") customerId: Long,
+        @PathVariable("id") id: UUID,
+        @PathVariable("customerId") customerId: UUID,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<String> {
@@ -46,8 +47,8 @@ class CustomerPhoneNumberController(
 
     @GetMapping("/{id}")
     fun getPhoneNumber(
-        @PathVariable("id") id: Long,
-        @PathVariable("customerId") customerId: Long,
+        @PathVariable("id") id: UUID,
+        @PathVariable("customerId") customerId: UUID,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<PhoneNumberResponse> {
@@ -58,7 +59,7 @@ class CustomerPhoneNumberController(
 
     @GetMapping
     fun getAllPhoneNumbers(
-        @PathVariable customerId: Long,
+        @PathVariable customerId: UUID,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<List<PhoneNumberResponse>> {

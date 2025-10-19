@@ -1,21 +1,22 @@
 package com.qinet.feastique.model.entity.food
 
-import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.qinet.feastique.model.entity.order.FoodOrder
+import com.github.f4b6a3.uuid.UuidCreator
+import com.qinet.feastique.model.entity.order.food.FoodOrderItem
 import com.qinet.feastique.model.entity.user.Vendor
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
 import java.time.LocalDateTime
+import java.util.UUID
 
 
 @Entity
 @Table(name = "food_sales")
 class FoodSales {
+
     @Id
-    @GeneratedValue
-    var id: Long? = null
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
+    var id: UUID = UuidCreator.getTimeOrdered()
 
     var amount: Long? = null
 
@@ -24,22 +25,16 @@ class FoodSales {
     @CreationTimestamp
     var saleDate: LocalDateTime? = null
 
-    @JsonBackReference
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "food_id", nullable = false)
-    @JsonIgnore
     lateinit var food: Food
 
-    @JsonBackReference
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "food_order_id", nullable = false)
-    @JsonIgnore
-    lateinit var foodOrder: FoodOrder
+    lateinit var foodOrderItem: FoodOrderItem
 
-    @JsonBackReference
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "vendor_id", nullable = false)
-    @JsonIgnore
     lateinit var vendor: Vendor
 }
 

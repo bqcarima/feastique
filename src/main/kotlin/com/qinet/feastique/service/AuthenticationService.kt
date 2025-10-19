@@ -32,7 +32,7 @@ class AuthenticationService(
     }
 
     /**
-     * Login flow for customers:
+     * Login flow for a [Customer]:
      * - delegate auth to customerService (which returns token pair)
      * - extract tokenIdentifier and expiry from access token
      * - create a server-side session so logout is trivial
@@ -47,10 +47,15 @@ class AuthenticationService(
         val tokenIdentifier = jwtUtility.getTokenIdentifier(accessToken)
         val accessTokenExpiryEpochMillis = jwtUtility.getExpirationEpochMillis(accessToken)
 
-        // Persist server-side session
+        // Extracting id and account type from the access token
         val customerId = jwtUtility.getUserId(accessToken)
         val userType = jwtUtility.getUserType(accessToken)
 
+        // Reset customer session on every login
+        userSessionService.resetSessions(customerId, userType)
+
+
+        // Persist server-side session
         val refreshTokenEntity = jwtUtility.parseToken(customerId, userType, tokenPair.refreshToken)
         refreshTokenService.storeRefreshToken(refreshTokenEntity)
 
@@ -72,7 +77,7 @@ class AuthenticationService(
     }
 
     /**
-     * Login flow for vendors:
+     * Login flow for a [Vendor]:
      * - delegate auth to vendorService (which returns token pair)
      * - extract tokenIdentifier and expiry from access token
      * - create a server-side session so logout is trivial
@@ -87,8 +92,12 @@ class AuthenticationService(
         val tokenIdentifier = jwtUtility.getTokenIdentifier(accessToken)
         val accessTokenExpiryEpochMillis = jwtUtility.getExpirationEpochMillis(accessToken)
 
+        // Extracting id and account type from the access token
         val vendorId = jwtUtility.getUserId(accessToken)
         val userType = jwtUtility.getUserType(accessToken)
+
+        // Reset the existing session on every login
+        userSessionService.resetSessions(vendorId, userType)
 
         // Persist server-side session
         val refreshTokenEntity = jwtUtility.parseToken(vendorId, userType, tokenPair.refreshToken)
@@ -134,9 +143,15 @@ class AuthenticationService(
     }
 
     /**
+     * Handles logout of a [Customer] and a [Vendor]
      * Logout flow:
      * - If the client sent an access token, delete the corresponding session (immediate revoke)
      * - If the client sent a refresh token, delete the stored refresh token record
+     *
+     * @param String
+     * @param LogoutDto
+     *
+     * @throws MalformedJwtException
      */
     fun handleLogout(authorizationHeader: String?, logoutRequestDto: LogoutDto?) {
 
@@ -152,7 +167,7 @@ class AuthenticationService(
             }
         }
 
-        logoutRequestDto?.refreshToken?.let { it ->
+        logoutRequestDto?.refreshToken?.let {
             try {
                 refreshTokenService.revokeByRefreshToken(it)
 

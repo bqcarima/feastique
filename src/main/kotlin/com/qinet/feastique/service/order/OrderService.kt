@@ -5,91 +5,95 @@ import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.model.dto.order.FoodOrderDto
 import com.qinet.feastique.model.dto.order.FoodOrderUpdateDto
-import com.qinet.feastique.model.entity.addOn.AddOn
-import com.qinet.feastique.model.entity.addOn.OrderAddOn
 import com.qinet.feastique.model.entity.beverage.Beverage
-import com.qinet.feastique.model.entity.beverage.OrderBeverage
-import com.qinet.feastique.model.entity.complement.Complement
-import com.qinet.feastique.model.entity.discount.OrderDiscount
-import com.qinet.feastique.model.entity.food.Food
-import com.qinet.feastique.model.entity.order.FoodOrder
+import com.qinet.feastique.model.entity.discount.AppliedDiscount
+import com.qinet.feastique.model.entity.order.Order
+import com.qinet.feastique.model.entity.order.beverage.BeverageOrderItem
+import com.qinet.feastique.model.entity.order.food.FoodOrderItem
 import com.qinet.feastique.model.enums.OrderStatus
 import com.qinet.feastique.model.enums.OrderType
 import com.qinet.feastique.repository.BeverageRepository
-import com.qinet.feastique.repository.addOn.AddOnRepository
-import com.qinet.feastique.repository.complement.ComplementRepository
 import com.qinet.feastique.repository.customer.CustomerAddressRepository
 import com.qinet.feastique.repository.customer.CustomerRepository
 import com.qinet.feastique.repository.discount.DiscountRepository
-import com.qinet.feastique.repository.discount.FoodDiscountRepository
 import com.qinet.feastique.repository.food.FoodRepository
-import com.qinet.feastique.repository.order.FoodOrderRepository
-import com.qinet.feastique.repository.vendor.VendorAddressRepository
+import com.qinet.feastique.repository.order.OrderRepository
 import com.qinet.feastique.repository.vendor.VendorRepository
 import com.qinet.feastique.security.UserSecurity
+import com.qinet.feastique.utility.GeneralUtility
 import com.qinet.feastique.utility.SecurityUtility
 import com.qinet.feastique.utility.toLocalDate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
+import java.util.*
 import kotlin.jvm.optionals.getOrElse
 
 @Service
-class FoodOrderService(
-    private val foodOrderRepository: FoodOrderRepository,
+class OrderService(
+    private val orderRepository: OrderRepository,
     private val customerRepository: CustomerRepository,
     private val foodRepository: FoodRepository,
     private val vendorRepository: VendorRepository,
-    private val complementRepository: ComplementRepository,
-    private val addOnRepository: AddOnRepository,
-    private val vendorAddressRepository: VendorAddressRepository,
     private val customerAddressRepository: CustomerAddressRepository,
     private val beverageRepository: BeverageRepository,
     private val securityUtility: SecurityUtility,
-    private val foodDiscountRepository: FoodDiscountRepository,
     private val discountRepository: DiscountRepository
 ) {
 
     @Transactional(readOnly = true)
-    fun getOrder(id: Long, userDetails: UserSecurity): FoodOrder? {
+    fun getOrder(id: UUID, userDetails: UserSecurity): Order? {
         val role = securityUtility.getRole(userDetails)
-        val foodOrder = when (role) {
-            "CUSTOMER" -> foodOrderRepository.findByIdAndCustomerIdAndCustomerDeletedStatus(id, userDetails.id, false)
-            "VENDOR" -> foodOrderRepository.findByIdAndVendorIdAndCustomerDeletedStatus(id, userDetails.id, false)
+        val order = when (role) {
+            "CUSTOMER" -> orderRepository.findByIdAndCustomerIdAndCustomerDeletedStatus(id, userDetails.id, false)
+            "VENDOR" -> orderRepository.findByIdAndVendorIdAndCustomerDeletedStatus(id, userDetails.id, false)
             else -> throw IllegalArgumentException("Invalid role. Contact customer support is issue persist.")
 
         }
-        return foodOrder
+        return order
     }
 
     @Transactional(readOnly = true)
-    fun getAllOrders(userDetails: UserSecurity): List<FoodOrder> {
+    fun getAllOrders(userDetails: UserSecurity): List<Order> {
         val role = securityUtility.getRole(userDetails)
-        var foodOrders = when (role) {
-            "CUSTOMER" -> foodOrderRepository.findAllByCustomerDeletedStatusAndCustomerId(false, userDetails.id)
-            "VENDOR" -> foodOrderRepository.findAllByVendorDeletedStatusAndVendorId(false, userDetails.id)
+        var orders = when (role) {
+            "CUSTOMER" -> orderRepository.findAllByCustomerDeletedStatusAndCustomerId(false, userDetails.id)
+            "VENDOR" -> orderRepository.findAllByVendorDeletedStatusAndVendorId(false, userDetails.id)
             else -> throw IllegalArgumentException("Invalid role. Contact customer support is issue persist.")
 
         }
-        if (foodOrders.isEmpty()) foodOrders = emptyList()
-        return foodOrders
+        if (orders.isEmpty()) orders = emptyList()
+        return orders
     }
 
     @Transactional
-    fun saveFoodOrder(foodOrder: FoodOrder): FoodOrder {
-        return foodOrderRepository.save(foodOrder)
+    fun saveFoodOrder(order: Order): Order {
+        return orderRepository.save(order)
     }
 
     // Customer specific operations.
+
+    /**
+     * This method places a food order and a beverage order (if applicable)
+     * directly from the food screen.
+     * @param FoodOrderDto
+     * @param UserSecurity`
+     * @return [Order]
+     * @throws UserNotFoundException
+     * @throws RequestedEntityNotFoundException
+     * @throws PermissionDeniedException
+     * @throws IllegalArgumentException
+     */
     @Transactional
-    fun placeFoodOrder(foodOrderDto: FoodOrderDto, customerDetails: UserSecurity): FoodOrder {
+    fun placeFoodOrder(foodOrderDto: FoodOrderDto, customerDetails: UserSecurity): Order {
         val customer = customerRepository.findById(customerDetails.id)
             .orElseThrow {
                 throw UserNotFoundException("An unexpected error occurred. Customer account not found.")
             }
 
-        val customerAddresses = customerAddressRepository.findAllByCustomerId(customer.id!!)
+        val customerAddresses = customerAddressRepository.findAllByCustomerId(customer.id)
             .takeIf { it.isNotEmpty() }
             ?: throw RequestedEntityNotFoundException("An unexpected error occurred. No address found for this customer.")
 
@@ -102,137 +106,156 @@ class FoodOrderService(
                 throw RequestedEntityNotFoundException("Unable to place order. Food not found.")
             }
 
-        val vendor = vendorRepository.findById(food.vendor.id!!)
+        val vendor = vendorRepository.findById(food.vendor.id)
             .orElseThrow { throw UserNotFoundException("Unable to place order. Vendor not found.") }
 
-        val vendorAddress = vendorAddressRepository.findByVendorId(vendor.id!!)
-            .takeIf { it != null }
-            ?: throw RequestedEntityNotFoundException("Vendor address not found.")
 
-        val foodOrder = FoodOrder()
-        foodOrder.vendor = vendor
-        foodOrder.customer = customer
-        foodOrder.food = food
-        foodOrder.placementTime = LocalDateTime.now()
-        foodOrder.customerAddress = defaultCustomerAddress
-        foodOrder.vendorAddress = vendorAddress
+        // Generating internal order id and user oder code
+        val orderId = GeneralUtility.OrderIdGenerator.generate()
 
-        foodOrder.size = food.foodSize.find {
-            it.id == foodOrderDto.foodSizeId
-        }!!
+        // Creating a new Order object
+        val newOrder = Order().apply {
+            this.internalOrderId = orderId.internalOrderId
+            this.userOrderCode = orderId.userOrderCode
+            this.customer = customer
+            this.vendor = vendor
+            this.placementTime = LocalDateTime.now()
+            this.customerAddress = defaultCustomerAddress
+            this.orderStatus = OrderStatus.PENDING
+        }
+
+        // Creating a new food order item
+        val newFoodOrderItem = FoodOrderItem().apply {
+            this.order = newOrder
+            this.food = food
+            this.quantity = foodOrderDto.foodQuantity
+            this.size = food.foodSize.find { it.id == foodOrderDto.foodSizeId }!!
+
+        }
 
         // Assigning a complement
         // Get the matching complement from the back reference.
-        val matchingComplementId = food.foodComplement.first { it.complement.id == foodOrderDto.complementId }.id
-            .takeIf { it != null }
+        val matchingComplement = food.foodComplement.firstOrNull { it.complement.id == foodOrderDto.complementId }?.complement
             ?: throw IllegalArgumentException("Unable to place order. Complement cannot be gotten from food.")
 
-        val complement = complementRepository.findById(matchingComplementId)
-            .orElseThrow { RequestedEntityNotFoundException("Unable to place order. Complement not found.") }
-        foodOrder.complement = complement
+        newFoodOrderItem.complement = matchingComplement
 
         // Assigning add-ons
-        var addOns = emptyList<AddOn>()
         if (!foodOrderDto.addOnIds.isNullOrEmpty()) {
             // Return id of matching add-ons
-            val matchingAddOnIds = food.foodAddOn.mapNotNull { it.addOn.id } // remove nulls that could be present
-                .filter { it in foodOrderDto.addOnIds!! }
+            val matchingAddOnIds = food.foodAddOn.map { it.addOn } // remove nulls that could be present
+                .filter { it.id in foodOrderDto.addOnIds!! }
                 .takeIf { it.isNotEmpty() }
                 ?: throw RequestedEntityNotFoundException("Unable to place order. Add-on not found.")
 
             // Retrieving the list of selected add-ons from the database based on their id and vendor id
-            addOns = addOnRepository.findAllByIdInAndVendorId(matchingAddOnIds, vendor.id!!)
-            val orderAddOns = addOns.map {
-                OrderAddOn().apply {
-                    this.foodOrder = foodOrder
-                    this.addOn = it
-                }
-            }
-            foodOrder.orderAddon.addAll(orderAddOns)
-        }
-
-        var beverages = emptyList<Beverage>()
-        if (!foodOrderDto.beverageIds.isNullOrEmpty()) {
-            beverages = beverageRepository.findAllByIdInAndVendorId(foodOrderDto.beverageIds!!, vendor.id!!)
-                .takeIf { it.isNotEmpty() }
-                ?: throw RequestedEntityNotFoundException("Unable to place order. Beverage(s) not found.")
-
-            val orderBeverages = beverages.map {
-                OrderBeverage().apply {
-                    this.foodOrder = foodOrder
-                    this.beverage = it
-                }
-            }
-            foodOrder.orderBeverage.addAll(orderBeverages)
+            newFoodOrderItem.addOns.addAll(matchingAddOnIds)
         }
 
         // Check if food is deliverable via backreference.
         if (food.menu.delivery == false) {
-            foodOrder.deliveryTime = null
+            newOrder.deliveryTime = null
         }
 
         // check if delivery fee is applicable to the order
         if (foodOrderDto.orderType == OrderType.DELIVERY) {
-            foodOrder.deliveryFee = food.deliveryFee
-            foodOrder.deliveryTime = food.deliveryTime
+            newOrder.deliveryFee = food.deliveryFee
+            newOrder.deliveryTime = food.deliveryTime
+            newFoodOrderItem.orderType = OrderType.DELIVERY
         } else {
-            food.deliveryFee = 0
+            newOrder.deliveryFee = 0
         }
-        foodOrder.orderType = foodOrderDto.orderType ?: throw IllegalArgumentException("Please select and order type.")
-        foodOrder.orderStatus = OrderStatus.PENDING
+        newOrder.orderType =
+            foodOrderDto.orderType ?: throw IllegalArgumentException("Please select and order type.")
 
-        val discountIds = food.foodDiscount.mapNotNull { it.discount.id }
-        val discounts = discountRepository.findAllByIdInAndVendorId(discountIds, food.vendor.id!!)
-            .takeIf { it.isNotEmpty()}
+        val discountIds = food.foodDiscount.map { it.discount.id }
+        val discounts = discountRepository.findAllByIdInAndVendorId(discountIds, food.vendor.id)
+            .takeIf { it.isNotEmpty() }
             ?: throw RequestedEntityNotFoundException("No discount found for the food.")
 
+        // filter discounts to get only active discounts
         val applicableDiscounts = discounts.filter {
             val today = LocalDate.now()
             it.startDate!!.toLocalDate() <= today &&
-                    it.endDate!!.toLocalDate() >=today
+                    it.endDate!!.toLocalDate() >= today
         }
 
-        val orderDiscounts = applicableDiscounts.map {
-            OrderDiscount().apply {
-                this.foodOrder = foodOrder
+        // mapping applicable discounts to applied discount objects and creating a list
+        val appliedDiscounts = applicableDiscounts.map {
+            AppliedDiscount().apply {
+                this.foodOrderItem = newFoodOrderItem
                 this.discount = it
             }
         }
-        foodOrder.orderDiscount.addAll(orderDiscounts)
-        val totalDiscountPercentage = applicableDiscounts.sumOf { it.percentage ?: 0 }
-        val subTotal = subTotal(
-            food = food,
-            complement = complement,
-            addOnList = addOns,
-            beverageList = beverages,
-            totalDiscountPercentage
-        )
-        val invoiceTotal: Float = if (food.deliveryFee != 0L) {
-            subTotal
-        } else {
-            subTotal + food.deliveryFee!!
+        newFoodOrderItem.appliedDiscounts.addAll(appliedDiscounts)
+
+        newFoodOrderItem.totalAmount = newFoodOrderItem.calculateTotal()
+        newOrder.foodOrderItems.add(newFoodOrderItem)
+
+        // Beverages added directly from the food order page
+        var beverages: List<Beverage>
+        if (!foodOrderDto.beverageIds.isNullOrEmpty()) {
+            beverages =
+                beverageRepository.findAllByIdInAndVendorId(foodOrderDto.beverageIds!!.keys.toList(), vendor.id)
+                    .takeIf { it.isNotEmpty() }
+                    ?: throw RequestedEntityNotFoundException("Unable to place order. Beverage(s) not found.")
+
+            val beverageOrderItems = beverages.map {
+                val beverageQuantity = foodOrderDto.beverageIds!![it.id]
+                BeverageOrderItem().apply {
+                    this.order = newOrder
+                    this.beverage = it
+                    this.quantity = beverageQuantity ?: 1
+                    this.totalAmount = this.calculateTotal()
+                }
+            }
+            newOrder.beverageOrderItems.addAll(beverageOrderItems)
         }
-        println(invoiceTotal)
-        foodOrder.totalAmount = invoiceTotal.toLong()
-        val placedFoodOrder = saveFoodOrder(foodOrder)
-        return placedFoodOrder
+
+        // calculate totals
+        val result = newOrder.calculateTotals()
+
+        // calculate invoice total: subtotal + delivery fee (if applicable)
+        val invoiceTotal: Long = if (newOrder.orderType != OrderType.DELIVERY) {
+            result.first
+        } else {
+            result.third
+        }
+
+        newOrder.totalAmount = invoiceTotal
+        val placedFoodOrder = saveFoodOrder(newOrder)
+        return orderRepository.findByIdWithAllRelations(placedFoodOrder.id).get()
     }
 
+    /**
+     * The method is used to change the status of an order.
+     * @param UUID
+     * @param FoodOrderUpdateDto
+     * @param UserSecurity`
+     * @return [Order]
+     * @throws RequestedEntityNotFoundException
+     * @throws PermissionDeniedException
+     * @throws IllegalArgumentException
+     */
     @Transactional
-    fun cancelOrUpdateOrder(id: Long, foodOrderUpdateDto: FoodOrderUpdateDto, userDetails: UserSecurity): FoodOrder {
-        var order = FoodOrder()
+    fun cancelOrUpdateOrder(
+        id: UUID,
+        foodOrderUpdateDto: FoodOrderUpdateDto,
+        userDetails: UserSecurity
+    ): Order {
+        var order = Order()
         val role = securityUtility.getSingleRole(userDetails)
 
         when (role) {
             "CUSTOMER" -> {
-                order = foodOrderRepository.findByIdAndCustomerIdAndOrderStatus(id, userDetails.id, OrderStatus.PENDING)
+                order = orderRepository.findByIdAndCustomerIdAndOrderStatus(id, userDetails.id, OrderStatus.PENDING)
                     .takeIf { it != null && it.orderStatus == OrderStatus.PENDING }
                     ?: throw RequestedEntityNotFoundException("An unexpected error occurred. Order cannot be cancelled. Order not found or has been confirmed already.")
                 order.orderStatus = foodOrderUpdateDto.orderStatus
             }
 
             "VENDOR" -> {
-                order = foodOrderRepository.findById(id)
+                order = orderRepository.findById(id)
                     .getOrElse { throw RequestedEntityNotFoundException("An unexpected error occurred. Unable to complete operation.") }
                     .also {
                         if (it.vendor.id != userDetails.id) {
@@ -250,6 +273,11 @@ class FoodOrderService(
                             }
                         }
                         order.responseTime = LocalDateTime.now()
+
+                        // Calculate and set the ready by time (if applicable)
+                        if (order.orderType != OrderType.DELIVERY) {
+                            order.readyBy = calculateOrderReadyTime(order)
+                        }
                     }
 
                     OrderStatus.CONFIRMED -> {
@@ -274,66 +302,66 @@ class FoodOrderService(
                         }
                         order.completedTime = LocalDateTime.now()
                     }
+
                     else -> throw IllegalArgumentException("Invalid option. Try again. Contact support if issue persists.")
                 }
             }
         }
 
-        foodOrderRepository.save(order)
-        val updatedFoodOrder = foodOrderRepository.findByIdWithAllRelations(id)
+        orderRepository.save(order)
+        val updatedOrder = orderRepository.findByIdWithAllRelations(id)
             .orElseThrow { IllegalArgumentException("An unexpected error occurred updating food order.") }
-        return updatedFoodOrder
+        return updatedOrder
     }
 
+    /**
+     * This method hides an [Order] from the user's history by
+     * changing the `deleted_status` to `true`.
+     * @param UUID
+     * @param UserSecurity
+     *
+     * @throws RequestedEntityNotFoundException
+     * @throws PermissionDeniedException
+     */
     fun deleteOrder(
-        id: Long,
+        id: UUID,
         userDetails: UserSecurity
     ) {
         val role = securityUtility.getRole(userDetails)
-        val order = foodOrderRepository.findById(id)
+        val order = orderRepository.findById(id)
             .orElseThrow { throw RequestedEntityNotFoundException("An unexpected error occurred. Unable to delete order.") }
 
         when (role) {
             "CUSTOMER" -> {
-                if (order.customer.id != userDetails.id) {
+                if (order?.customer?.id != userDetails.id) {
                     throw PermissionDeniedException("You do not have there permission to delete this order.")
                 }
                 order.customerDeletedStatus = true
             }
 
             "VENDOR" -> {
-                if (order.vendor.id != userDetails.id) {
+                if (order?.vendor?.id != userDetails.id) {
                     throw PermissionDeniedException("You do not have there permission to delete this order.")
                 }
                 order.vendorDeletedStatus = true
             }
         }
-        foodOrderRepository.save(order)
+        orderRepository.save(order)
     }
 
-    // Helper function to calculate order total cost.
-    private fun subTotal(
-        food: Food,
-        complement: Complement,
-        addOnList: List<AddOn>?,
-        beverageList: List<Beverage>?,
-        totalDiscountPercentage: Int
-    ): Float {
-        var total: Float
-        val basePrice = food.basePrice!!
-        val complementPrice = complement.price!!
-        val addOnTotal = addOnList?.sumOf { it.price ?: 0 } ?: 0f
-        val foodTotal = basePrice.toFloat() + complementPrice.toFloat() + addOnTotal.toFloat()
-        val beverageTotal = beverageList?.sumOf { it.price ?: 0 } ?: 0f
-
-        total = discountedPrice(foodTotal, totalDiscountPercentage) + beverageTotal.toFloat()
-        return total
-    }
-
-    private fun discountedPrice(price: Float, totalDiscountPercentage: Int): Float {
-        val discountMultiplier = (totalDiscountPercentage.toFloat() / 100f)
-        val priceDrop = discountMultiplier * price
-        return price - priceDrop
+    /**
+     * This method calculates the time an [Order] of type
+     * [OrderType.DINE_IN] or [OrderType.TAKEAWAY] will be ready.
+     *
+     * @param Order
+     * @return [LocalTime]
+     * @throws NullPointerException
+     */
+    private fun calculateOrderReadyTime(order: Order): LocalTime {
+        val maxPreparationTime = order.foodOrderItems
+            .maxOfOrNull { it.food.preparationTime ?: 0 } ?: 0
+        val readyTime = order.responseTime?.plusMinutes(maxPreparationTime.toLong())
+        return readyTime!!.toLocalTime()
     }
 }
 

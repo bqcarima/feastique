@@ -5,6 +5,7 @@ import com.qinet.feastique.model.enums.AccountType
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
+import com.github.f4b6a3.uuid.UuidCreator
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import java.time.LocalDateTime
@@ -12,9 +13,10 @@ import java.util.*
 
 @MappedSuperclass
 abstract class UserEntity {
+
     @Id
-    @GeneratedValue
-    var id: Long? = null
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
+    var id: UUID = UuidCreator.getTimeOrdered()
 
     @NotBlank(message = "Username cannot be null.")
     @NotEmpty(message = "Username cannot be empty.")

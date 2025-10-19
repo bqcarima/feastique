@@ -1,49 +1,27 @@
 package com.qinet.feastique.model.entity.order
 
-import com.fasterxml.jackson.annotation.JsonBackReference
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonManagedReference
-import com.qinet.feastique.model.entity.complement.Complement
-import com.qinet.feastique.model.entity.food.Food
-import com.qinet.feastique.model.entity.food.FoodSize
-import com.qinet.feastique.model.entity.user.Customer
-import com.qinet.feastique.model.entity.user.Vendor
+import com.github.f4b6a3.uuid.UuidCreator
+import com.qinet.feastique.model.enums.OrderType
 import jakarta.persistence.*
+import java.util.UUID
 
-@MappedSuperclass
+@Entity
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 abstract class OrderEntity {
+
     @Id
-    @GeneratedValue
-    var id: Long? = null
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
+    var id: UUID = UuidCreator.getTimeOrdered()
 
-    @JsonBackReference // prevent infinite recursion for extra protection
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
-    @JsonIgnore
-    lateinit var customer: Customer
+    var quantity: Int? = 1
 
-    @JsonBackReference
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vendor_id", nullable = false)
-    @JsonIgnore
-    lateinit var vendor: Vendor
+    @Column(name = "total_amount")
+    var totalAmount: Long? = 0
 
-    @JsonBackReference
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "food_id", nullable = false)
-    @JsonIgnore
-    lateinit var food: Food
+    @Column(name = "order_type")
+    @Enumerated(EnumType.STRING)
+    var orderType: OrderType? = null
 
-    @JsonManagedReference
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "complement_id", nullable = false)
-    @JsonIgnore
-    lateinit var complement: Complement
-
-    @JsonBackReference
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_size_id", nullable = false)
-    @JsonIgnore
-    lateinit var size: FoodSize
+    abstract fun calculateTotal(): Long
 }
 

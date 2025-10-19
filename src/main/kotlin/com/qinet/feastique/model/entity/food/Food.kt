@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonManagedReference
+import com.github.f4b6a3.uuid.UuidCreator
 import com.qinet.feastique.model.entity.Menu
 import com.qinet.feastique.model.entity.addOn.FoodAddOn
 import com.qinet.feastique.model.entity.complement.FoodComplement
@@ -14,10 +15,11 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import java.time.LocalTime
+import java.util.UUID
 
 @Suppress("JpaEntityGraphsInspection")
 @Entity
-@Table(name = "food")
+@Table(name = "foods")
 @NamedEntityGraphs(
     value = [
         NamedEntityGraph(
@@ -49,9 +51,13 @@ import java.time.LocalTime
     ]
 )
 class Food {
+
     @Id
-    @GeneratedValue
-    var id: Long? = null
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
+    var id: UUID = UuidCreator.getTimeOrdered()
+
+    @Column(name = "food_number", unique = true)
+    var foodNumber: String? = null
 
     @Column(name = "food_name")
     @NotBlank(message = "Food name cannot be null.")
@@ -72,7 +78,7 @@ class Food {
 
     @Column(name = "preparation_time")
     @NotNull(message = "Preparation time cannot be empty.")
-    var preparationTime: Long? = 0
+    var preparationTime: Int? = 0
 
     @Column(name = "delivery_time")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "hh:mm a")
@@ -157,12 +163,5 @@ class Food {
         orphanRemoval = true
     )
     lateinit var menu: Menu
-
-    @JsonBackReference
-    @OneToMany(
-        mappedBy = "food",
-        orphanRemoval = false
-    )
-    var foodSales: MutableSet<FoodSales> = mutableSetOf()
 }
 

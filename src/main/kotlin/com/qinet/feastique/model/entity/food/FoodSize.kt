@@ -2,18 +2,20 @@ package com.qinet.feastique.model.entity.food
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.qinet.feastique.model.entity.order.FoodOrder
+import com.github.f4b6a3.uuid.UuidCreator
+import com.qinet.feastique.model.entity.order.food.FoodOrderItem
 import com.qinet.feastique.model.enums.Size
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotNull
+import java.util.UUID
 
 @Entity
-@Table(name = "food_size")
+@Table(name = "food_sizes")
 class FoodSize {
 
     @Id
-    @GeneratedValue
-    var id: Long? = null
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
+    var id: UUID = UuidCreator.getTimeOrdered()
 
     @NotNull(message = "Please select at least one size.")
 
@@ -37,6 +39,6 @@ class FoodSize {
         orphanRemoval = false
     )
     @OrderColumn(name = "order_index")
-    var foodSize: MutableList<FoodOrder> = mutableListOf()
+    var foodSize: MutableList<FoodOrderItem> = mutableListOf()
 }
 

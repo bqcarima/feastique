@@ -1,6 +1,5 @@
 package com.qinet.feastique.service
 
-import com.qinet.feastique.exception.DuplicateFoundException
 import com.qinet.feastique.exception.PermissionDeniedException
 import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
@@ -11,6 +10,7 @@ import com.qinet.feastique.repository.vendor.VendorRepository
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.*
 
 @Service
 class BeverageService(
@@ -19,7 +19,7 @@ class BeverageService(
 ) {
 
     @Transactional(readOnly = true)
-    fun getBeverage(id: Long, vendorDetails: UserSecurity): Beverage {
+    fun getBeverage(id: UUID, vendorDetails: UserSecurity): Beverage {
         val beverage = beverageRepository.findById(id)
             .orElseThrow { RequestedEntityNotFoundException("No beverage found for id: $id") }
             .also {
@@ -48,7 +48,7 @@ class BeverageService(
         beverageRepository.findFirstByBeverageNameIgnoreCaseAndVendorId(beverageName, vendorDetails.id) != null
 
     @Transactional
-    fun deleteBeverage(id: Long, vendorDetails: UserSecurity) {
+    fun deleteBeverage(id: UUID, vendorDetails: UserSecurity) {
         val beverage = getBeverage(id,vendorDetails)
         if(beverage.vendor.id != vendorDetails.id)
             throw PermissionDeniedException("You do not have the permission to delete the beverage.")
@@ -79,17 +79,7 @@ class BeverageService(
             }
         }
 
-        if(beverage.id == null) {
-
-            // Check if the vendor has already added a complement with the same name
-            if(!getDuplicates(beverageDto.beverageName!!, vendorDetails)) {
-                beverage.beverageName = beverageDto.beverageName
-            } else {
-                throw DuplicateFoundException("Duplicate found with the name: ${beverageDto.beverageName}")
-            }
-        } else {
-            beverage.beverageName = beverageDto.beverageName ?: throw IllegalArgumentException("Please enter a name for the beverage.")
-        }
+        beverage.beverageName = beverageDto.beverageName ?: throw IllegalArgumentException("Please enter a name for the beverage.")
 
         beverage.alcoholic = beverageDto.alcoholic
         beverage.percentage = beverageDto.percentage

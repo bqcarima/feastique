@@ -5,7 +5,7 @@ import java.time.LocalDate
 import java.util.*
 
 data class CustomerResponse(
-    val id: Long,
+    val id: UUID,
     val username: String,
     val firstName: String,
     val lastName: String,

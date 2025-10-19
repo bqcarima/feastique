@@ -6,10 +6,11 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import java.time.LocalTime
+import java.util.UUID
 
 data class FoodDto(
 
-    var id: Long? = null,
+    var id: UUID? = null,
 
     @field:NotBlank(message = "Food name cannot be null.")
     @field:NotEmpty(message = "Food name cannot be empty.")
@@ -28,15 +29,16 @@ data class FoodDto(
     var basePrice: Long?,
 
     @field:NotNull(message = "Preparation time cannot be empty.")
-    var preparationTime: Long?,
+    var preparationTime: Int?,
 
     var deliveryTime: LocalTime?,
+    var deliveryFee: Long?,
     var foodImage: List<String>,
     var foodSizeMap: Map<Size, Long>,
-    var complementIds: List<Long>,
-    var addOnIds: List<Long>?,
+    var complementIds: List<UUID>,
+    var addOnIds: List<UUID>?,
     var orderType: List<String>,
     var availability: List<String>,
-    var discountIds: List<Long>?,
+    var discountIds: List<UUID>?,
 )
 

@@ -10,6 +10,7 @@ import com.qinet.feastique.security.UserSecurity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Service
 class CustomerAddressService(
@@ -17,7 +18,7 @@ class CustomerAddressService(
     private val customerRepository: CustomerRepository
 ) {
     @Transactional(readOnly = true)
-    fun getAddressById(addressId: Long, customerDetails: UserSecurity): CustomerAddress {
+    fun getAddressById(addressId: UUID, customerDetails: UserSecurity): CustomerAddress {
         val address = customerAddressRepository.findById(addressId)
             .orElseThrow { throw RequestedEntityNotFoundException("Address Not Found.") }
             .also {
@@ -48,7 +49,7 @@ class CustomerAddressService(
     }
 
     @Transactional
-    fun deleteAddress(id: Long, customerDetails: UserSecurity) {
+    fun deleteAddress(id: UUID, customerDetails: UserSecurity) {
         val customer = customerRepository.findById(customerDetails.id)
             .orElseThrow {
                 throw RequestedEntityNotFoundException("Customer not found.")
@@ -97,7 +98,7 @@ class CustomerAddressService(
         address.latitude = addressDto.latitude
 
         if (addressDto.default == true) {
-            val currentAddresses = customerAddressRepository.findAllByCustomerId(customer.id!!)
+            val currentAddresses = customerAddressRepository.findAllByCustomerId(customer.id)
             currentAddresses.forEach { it.default = false }
             customerAddressRepository.saveAll(currentAddresses)
             address.default = addressDto.default

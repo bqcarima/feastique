@@ -11,6 +11,7 @@ import com.qinet.feastique.repository.vendor.VendorRepository
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 @Service
 class AddOnService(
@@ -18,7 +19,7 @@ class AddOnService(
     private val vendorRepository: VendorRepository
 ) {
     @Transactional(readOnly = true)
-    fun getAddOn(id: Long, vendorDetails: UserSecurity): AddOn {
+    fun getAddOn(id: UUID, vendorDetails: UserSecurity): AddOn {
         val addOn = addOnRepository.findById(id)
             .orElseThrow { IllegalArgumentException("No add-on with id: $id.") }
             .also {
@@ -35,7 +36,7 @@ class AddOnService(
             .takeIf { it.isNotEmpty() }
             ?: throw IllegalArgumentException("No add-ons found for the vendor ${vendorDetails.id}")
 
-        require(addOns.all { it ->
+        require(addOns.all {
             it.vendor.id == vendorDetails.id
         }) {
             throw IllegalArgumentException("You (vendor ${vendorDetails.id}) does not have the permission to access these discounts.")
@@ -48,7 +49,7 @@ class AddOnService(
         addOnRepository.findFirstByAddOnNameIgnoreCaseAndVendorId(addOnName, vendorDetails.id) != null
 
     @Transactional
-    fun deleteAddOn(id: Long, vendorDetails: UserSecurity) {
+    fun deleteAddOn(id: UUID, vendorDetails: UserSecurity) {
         val addOn = getAddOn(id, vendorDetails)
         addOnRepository.delete(addOn)
     }

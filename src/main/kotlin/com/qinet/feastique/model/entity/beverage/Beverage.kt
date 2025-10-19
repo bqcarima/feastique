@@ -2,28 +2,21 @@ package com.qinet.feastique.model.entity.beverage
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.github.f4b6a3.uuid.UuidCreator
 import com.qinet.feastique.model.entity.user.Vendor
-import jakarta.persistence.CascadeType
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
-import jakarta.persistence.OneToMany
-import jakarta.persistence.Table
+import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
+import java.util.*
 
 @Entity
-@Table(name = "beverage")
+@Table(name = "beverages")
 class Beverage {
 
     @Id
-    @GeneratedValue
-    var id: Long? = null
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
+    var id: UUID = UuidCreator.getTimeOrdered()
 
     @Column(name = "name")
     @NotBlank(message = "Beverage name cannot be null.")
@@ -40,6 +33,7 @@ class Beverage {
     @NotEmpty(message = "Beverage group cannot be empty.")
     var beverageGroup: String? = ""
 
+    @NotNull(message = "Price cannot be null.")
     var price: Long? = 0
 
     @NotNull(message = "Delivery availability cannot be null.")
@@ -50,20 +44,5 @@ class Beverage {
     @JoinColumn(name = "vendor_id", nullable = false)
     @JsonIgnore
     lateinit var vendor: Vendor
-
-    @JsonBackReference
-    @OneToMany(
-        mappedBy = "beverage",
-        cascade = [CascadeType.ALL],
-        orphanRemoval = false
-    )
-    var orderBeverage: MutableList<OrderBeverage> = mutableListOf()
-
-    @JsonBackReference
-    @OneToMany(
-        mappedBy = "beverage",
-        cascade = [CascadeType.ALL],
-        orphanRemoval = true
-    )
-    var cartBeverage: MutableList<OrderBeverage> = mutableListOf()
 }
+

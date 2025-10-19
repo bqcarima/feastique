@@ -20,6 +20,7 @@ import com.qinet.feastique.utility.DuplicateUtility
 import com.qinet.feastique.utility.SecurityUtility
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 /**
  * A unified PhoneNumberService layer to handle
@@ -43,7 +44,7 @@ class PhoneNumberService(
 
     @Suppress("UNCHECKED_CAST")
     @Transactional(readOnly = true)
-    fun <T : PhoneNumber> getPhoneNumber(id: Long, userDetails: UserSecurity): T {
+    fun <T : PhoneNumber> getPhoneNumber(id: UUID, userDetails: UserSecurity): T {
         val role = securityUtility.getSingleRole(userDetails)
 
         val user = when (role) {
@@ -184,7 +185,7 @@ class PhoneNumberService(
     }
 
     @Transactional
-    fun deletePhoneNumber(id: Long, userDetails: UserSecurity) {
+    fun deletePhoneNumber(id: UUID, userDetails: UserSecurity) {
         val role = securityUtility.getSingleRole(userDetails)
         when (role) {
             "CUSTOMER" -> {

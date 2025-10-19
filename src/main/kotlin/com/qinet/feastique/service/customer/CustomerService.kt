@@ -180,11 +180,11 @@ class CustomerService(
         if (oldUsername != savedCustomer.username) {
 
             // delete old refresh token and old session
-            userSessionService.resetSessions(savedCustomer.id!!, savedCustomer.accountType?.name ?: AccountType.CUSTOMER.name)
+            userSessionService.resetSessions(savedCustomer.id, savedCustomer.accountType?.name ?: AccountType.CUSTOMER.name)
 
             // Generate a new token pair
             val newTokenPair = jwtUtility.generateTokenPair(
-                savedCustomer.id!!,
+                savedCustomer.id,
                 savedCustomer.username,
                 AccountType.CUSTOMER
             )

@@ -1,32 +1,22 @@
 package com.qinet.feastique.model.entity.post
 
-import com.fasterxml.jackson.annotation.JsonBackReference
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonManagedReference
+import com.github.f4b6a3.uuid.UuidCreator
 import com.qinet.feastique.model.entity.user.Vendor
-import jakarta.persistence.CascadeType
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
-import jakarta.persistence.OneToMany
-import jakarta.persistence.Table
+import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.Formula
-import java.util.Date
+import java.util.*
 
 @Entity
-@Table(name = "post")
+@Table(name = "posts")
 class Post {
 
     @Id
-    @GeneratedValue
-    var id: Long? = null
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
+    var id: UUID = UuidCreator.getTimeOrdered()
 
     @NotBlank(message = "Title cannot be blank")
     @NotEmpty(message = "Title cannot be blank")
@@ -45,10 +35,8 @@ class Post {
     @Column(name = "updated_at")
     var updatedAt: Date? = null
 
-    @JsonBackReference // prevent infinite recursion for extra protection
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "vendor_id", nullable = false)
-    @JsonIgnore
     lateinit var vendor: Vendor
 
     // Fetch number of likeCount directly when retrieving post without initialising likes

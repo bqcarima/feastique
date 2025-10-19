@@ -7,7 +7,7 @@ import jakarta.persistence.*
 
 
 @Entity
-@Table(name = "vendor_phone_number")
+@Table(name = "vendor_phone_numbers")
 class VendorPhoneNumber : PhoneNumber() {
 
     @JsonBackReference

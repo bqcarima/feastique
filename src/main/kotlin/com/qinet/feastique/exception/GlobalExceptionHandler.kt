@@ -153,7 +153,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(Exception::class)
     fun handleUncategorizedException(e: Exception): ResponseEntity<ErrorResponse> {
         val status = HttpStatus.INTERNAL_SERVER_ERROR
-        val genericErrorMessage = "An unexpected error occurred. Please contact customer support. ${e.message} "
+        val genericErrorMessage = "An unexpected error occurred. Please contact customer support. ${e.message}"
         return ResponseEntity(
             ErrorResponse.fromMessage(status, genericErrorMessage),
             status

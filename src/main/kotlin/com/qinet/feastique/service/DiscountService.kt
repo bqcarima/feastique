@@ -10,6 +10,7 @@ import com.qinet.feastique.repository.vendor.VendorRepository
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 @Service
 class DiscountService(
@@ -18,7 +19,7 @@ class DiscountService(
 ) {
 
     @Transactional(readOnly = true)
-    fun getDiscount(id: Long, vendorDetails: UserSecurity): Discount {
+    fun getDiscount(id: UUID, vendorDetails: UserSecurity): Discount {
         val discount = discountRepository.findById(id)
             .orElseThrow { RequestedEntityNotFoundException("No discount found for id: $id") }
             .also {
@@ -36,7 +37,7 @@ class DiscountService(
             .takeIf { it.isNotEmpty() }
             ?: throw RequestedEntityNotFoundException("No discounts found for the vendor ${vendorDetails.id}")
 
-        require(discounts.all { it ->
+        require(discounts.all {
             it.vendor.id == vendorDetails.id
         }) {
             throw PermissionDeniedException("You (vendor ${vendorDetails.id}) does not have the permission to access these discounts.")
@@ -49,7 +50,7 @@ class DiscountService(
         discountRepository.findFirstByDiscountNameIgnoreCaseAndVendorId(discountName, vendorDetails.id) != null
 
     @Transactional
-    fun deleteDiscount(id: Long, vendorDetails: UserSecurity) {
+    fun deleteDiscount(id: UUID, vendorDetails: UserSecurity) {
         val discount = getDiscount(id, vendorDetails)
         discountRepository.delete(discount)
     }

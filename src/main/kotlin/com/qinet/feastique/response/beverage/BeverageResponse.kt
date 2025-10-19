@@ -1,7 +1,9 @@
-package com.qinet.feastique.response
+package com.qinet.feastique.response.beverage
+
+import java.util.UUID
 
 data class BeverageResponse(
-    val id: Long,
+    val id: UUID,
     val beverageName: String,
     val alcoholic: Boolean,
     val percentage: Int,

@@ -28,6 +28,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Service
 class VendorService(
@@ -43,7 +44,7 @@ class VendorService(
 ) {
 
     @Transactional(readOnly = true)
-    fun getVendorById(vendorId: Long): Vendor {
+    fun getVendorById(vendorId: UUID): Vendor {
         return vendorRepository.findById(vendorId)
             .orElseThrow {
                 UserNotFoundException("Vendor not found.")
@@ -119,7 +120,7 @@ class VendorService(
                 savedVendor.address = savedAddress
 
                 // Update the vendor with a foreign key reference in the address table
-                savedVendor = saveVendor(vendor)
+                savedVendor = saveVendor(savedVendor)
                 return savedVendor
             } else {
                 throw PhoneNumberUnavailableException()
@@ -172,11 +173,11 @@ class VendorService(
         if (oldUsername != savedVendor.username) {
 
             // delete old refresh token and old session
-            userSessionService.resetSessions(savedVendor.id!!, savedVendor.accountType.toString())
+            userSessionService.resetSessions(savedVendor.id, savedVendor.accountType.toString())
 
             // Generate a new token par.
             val newTokenPair = jwtUtility.generateTokenPair(
-                savedVendor.id!!,
+                savedVendor.id,
                 savedVendor.username,
                 savedVendor.accountType ?: AccountType.VENDOR
             )

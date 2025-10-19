@@ -10,6 +10,7 @@ import com.qinet.feastique.repository.vendor.VendorRepository
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 import kotlin.collections.any
 
 @Service
@@ -19,7 +20,7 @@ class PostService (
 ) {
 
     @Transactional(readOnly = true)
-    fun getPostById(id: Long, vendorDetails: UserSecurity): Post {
+    fun getPostById(id: UUID, vendorDetails: UserSecurity): Post {
         val post = postRepository.findById(id)
             .orElseThrow { RequestedEntityNotFoundException("No posts found with id $id") }
             .also {
@@ -45,7 +46,7 @@ class PostService (
     }
 
     @Transactional
-    fun deletePost(id: Long, vendorDetails: UserSecurity) {
+    fun deletePost(id: UUID, vendorDetails: UserSecurity) {
         val post = getPostById(id, vendorDetails)
         postRepository.delete(post)
     }

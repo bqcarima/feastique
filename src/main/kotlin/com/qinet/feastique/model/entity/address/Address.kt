@@ -1,14 +1,16 @@
 package com.qinet.feastique.model.entity.address
 
+import com.github.f4b6a3.uuid.UuidCreator
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
+import java.util.UUID
 
 @MappedSuperclass
 abstract class Address {
     @Id
-    @GeneratedValue
-    var id: Long? = null
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
+    var id: UUID = UuidCreator.getTimeOrdered()
 
     var country: String = "Cameroon"
 

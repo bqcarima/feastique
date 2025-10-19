@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/vendors/{vendorId}/account")
@@ -21,7 +22,7 @@ class VendorController(
 ) {
     @PutMapping("/profile")
     fun updateProfile(
-        @PathVariable vendorId: Long,
+        @PathVariable vendorId: UUID,
         @RequestBody @Valid vendorUpdateDto: VendorUpdateDto,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
@@ -33,7 +34,7 @@ class VendorController(
 
     @PostMapping("/password")
     fun changePassword(
-        @PathVariable vendorId: Long,
+        @PathVariable vendorId: UUID,
         @RequestBody @Valid passwordDto: PasswordDto,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
@@ -45,7 +46,7 @@ class VendorController(
 
     @GetMapping("/me")
     fun getAccountDetails(
-        @PathVariable vendorId: Long,
+        @PathVariable vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<VendorMinimalResponse> {

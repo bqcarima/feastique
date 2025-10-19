@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/vendors/{vendorId}/add_on")
@@ -21,7 +22,7 @@ class AddOnController(
 
     @PutMapping
     fun addOrUpdateAddOn (
-        @PathVariable vendorId: Long,
+        @PathVariable vendorId: UUID,
         @RequestBody
         @Valid addOnDto: AddOnDto,
         @AuthenticationPrincipal vendorDetails: UserSecurity
@@ -34,8 +35,8 @@ class AddOnController(
 
     @DeleteMapping("/{id}")
     fun deleteAddOn(
-        @PathVariable id: Long,
-        @PathVariable vendorId: Long,
+        @PathVariable id: UUID,
+        @PathVariable vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<String> {
@@ -46,7 +47,7 @@ class AddOnController(
 
     @GetMapping
     fun getAllAddOns(
-        @PathVariable vendorId: Long,
+        @PathVariable vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<List<AddOnResponse>> {

@@ -2,32 +2,34 @@ package com.qinet.feastique.common.mapper
 
 import com.qinet.feastique.model.entity.addOn.AddOn
 import com.qinet.feastique.model.entity.addOn.FoodAddOn
-import com.qinet.feastique.model.entity.addOn.OrderAddOn
 import com.qinet.feastique.model.entity.address.Address
 import com.qinet.feastique.model.entity.address.CustomerAddress
 import com.qinet.feastique.model.entity.beverage.Beverage
-import com.qinet.feastique.model.entity.beverage.OrderBeverage
 import com.qinet.feastique.model.entity.complement.Complement
 import com.qinet.feastique.model.entity.complement.FoodComplement
 import com.qinet.feastique.model.entity.discount.Discount
 import com.qinet.feastique.model.entity.discount.FoodDiscount
 import com.qinet.feastique.model.entity.food.*
-import com.qinet.feastique.model.entity.order.FoodOrder
+import com.qinet.feastique.model.entity.order.Order
+import com.qinet.feastique.model.entity.order.beverage.BeverageOrderItem
+import com.qinet.feastique.model.entity.order.food.FoodOrderItem
 import com.qinet.feastique.model.entity.phoneNumber.PhoneNumber
 import com.qinet.feastique.model.entity.phoneNumber.VendorPhoneNumber
 import com.qinet.feastique.model.entity.post.Post
 import com.qinet.feastique.model.entity.user.Customer
 import com.qinet.feastique.model.entity.user.Vendor
-import com.qinet.feastique.model.enums.BeverageGroup
 import com.qinet.feastique.model.enums.OrderStatus
 import com.qinet.feastique.model.enums.Size
 import com.qinet.feastique.response.*
 import com.qinet.feastique.response.address.AddressResponse
 import com.qinet.feastique.response.address.CustomerAddressResponse
+import com.qinet.feastique.response.beverage.BeverageItemResponse
+import com.qinet.feastique.response.beverage.BeverageResponse
 import com.qinet.feastique.response.food.*
 import com.qinet.feastique.response.order.FoodOrderCustomerResponse
-import com.qinet.feastique.response.order.FoodOrderResponse
+import com.qinet.feastique.response.order.FoodOrderItemResponse
 import com.qinet.feastique.response.order.FoodOrderVendorResponse
+import com.qinet.feastique.response.order.OrderResponse
 import com.qinet.feastique.response.vendor.VendorMinimalResponse
 import com.qinet.feastique.response.vendor.VendorResponse
 import java.text.SimpleDateFormat
@@ -40,7 +42,7 @@ import java.util.*
  * @return [AddOnResponse] DTO with id, name, and price.
  */
 fun AddOn.toResponse() = AddOnResponse(
-    id = this.id ?: 0,
+    id = this.id,
     addOnName = this.addOnName.orEmpty(),
     price = this.price ?: 0
 )
@@ -52,7 +54,7 @@ fun AddOn.toResponse() = AddOnResponse(
  * @return [Address] DTO with id, country, region, city, neighbourhood, street name, directions and location.
  */
 fun Address.toResponse(): AddressResponse = AddressResponse(
-    id = id ?: 0,
+    id = id,
     country = country,
     region = region ?: "Not selected",
     city = city ?: "Not selected",
@@ -62,8 +64,14 @@ fun Address.toResponse(): AddressResponse = AddressResponse(
     location = listOf(longitude ?: "0.0", latitude ?: "0.0")
 )
 
+/**
+ * Maps a [CustomerAddress] entity to its API DTO [CustomerAddressResponse].
+ *
+ * @receiver `CustomerAddress` entity to map from.
+ * @return [CustomerAddressResponse] DTO with id, country, region, etc.
+ */
 fun CustomerAddress.toResponse(): CustomerAddressResponse = CustomerAddressResponse(
-    id = id ?: 0,
+    id = id ,
     country = country,
     region = region ?: "Not selected",
     city = city ?: "Not selected",
@@ -81,13 +89,26 @@ fun CustomerAddress.toResponse(): CustomerAddressResponse = CustomerAddressRespo
  * @return [BeverageResponse] DTO with id, name, and price.
  */
 fun Beverage.toResponse() = BeverageResponse(
-    id = id ?: 0,
+    id = id,
     beverageName = beverageName.orEmpty(),
     alcoholic = alcoholic ?: false,
-    beverageGroup = beverageName.orEmpty(),
+    beverageGroup = beverageGroup.orEmpty(),
     percentage = percentage ?: 0,
     price = price ?: 0,
     delivery = delivery ?: false,
+)
+
+/**
+ * Maps a [BeverageOrderItem] entity to an API DTO [BeverageItemResponse].
+ *
+ * @receiver `BeverageOrderItem` entity to map from.
+ * @return [BeverageItemResponse] DTO with id, beverage name, quantity, and total amount.
+ */
+fun BeverageOrderItem.toBeverageItemResponse() = BeverageItemResponse(
+    id = id,
+    beverageName = beverage.beverageName.orEmpty(),
+    quantity = quantity ?: 0,
+    totalAmount = totalAmount ?: 0
 )
 
 /**
@@ -97,7 +118,7 @@ fun Beverage.toResponse() = BeverageResponse(
  * @return [ComplementResponse] DTO with id, name, and price.
  */
 fun Complement.toResponse() = ComplementResponse(
-    id = id ?: 0,
+    id = id,
     name = complementName.orEmpty(),
     price = price ?: 0
 )
@@ -106,10 +127,10 @@ fun Complement.toResponse() = ComplementResponse(
  * Converts a [Customer] entity to its API response DTO [CustomerResponse].
  *
  * @receiver `Customer` entity to map from.
- * @return [CustomerResponse] DTO with id, name, etc.
+ * @return [CustomerResponse] DTO with id, first name, last name, etc.
  */
 fun Customer.toResponse(): CustomerResponse = CustomerResponse(
-    id = id ?: 0,
+    id = id,
     username = username,
     firstName = firstName.orEmpty(),
     lastName = lastName.orEmpty(),
@@ -127,10 +148,10 @@ fun Customer.toResponse(): CustomerResponse = CustomerResponse(
  * Converts a [Customer] entity to its API response DTO [FoodOrderCustomerResponse].
  * Show minimal customer details when viewing an order.
  * @receiver `Customer` entity to map from.
- * @return [FoodOrderCustomerResponse] DTO with id, name, etc.
+ * @return [FoodOrderCustomerResponse] DTO with id, name, and only relevant information.
  */
 fun Customer.orderResponse(): FoodOrderCustomerResponse = FoodOrderCustomerResponse(
-    id = id ?: 0,
+    id = id,
     username = username,
     firstName = firstName.orEmpty(),
     lastName = lastName.orEmpty(),
@@ -145,7 +166,7 @@ val dateFormatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
  * @return [DiscountResponse] DTO with id, discount name, percentage, start date, end date, and parent food id.
  */
 fun Discount.toResponse(): DiscountResponse = DiscountResponse(
-    id = id ?: 0,
+    id = id,
     discountName = discountName.orEmpty(),
     percentage = percentage ?: 0,
     startDate = startDate ?: dateFormatter.parse("00-00-000"),
@@ -166,9 +187,10 @@ fun Discount.toResponse(): DiscountResponse = DiscountResponse(
  * @return [FoodResponse] DTO representing full food details for API.
  */
 fun Food.toResponse() = FoodResponse(
-    id = id ?: 0,
+    id = id,
+    foodNumber = foodNumber.orEmpty(),
     foodName = foodName.orEmpty(),
-    vendorId = vendor.id ?: 0,
+    vendorId = vendor.id,
     vendorName = vendor.chefName.orEmpty(),
     mainCourse = mainCourse.orEmpty(),
     description = description.orEmpty(),
@@ -180,9 +202,9 @@ fun Food.toResponse() = FoodResponse(
     // Map each related entity collection to its response DTO
     images = this.foodImage.map { image ->
         FoodImageResponse(
-            id = image.id ?: 0,
+            id = image.id,
             imageUrl = image.imageUrl.orEmpty(),
-            foodId = id ?: 0 // use parent food id, not image.food.id
+            foodId = id // use parent food id, not image.food.id
         )
     },
     size = foodSize.map { it.toResponse() },
@@ -203,13 +225,14 @@ fun Food.toResponse() = FoodResponse(
  * @return [FoodMinimalResponse] DTO representing little food details for API.
  */
 fun Food.toMinimalResponse(): FoodMinimalResponse = FoodMinimalResponse (
-    id = id ?: 0,
+    id = id,
     foodName = foodName.orEmpty(),
     mainCourse = mainCourse.orEmpty(),
+    basePrice = basePrice ?: 0
 )
 
 fun FoodAddOn.toResponse() = AddOnResponse(
-    id = addOn.id ?: 0,
+    id = addOn.id,
     addOnName = addOn.addOnName.orEmpty(),
     price = addOn.price ?: 0
 )
@@ -221,7 +244,7 @@ fun FoodAddOn.toResponse() = AddOnResponse(
  * @return [FoodAvailabilityResponse] DTO with id, and name.
  */
 fun FoodAvailability.toResponse() = FoodAvailabilityResponse(
-    id = this.id ?: 0,
+    id = this.id,
     availability = this.availability.orEmpty()
 )
 
@@ -233,7 +256,7 @@ fun FoodAvailability.toResponse() = FoodAvailabilityResponse(
  * @return [ComplementResponse] DTO.
  */
 fun FoodComplement.toResponse() = ComplementResponse(
-    id = complement.id ?: 0,
+    id = complement.id,
     name = complement.complementName.orEmpty(),
     price = complement.price ?: 0,
 
@@ -246,7 +269,7 @@ fun FoodComplement.toResponse() = ComplementResponse(
  * @return [FoodDiscountResponse] DTO with id, discount name, percentage, start date, end date,  and active status.
  */
 fun FoodDiscount.toResponse(): FoodDiscountResponse = FoodDiscountResponse(
-    id = id ?: 0,
+    id = id,
     discountName = discount.discountName.orEmpty(),
     percentage = discount.percentage ?: 0,
     startDate = discount.startDate ?: dateFormatter.parse("00-00-000"),
@@ -261,9 +284,9 @@ fun FoodDiscount.toResponse(): FoodDiscountResponse = FoodDiscountResponse(
  * @return [FoodImageResponse] DTO with id, URL, and parent food id.
  */
 fun FoodImage.toResponse(): FoodImageResponse = FoodImageResponse(
-    id = id ?: 0,
+    id = id,
     imageUrl = imageUrl.orEmpty(),
-    foodId = food.id ?: 0
+    foodId = food.id
 )
 
 /**
@@ -273,35 +296,25 @@ fun FoodImage.toResponse(): FoodImageResponse = FoodImageResponse(
  * @return [FoodOrderTypeResponse] DTO with id, parent food id, and order type string.
  */
 fun FoodOrderType.toResponse(): FoodOrderTypeResponse = FoodOrderTypeResponse(
-    id = id ?: 0,
-    foodId = food.id ?: 0,
+    id = id,
+    foodId = food.id,
     orderType = orderType.orEmpty()
 )
 
 /**
- * Converts a [FoodOrder] entity to its API response DTO [FoodOrderResponse].
+ * Converts a [FoodOrderItem] entity to its API response DTO [FoodOrderItemResponse].
  *
- * @receiver `FoodOrder` entity to map from.
- * @return [FoodOrderResponse] DTO with id, customer details, etc.
+ * @receiver `FoodOrderItem` entity to map from.
+ * @return [FoodOrderItemResponse] DTO with id, customer details, etc.
  */
-fun FoodOrder.toResponse(): FoodOrderResponse = FoodOrderResponse(
-    id = id ?: 0,
-    customer = customer.orderResponse(),
-    vendor = vendor.orderResponse(),
+fun FoodOrderItem.toResponse(): FoodOrderItemResponse = FoodOrderItemResponse(
+    id = id,
     food = food.toMinimalResponse(),
-    orderStatus = orderStatus ?: OrderStatus.PENDING,
     complement = complement.toResponse(),
     size = size.toResponse(),
-    orderAddOn = orderAddon.map { it.toResponse() },
-    orderBeverage = orderBeverage.map { it.toResponse() },
-    customerAddress = customerAddress.toResponse(),
-    vendorAddress = vendorAddress.toResponse(),
-    placementTime = placementTime,
-    deliveryTime = deliveryTime,
-    discounts = orderDiscount.map { it.discount.toResponse() },
+    addOn = addOns.map { it.toResponse() },
+    discounts = appliedDiscounts.map { it.discount.toResponse() },
     totalAmount = totalAmount ?: 0,
-    orderType = orderType,
-    completedTime = completedTime
 )
 
 /**
@@ -311,41 +324,56 @@ fun FoodOrder.toResponse(): FoodOrderResponse = FoodOrderResponse(
  * @return [FoodSizeResponse] DTO with id and size string.
  */
 fun FoodSize.toResponse(): FoodSizeResponse = FoodSizeResponse(
-    id = id ?: 0,
+    id = id,
     size = size ?: Size.MEDIUM,
     priceIncrease = priceIncrease ?: 0
 )
 
-fun OrderAddOn.toResponse(): AddOnResponse = AddOnResponse(
-    id = addOn.id ?: 0,
-    addOnName = addOn.addOnName.orEmpty(),
-    price = addOn.price ?: 0
+
+/**
+ * Maps an [Order] entity to its API DTO [OrderResponse].
+ *
+ * @receiver `FoodAvailability` entity to map from.
+ * @return [OrderResponse] DTO with id, userOrderCode etc.
+ */
+fun Order.toResponse(): OrderResponse = OrderResponse(
+    id = id,
+    userOrderCode = userOrderCode.orEmpty(),
+    customer = customer.orderResponse(),
+    vendor = vendor.orderResponse(),
+    foodOrderItems = foodOrderItems.map { it.toResponse() },
+    beverageOrderItems = beverageOrderItems.map { it.toBeverageItemResponse() },
+    orderType = orderType,
+    deliveryFee = deliveryFee ?: 0,
+    orderStatus = orderStatus ?: OrderStatus.PENDING,
+    totalAmount = totalAmount ?: 0,
+    placementTime = placementTime,
+    responseTime = responseTime,
+    deliveryTime = deliveryTime,
+    completedTime = completedTime,
+    customerAddress = customerAddress?.toResponse()
 )
 
-fun OrderBeverage.toResponse(): BeverageResponse = BeverageResponse(
-    id = beverage.id ?: 0,
-    beverageName = beverage.beverageName.orEmpty(),
-    alcoholic = beverage.alcoholic ?: false,
-    percentage = beverage.percentage ?: 0,
-    beverageGroup = beverage.beverageGroup ?: BeverageGroup.OTHER.name,
-    price = beverage.price ?: 0,
-    delivery = beverage.delivery ?: false,
-)
-
+/**
+ * Maps a [PhoneNumber] entity to its API DTO [PhoneNumberResponse].
+ *
+ * @receiver `PhoneNumber` entity to map from.
+ * @return [OrderResponse] DTO with id, phone number etc.
+ */
 fun PhoneNumber.toResponse(): PhoneNumberResponse = PhoneNumberResponse(
-    id = id ?: 0,
+    id = id,
     phoneNumber = phoneNumber.orEmpty(),
     default = default ?: false
 )
 
 /**
- * Maps a [Post] entity to its response DTO.
+ * Maps a [Post] entity to a response DTO.
  *
  * @receiver `Post` entity to map from.
  * @return [PostResponse] DTO with id, title, body, image, likes and created date.
  */
 fun Post.toResponse(): PostResponse = PostResponse(
-    id = id ?: 0,
+    id = id,
     title = title.orEmpty(),
     body = body.orEmpty(),
     image = image.orEmpty(),
@@ -354,19 +382,25 @@ fun Post.toResponse(): PostResponse = PostResponse(
 )
 
 /**
- * Maps a [PhoneNumber] entity to its response DTO.
+ * Maps a [VendorPhoneNumber] entity to its response DTO.
  *
- * @receiver `PhoneNumber` entity to map from.
- * @return [PhoneNumberResponse] DTO with id and size string, and its default status.
+ * @receiver `VendorPhoneNumber` entity to map from.
+ * @return [PhoneNumberResponse] DTO with id and phoneNumber string, and its default status.
  */
 fun VendorPhoneNumber.toResponse(): PhoneNumberResponse = PhoneNumberResponse(
-    id = id ?: 0,
+    id = id,
     phoneNumber = phoneNumber.orEmpty(),
     default = default ?: false
 )
 
+/**
+ * Maps a [Vendor] entity to its API DTO [VendorResponse].
+ *
+ * @receiver `Vendor` entity to map from.
+ * @return [VendorResponse] DTO with id, username, chef name etc.
+ */
 fun Vendor.toResponse(): VendorResponse = VendorResponse(
-    id = id ?: 0,
+    id = id,
     username = username,
     firstName = firstName.orEmpty(),
     lastName = lastName.orEmpty(),
@@ -385,6 +419,13 @@ fun Vendor.toResponse(): VendorResponse = VendorResponse(
     discount = discount.map { it.toResponse() },
 )
 
+
+/**
+ * Maps a [Vendor] entity to its API DTO [VendorMinimalResponse].
+ *
+ * @receiver `Vendor` entity to map from.
+ * @return [VendorMinimalResponse] DTO with id, username, chef name. and reduced information.
+ */
 fun Vendor.toMinimalResponse(): VendorMinimalResponse = VendorMinimalResponse(
     username = username,
     firstName = firstName.orEmpty(),
@@ -402,10 +443,10 @@ fun Vendor.toMinimalResponse(): VendorMinimalResponse = VendorMinimalResponse(
  * Converts a [Vendor] entity to its API response DTO [FoodOrderVendorResponse].
  *
  * @receiver `Vendor` entity to map from.
- * @return [FoodOrderVendorResponse] DTO with id, name, etc.
+ * @return [FoodOrderVendorResponse] DTO with id, name, and only necessary information..
  */
 fun Vendor.orderResponse(): FoodOrderVendorResponse = FoodOrderVendorResponse(
-    id = id ?: 0,
+    id = id,
     username = username,
     chefName = chefName.orEmpty(),
     restaurantName = restaurantName.orEmpty()

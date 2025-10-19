@@ -1,7 +1,9 @@
 package com.qinet.feastique.response.address
 
+import java.util.UUID
+
 data class CustomerAddressResponse(
-    val id: Long,
+    val id: UUID,
     val country: String,
     val region: String,
     val city: String,

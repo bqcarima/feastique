@@ -1,9 +1,10 @@
 package com.qinet.feastique.response
 
 import java.util.Date
+import java.util.UUID
 
 data class PostResponse(
-    val id: Long,
+    val id: UUID,
     val title: String,
     val body: String,
     val image: String,

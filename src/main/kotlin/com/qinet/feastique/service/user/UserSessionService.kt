@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.Date
+import java.util.UUID
 
 @Service
 class UserSessionService(
@@ -16,7 +17,7 @@ class UserSessionService(
     ) {
     fun createSession(
         tokenIdentifier: String,
-        userId: Long,
+        userId: UUID,
         userType: String,
         expiresAtEpocMillis: Long
     ): UserSession {
@@ -54,11 +55,12 @@ class UserSessionService(
         }
     }
 
-    fun deleteAllSessionsForUser(userId: Long, userType: String ) {
+    fun deleteAllSessionsForUser(userId: UUID, userType: String ) {
         userSessionRepository.deleteByUserIdAndUserType(userId, userType)
     }
 
-    fun resetSessions(userId: Long, userType: String) {
+    @Transactional
+    fun resetSessions(userId: UUID, userType: String) {
 
         // Remove refresh tokens
         when(userType) {
@@ -71,7 +73,7 @@ class UserSessionService(
 
     /**
      * Cleanup expired sessions. This method deletes sessions whose expiry is before the provided threshold.
-     * By default it removes sessions already expired at the moment of invocation.
+     * By default, it removes sessions already expired at the moment of invocation.
      *
      * Optional: annotate a scheduled cron or fixedDelay to run periodically.
      */

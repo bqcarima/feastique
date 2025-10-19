@@ -1,7 +1,9 @@
 package com.qinet.feastique.response.order
 
+import java.util.UUID
+
 data class FoodOrderVendorResponse(
-    val id: Long,
+    val id: UUID,
     val username: String,
     val chefName: String,
     val restaurantName: String,

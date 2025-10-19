@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/vendors/{vendorId}/discounts")
@@ -21,7 +22,7 @@ class DiscountController(
 
     @PutMapping
     fun addOrUpdateDiscount(
-        @PathVariable vendorId: Long,
+        @PathVariable vendorId: UUID,
         @RequestBody
         @Valid discountDto: DiscountDto,
         @AuthenticationPrincipal vendorDetails: UserSecurity
@@ -34,8 +35,8 @@ class DiscountController(
 
     @GetMapping("/{id}")
     fun getDiscount(
-        @PathVariable id: Long,
-        @PathVariable vendorId: Long,
+        @PathVariable id: UUID,
+        @PathVariable vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<DiscountResponse> {
@@ -46,7 +47,7 @@ class DiscountController(
 
     @GetMapping
     fun getAllDiscounts(
-        @PathVariable vendorId: Long,
+        @PathVariable vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<List<DiscountResponse>> {
@@ -57,8 +58,8 @@ class DiscountController(
 
     @DeleteMapping("/{id}")
     fun deleteDiscount(
-        @PathVariable vendorId: Long,
-        @PathVariable id: Long,
+        @PathVariable vendorId: UUID,
+        @PathVariable id: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<String> {
@@ -69,7 +70,7 @@ class DiscountController(
 
     @DeleteMapping("/all")
     fun deleteAllDiscounts(
-        @PathVariable vendorId: Long,
+        @PathVariable vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<String> {

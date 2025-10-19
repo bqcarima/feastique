@@ -12,6 +12,7 @@ import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.utility.DuplicateUtility
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 @Service
 class ComplementService(
@@ -21,7 +22,7 @@ class ComplementService(
 ) {
 
     @Transactional(readOnly = true)
-    fun getComplement(id: Long, vendorDetails: UserSecurity): Complement {
+    fun getComplement(id: UUID, vendorDetails: UserSecurity): Complement {
         val complement = complementRepository.findById(id)
             .orElseThrow { RequestedEntityNotFoundException("No discount found for id: $id") }
             .also {
@@ -45,13 +46,8 @@ class ComplementService(
         return complements
     }
 
-    @Transactional(readOnly = true)
-    fun getDuplicates(complementName: String, vendorDetails: UserSecurity): Boolean =
-        complementRepository.findFirstByComplementNameIgnoreCaseAndVendorId(complementName, vendorDetails.id) != null
-
-
     @Transactional
-    fun deleteComplement(id: Long, vendorDetails: UserSecurity) {
+    fun deleteComplement(id: UUID, vendorDetails: UserSecurity) {
         val complement = getComplement(id, vendorDetails)
         if (complement.vendor.id != vendorDetails.id) {
             throw PermissionDeniedException("You do not have the permission to delete this complement.")

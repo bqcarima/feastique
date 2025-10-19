@@ -8,9 +8,10 @@ import com.qinet.feastique.response.DiscountResponse
 import com.qinet.feastique.response.PhoneNumberResponse
 import com.qinet.feastique.response.food.FoodResponse
 import java.util.Date
+import java.util.UUID
 
 data class VendorResponse(
-    val id: Long,
+    val id: UUID,
     val username: String,
     val firstName: String,
     val lastName: String,
@@ -27,4 +28,5 @@ data class VendorResponse(
     val addOn: List<AddOnResponse>,
     val complement: List<ComplementResponse>,
     val discount: List<DiscountResponse>,
-    )
+)
+

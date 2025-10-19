@@ -1,12 +1,12 @@
 package com.qinet.feastique.model.dto
 
-import jakarta.persistence.Column
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
+import java.util.*
 
 data class AddressDto(
 
-    var id: Long? = null,
+    var id: UUID? = null,
     var country: String = "Cameroon",
 
     @field:NotBlank(message = "Region cannot be null.")

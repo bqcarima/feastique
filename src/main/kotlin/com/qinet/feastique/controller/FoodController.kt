@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/vendors/{vendorId}/foods")
@@ -21,7 +22,7 @@ class FoodController(
 
     @PutMapping
     fun addOrUpdateFood(
-        @PathVariable vendorId: Long,
+        @PathVariable vendorId: UUID,
         @RequestBody
         @Valid foodDto: FoodDto,
         @AuthenticationPrincipal vendorDetails: UserSecurity
@@ -34,8 +35,8 @@ class FoodController(
 
     @DeleteMapping("/{id}")
     fun deleteFood(
-        @PathVariable id: Long,
-        @PathVariable vendorId: Long,
+        @PathVariable id: UUID,
+        @PathVariable vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<String> {
@@ -46,8 +47,8 @@ class FoodController(
 
     @GetMapping("/{id}")
     fun getFood(
-        @PathVariable id: Long,
-        @PathVariable vendorId: Long,
+        @PathVariable id: UUID,
+        @PathVariable vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<FoodResponse> {
@@ -58,7 +59,7 @@ class FoodController(
 
     @GetMapping
     fun getAllFood(
-        @PathVariable vendorId: Long,
+        @PathVariable vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<List<FoodResponse>> {

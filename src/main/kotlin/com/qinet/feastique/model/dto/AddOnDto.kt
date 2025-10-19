@@ -4,10 +4,11 @@ import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
+import java.util.UUID
 
 data class AddOnDto (
 
-    var id: Long? = null,
+    var id: UUID? = null,
 
     @field:NotBlank(message = "AddOn name cannot be null.")
     @field:NotEmpty(message = "AddOn name cannot be empty.")

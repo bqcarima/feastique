@@ -3,32 +3,33 @@ package com.qinet.feastique.controller
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.order.FoodOrderDto
 import com.qinet.feastique.model.dto.order.FoodOrderUpdateDto
-import com.qinet.feastique.response.order.FoodOrderResponse
+import com.qinet.feastique.response.order.OrderResponse
 import com.qinet.feastique.security.UserSecurity
-import com.qinet.feastique.service.order.FoodOrderService
+import com.qinet.feastique.service.order.OrderService
 import com.qinet.feastique.utility.SecurityUtility
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api")
 class OrderController(
-    private val foodOrderService: FoodOrderService,
+    private val orderService: OrderService,
     private val securityUtility: SecurityUtility
 ) {
     @PutMapping("/customers/{customerId}/orders")
     fun placeOrder(
-        @PathVariable customerId:Long,
+        @PathVariable customerId: UUID,
         @RequestBody @Valid foodOrderDto: FoodOrderDto,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
-    ) : ResponseEntity<FoodOrderResponse> {
+    ) : ResponseEntity<OrderResponse> {
         securityUtility.validatePath(customerId, customerDetails)
-        val foodOrder = foodOrderService.placeFoodOrder(foodOrderDto, customerDetails)
-        return ResponseEntity(foodOrder.toResponse(), HttpStatus.CREATED)
+        val order = orderService.placeFoodOrder(foodOrderDto, customerDetails)
+        return ResponseEntity(order.toResponse(), HttpStatus.CREATED)
     }
 
     @PutMapping(
@@ -38,16 +39,16 @@ class OrderController(
         ]
     )
     fun cancelOrUpdateOrder(
-        @PathVariable id: Long,
-        @PathVariable(required = false) customerId: Long?,
-        @PathVariable(required = false) vendorId: Long?,
+        @PathVariable id: UUID,
+        @PathVariable(required = false) customerId: UUID?,
+        @PathVariable(required = false) vendorId: UUID?,
         @RequestBody @Valid foodOrderUpdateDto: FoodOrderUpdateDto,
         @AuthenticationPrincipal userDetails: UserSecurity
 
     ) : ResponseEntity<String> {
-        val pathId = customerId ?:vendorId
+        val pathId = customerId ?: vendorId
         securityUtility.validatePath(pathId!!, userDetails)
-        foodOrderService.cancelOrUpdateOrder(id, foodOrderUpdateDto, userDetails)
+        orderService.cancelOrUpdateOrder(id, foodOrderUpdateDto, userDetails)
         return ResponseEntity("Order updated successfully.", HttpStatus.OK)
     }
 
@@ -58,15 +59,15 @@ class OrderController(
         ]
     )
     fun deleteOrder(
-        @PathVariable id: Long,
-        @PathVariable(required = false) customerId: Long?,
-        @PathVariable(required = false) vendorId: Long?,
+        @PathVariable id: UUID,
+        @PathVariable(required = false) customerId: UUID?,
+        @PathVariable(required = false) vendorId: UUID?,
         @AuthenticationPrincipal userDetails: UserSecurity
 
     ) : ResponseEntity<String> {
         val pathId = customerId ?: vendorId
         securityUtility.validatePath(pathId!!, userDetails)
-        foodOrderService.deleteOrder(id, userDetails)
+        orderService.deleteOrder(id, userDetails)
         return ResponseEntity("Order deleted successfully.", HttpStatus.OK)
     }
 
@@ -77,15 +78,15 @@ class OrderController(
         ]
     )
     fun getOrder(
-        @PathVariable id: Long,
-        @PathVariable(required = false) customerId: Long?,
-        @PathVariable(required = false) vendorId: Long?,
+        @PathVariable id: UUID,
+        @PathVariable(required = false) customerId: UUID?,
+        @PathVariable(required = false) vendorId: UUID?,
         @AuthenticationPrincipal userDetails: UserSecurity
 
-    ) : ResponseEntity<FoodOrderResponse> {
+    ) : ResponseEntity<OrderResponse> {
         val pathId = customerId ?: vendorId
         securityUtility.validatePath(pathId!!, userDetails)
-        val order = foodOrderService.getOrder(pathId, userDetails)
+        val order = orderService.getOrder(pathId, userDetails)
         return ResponseEntity(order?.toResponse(), HttpStatus.OK)
     }
 
@@ -96,14 +97,15 @@ class OrderController(
         ]
     )
     fun getAllOrders(
-        @PathVariable(required = false) customerId: Long?,
-        @PathVariable(required = false) vendorId: Long?,
+        @PathVariable(required = false) customerId: UUID?,
+        @PathVariable(required = false) vendorId: UUID?,
         @AuthenticationPrincipal userDetails: UserSecurity
 
-    ) : ResponseEntity<List<FoodOrderResponse>> {
+    ) : ResponseEntity<List<OrderResponse>> {
         val pathId = customerId ?: vendorId
         securityUtility.validatePath(pathId!!, userDetails)
-        val orders = foodOrderService.getAllOrders(userDetails)
+        val orders = orderService.getAllOrders(userDetails)
         return ResponseEntity(orders.map {it.toResponse()}, HttpStatus.OK)
     }
 }
+
