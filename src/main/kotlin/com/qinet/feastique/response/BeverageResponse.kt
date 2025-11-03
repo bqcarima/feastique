@@ -1,4 +1,4 @@
-package com.qinet.feastique.response.beverage
+package com.qinet.feastique.response
 
 import java.util.UUID
 

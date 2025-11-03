@@ -48,11 +48,11 @@ class VendorAddressService(
                 }
 
         address.country = addressDto.country
-        address.region = addressDto.region ?: throw IllegalArgumentException("Please select a region.")
-        address.city = addressDto.city ?: throw IllegalArgumentException("Please enter a city.")
-        address.neighbourhood = addressDto.neighbourhood ?: throw IllegalArgumentException("Please enter a neighbourhood.")
+        address.region = requireNotNull(addressDto.region) { "Please select a region." }
+        address.city = requireNotNull(addressDto.city) { "Please enter a city." }
+        address.neighbourhood = requireNotNull(addressDto.neighbourhood) { "Please enter a neighbourhood." }
         address.streetName = addressDto.streetName
-        address.directions = addressDto.directions ?: throw IllegalArgumentException("Please enter directions to your location.")
+        address.directions = requireNotNull(addressDto.directions) { "Please enter directions to exact location." }
         address.longitude = addressDto.longitude
         address.latitude = addressDto.latitude
         address.vendor = vendor

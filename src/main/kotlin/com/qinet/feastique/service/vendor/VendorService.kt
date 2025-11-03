@@ -13,6 +13,8 @@ import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.entity.address.VendorAddress
 import com.qinet.feastique.model.entity.phoneNumber.VendorPhoneNumber
 import com.qinet.feastique.model.enums.AccountType
+import com.qinet.feastique.model.enums.Region
+import com.qinet.feastique.model.enums.RegionCode
 import com.qinet.feastique.repository.customer.CustomerPhoneNumberRepository
 import com.qinet.feastique.repository.phoneNumber.VendorPhoneNumberRepository
 import com.qinet.feastique.repository.vendor.VendorAddressRepository
@@ -62,7 +64,10 @@ class VendorService(
     fun isDuplicateFound(username: String? = null, phoneNumber: String? = null): Boolean {
         return when {
             username != null -> vendorRepository.existsByUsernameIgnoreCase(username)
-            phoneNumber != null -> (vendorPhoneNumberRepository.existsByPhoneNumber(phoneNumber) && customerPhoneNumberRepository.existsByPhoneNumber(phoneNumber))
+            phoneNumber != null -> (vendorPhoneNumberRepository.existsByPhoneNumber(phoneNumber) && customerPhoneNumberRepository.existsByPhoneNumber(
+                phoneNumber
+            ))
+
             else -> throw IllegalArgumentException("Either username or phone must be provided")
         }
     }
@@ -78,19 +83,35 @@ class VendorService(
         if (!isDuplicateFound(username = vendorSignupDto.username!!)) {
             if (!isDuplicateFound(phoneNumber = vendorSignupDto.phoneNumber)) {
                 // Information meant for the vendor table
-                val vendor = Vendor()
-                vendor.username = vendorSignupDto.username ?: throw IllegalArgumentException("Please enter a username")
-                vendor.firstName =
-                    vendorSignupDto.firstName ?: throw IllegalArgumentException("Please enter a first name.")
-                vendor.lastName =
-                    vendorSignupDto.lastName ?: throw IllegalArgumentException("Please enter a last name.")
-                vendor.username = vendorSignupDto.username ?: throw IllegalArgumentException("Please enter a username.")
-                vendor.chefName =
-                    vendorSignupDto.chefName ?: throw IllegalArgumentException("Please enter your a restaurant name.")
-                vendor.restaurantName =
-                    vendorSignupDto.restaurantName ?: throw IllegalArgumentException("Please enter your a chef name.")
-                vendor.password = passwordEncoder.encode(vendorSignupDto.password!!)
-                vendor.accountType = AccountType.VENDOR
+                val vendor = Vendor().apply {
+                    this.username = requireNotNull(vendorSignupDto.username) { "Please enter a username."}
+                    this.firstName = requireNotNull(vendorSignupDto.firstName) { "Please enter a first name."}
+                    this.lastName = requireNotNull(vendorSignupDto.lastName) { "Please enter a last name."}
+                    this.chefName = requireNotNull(vendorSignupDto.chefName) { "Please enter a chef name."}
+
+                    this.restaurantName = vendorSignupDto.restaurantName
+
+                    this.password = passwordEncoder.encode(vendorSignupDto.password!!)
+                    this.accountType = AccountType.VENDOR
+                }
+
+                val regionAsString = requireNotNull(vendorSignupDto.region) { "Please select a region." }
+                val regionAsEnum = Region.fromString(regionAsString)
+
+                vendor.region = regionAsEnum
+
+                val regionCode = RegionCode.fromString(regionAsString)
+                val lastVendor = vendorRepository.findTopByRegionOrderByVendorCodeDescWithLock(regionAsEnum)
+                    .firstOrNull()
+
+                val nextNumber = if (lastVendor != null) {
+                    val lastNumericSequence = lastVendor.vendorCode!!.takeLast(4).toInt()
+                    lastNumericSequence + 1
+                } else {
+                    1
+                }
+
+                vendor.vendorCode = "%s%04d".format(regionCode.type, nextNumber)
                 var savedVendor = saveVendor(vendor)
 
                 // Information meant for the vendor phone number table
@@ -102,19 +123,17 @@ class VendorService(
                 savedVendor.vendorPhoneNumber.add(saveVendorPhoneNumber)
 
                 // Information meant for the address table
-                val address = VendorAddress()
-                address.country = "Cameroon"
-                address.region =
-                    vendorSignupDto.region ?: throw IllegalArgumentException("Please select a region.")
-                address.city = vendorSignupDto.city ?: throw IllegalArgumentException("Please enter a username.")
-                address.neighbourhood =
-                    vendorSignupDto.neighbourhood ?: throw IllegalArgumentException("Please enter a neighbourhood.")
-                address.streetName = vendorSignupDto.streetName
-                address.directions =
-                    vendorSignupDto.directions ?: throw IllegalArgumentException("Please enter a neighbourhood.")
-                address.longitude = vendorSignupDto.longitude
-                address.latitude = vendorSignupDto.latitude
-                address.vendor = savedVendor
+                val address = VendorAddress().apply {
+                    this.country = "Cameroon"
+                    this.region = regionAsEnum
+                    this.city = requireNotNull(vendorSignupDto.city) { "Please enter a city." }
+                    this.neighbourhood = requireNotNull(vendorSignupDto.neighbourhood) { "Please enter a neighbourhood." }
+                    this.streetName = vendorSignupDto.streetName
+                    this.directions = requireNotNull(vendorSignupDto.directions) { "Please enter directions to you location"}
+                    this.longitude = vendorSignupDto.longitude
+                    this.latitude = vendorSignupDto.latitude
+                    this.vendor = savedVendor
+                }
 
                 val savedAddress = vendorAddressRepository.save(address)
                 savedVendor.address = savedAddress
@@ -146,7 +165,8 @@ class VendorService(
         val userDetails = authentication.principal as? UserSecurity
             ?: throw IllegalStateException("Unexpected principal type after authentication")
 
-        val tokenPair = jwtUtility.generateTokenPair(userDetails.id, userDetails.username, AccountType.valueOf("VENDOR"))
+        val tokenPair =
+            jwtUtility.generateTokenPair(userDetails.id, userDetails.username, AccountType.valueOf("VENDOR"))
         return tokenPair
     }
 
@@ -158,16 +178,14 @@ class VendorService(
             if (isDuplicateFound(username = vendorUpdateDto.username)) {
                 throw DuplicateFoundException("Username ${vendorUpdateDto.username} is unavailable.")
             }
-            vendor.username = vendorUpdateDto.username ?: throw IllegalArgumentException("Please enter a username.")
+            vendor.username = requireNotNull(vendorUpdateDto.username) { "Please enter a username."}
         }
 
-        vendor.firstName = vendorUpdateDto.firstName ?: throw IllegalArgumentException("Please enter a first name.")
-        vendor.lastName = vendorUpdateDto.lastName ?: throw IllegalArgumentException("Please enter a last name.")
-        vendor.chefName = vendorUpdateDto.chefName ?: throw IllegalArgumentException("Please enter a chef name.")
-        vendor.restaurantName =
-            vendorUpdateDto.restaurantName ?: throw IllegalArgumentException("Please enter a restaurant name.")
-        vendor.image = vendorUpdateDto.image ?: throw IllegalArgumentException("Please enter am image url.")
-        vendor.accountUpdated = LocalDateTime.now()
+        vendor.firstName = requireNotNull(vendorUpdateDto.firstName) { "Please enter a first name."}
+        vendor.lastName = requireNotNull(vendorUpdateDto.lastName) { "Please enter a last name."}
+        vendor.chefName = requireNotNull(vendorUpdateDto.chefName) { "Please enter a chef name."}
+        vendor.restaurantName = requireNotNull(vendorUpdateDto.restaurantName) { "Please enter a restaurant name."}
+        vendor.image = requireNotNull(vendorUpdateDto.image) { "Please select an image."}
         val savedVendor = saveVendor(vendor)
 
         if (oldUsername != savedVendor.username) {

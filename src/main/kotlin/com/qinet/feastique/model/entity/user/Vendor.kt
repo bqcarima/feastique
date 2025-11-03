@@ -8,9 +8,12 @@ import com.qinet.feastique.model.entity.complement.Complement
 import com.qinet.feastique.model.entity.discount.Discount
 import com.qinet.feastique.model.entity.food.Food
 import com.qinet.feastique.model.entity.phoneNumber.VendorPhoneNumber
+import com.qinet.feastique.model.enums.Region
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.NamedAttributeNode
 import jakarta.persistence.NamedEntityGraph
 import jakarta.persistence.NamedEntityGraphs
@@ -19,6 +22,7 @@ import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotNull
 
 @NamedEntityGraphs(
     value = [
@@ -49,11 +53,18 @@ import jakarta.validation.constraints.NotEmpty
         )
     ]
 )
-
-
 @Entity
 @Table(name = "vendors")
 class Vendor : UserEntity() {
+
+    @Column(name = "region")
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "Region cannot be empty.")
+    var region: Region? = null
+
+    @Column(name = "vendor_code")
+    @NotBlank(message = "Vendor code cannot be empty")
+    var vendorCode: String? = ""
 
     @Column(name = "chef_name")
     @NotBlank(message = "Chef name cannot be null.")
@@ -71,7 +82,7 @@ class Vendor : UserEntity() {
         cascade = [CascadeType.ALL],
         orphanRemoval = true // Automatic removal of addresses if removed from the vendor
     )
-    var addOn: MutableList<AddOn> = mutableListOf()
+    var addOn: MutableSet<AddOn> = mutableSetOf()
 
     @JsonManagedReference
     @OneToOne(
@@ -87,7 +98,7 @@ class Vendor : UserEntity() {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var food: MutableList<Food> = mutableListOf()
+    var food: MutableSet<Food> = mutableSetOf()
 
     @JsonManagedReference
     @OneToMany(
@@ -95,7 +106,7 @@ class Vendor : UserEntity() {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var vendorPhoneNumber: MutableList<VendorPhoneNumber> = mutableListOf()
+    var vendorPhoneNumber: MutableSet<VendorPhoneNumber> = mutableSetOf()
 
     @JsonBackReference
     @OneToMany(
@@ -103,7 +114,7 @@ class Vendor : UserEntity() {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var complement: MutableList<Complement> = mutableListOf()
+    var complement: MutableSet<Complement> = mutableSetOf()
 
     @JsonManagedReference
     @OneToMany(
@@ -111,6 +122,6 @@ class Vendor : UserEntity() {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var discount: MutableList<Discount> = mutableListOf()
+    var discount: MutableSet<Discount> = mutableSetOf()
 }
 

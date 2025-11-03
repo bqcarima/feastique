@@ -6,6 +6,5 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface FoodDiscountRepository : JpaRepository<FoodDiscount, UUID> {
-    fun deleteAllByDiscountIdInAndDiscount_VendorId(discountIds: List<UUID>, vendorId: UUID)
-}
+interface FoodDiscountRepository : JpaRepository<FoodDiscount, UUID>
+

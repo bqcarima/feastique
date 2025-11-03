@@ -2,7 +2,7 @@ package com.qinet.feastique.model.enums
 
 enum class RegionCode(val type: String) {
     ADAMAWA("CMO1"),
-    CENTER("CM02"),
+    CENTRE("CM02"),
     EAST("CM03"),
     FAR_NORTH("CM04"),
     LITTORAL("CM05"),
@@ -10,5 +10,12 @@ enum class RegionCode(val type: String) {
     NORTHWEST("CM07"),
     SOUTH("CM08"),
     SOUTHWEST("CM09"),
-    WEST("CM10")
+    WEST("CM10");
+
+    companion object {
+        private val lookup = RegionCode.entries.associateBy { it.name.uppercase() }
+        fun fromString(regionName: String): RegionCode =
+            lookup[regionName.uppercase()] ?: throw IllegalArgumentException("$regionName is not a valid region.")
+    }
 }
+

@@ -35,6 +35,7 @@ data class FoodDto(
     var deliveryFee: Long?,
     var foodImage: List<String>,
     var foodSizeMap: Map<Size, Long>,
+    var foodSizeName: List<String>?,
     var complementIds: List<UUID>,
     var addOnIds: List<UUID>?,
     var orderType: List<String>,

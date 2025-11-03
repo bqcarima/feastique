@@ -1,9 +1,11 @@
 package com.qinet.feastique.model.entity.address
 
 import com.github.f4b6a3.uuid.UuidCreator
+import com.qinet.feastique.model.enums.Region
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotNull
 import java.util.UUID
 
 @MappedSuperclass
@@ -14,9 +16,9 @@ abstract class Address {
 
     var country: String = "Cameroon"
 
-    @NotBlank(message = "Region cannot be null.")
-    @NotEmpty(message = "Region cannot be empty.")
-    var region: String? = ""
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "Region cannot be empty.")
+    var region: Region? = null
 
     @NotBlank(message = "City cannot be null.")
     @NotEmpty(message = "City cannot be empty.")

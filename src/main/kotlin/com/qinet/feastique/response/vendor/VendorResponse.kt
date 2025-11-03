@@ -12,6 +12,7 @@ import java.util.UUID
 
 data class VendorResponse(
     val id: UUID,
+    val vendorCode: String,
     val username: String,
     val firstName: String,
     val lastName: String,
@@ -19,7 +20,7 @@ data class VendorResponse(
     val restaurantName: String,
     val balance: Long,
     val verified: Boolean,
-    val accountType: AccountType?,
+    val accountType: String?,
     val imageUrl: String,
     val registrationDate: Date,
     val phoneNumber: List<PhoneNumberResponse>,

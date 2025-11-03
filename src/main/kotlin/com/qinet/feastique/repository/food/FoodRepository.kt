@@ -17,5 +17,6 @@ interface FoodRepository : JpaRepository<Food, UUID> {
     @EntityGraph("Vendor.withAllRelations")
     @Query("SELECT f FROM Food f WHERE f.id = :id")
     fun findByIdWithAllRelations(@Param("id") id: UUID): Optional<Food>
+    fun existsByFoodNameIgnoreCaseAndVendorId(name: String, vendorId: UUID): Boolean
 }
 

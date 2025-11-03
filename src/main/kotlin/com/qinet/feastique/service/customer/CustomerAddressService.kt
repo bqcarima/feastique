@@ -89,11 +89,11 @@ class CustomerAddressService(
         }
 
         address.country = addressDto.country
-        address.region = addressDto.region
-        address.city = addressDto.city
-        address.neighbourhood = addressDto.neighbourhood
+        address.region = requireNotNull(addressDto.region) { "Please select a region." }
+        address.city = requireNotNull(addressDto.city) { "Please enter a city." }
+        address.neighbourhood = requireNotNull(addressDto.neighbourhood) { "Please enter a neighbourhood." }
         address.streetName = addressDto.streetName
-        address.directions = addressDto.directions
+        address.directions = requireNotNull(addressDto.directions) { "Please enter directions to exact location." }
         address.longitude = addressDto.longitude
         address.latitude = addressDto.latitude
 

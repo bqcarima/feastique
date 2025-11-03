@@ -14,3 +14,12 @@ spring:
     # In dev, you can override to show only date if you want
     date-format: "dd-MM-yyyy"
     time-zone: "UTC"
+
+
+    spring:
+      jpa:
+        hibernate:
+          naming:
+            physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+
+

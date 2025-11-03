@@ -4,6 +4,7 @@ package com.qinet.feastique.model.entity.user
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonManagedReference
 import com.qinet.feastique.model.entity.address.CustomerAddress
+import com.qinet.feastique.model.entity.order.Cart
 import com.qinet.feastique.model.entity.phoneNumber.CustomerPhoneNumber
 import jakarta.persistence.*
 import java.time.LocalDate
@@ -22,6 +23,14 @@ import java.time.LocalDate
     ]
 )
 class Customer : UserEntity() {
+
+    @JsonManagedReference
+    @OneToOne(
+        mappedBy = "customer",
+        cascade = [CascadeType.ALL],
+        optional = true
+    )
+    var cart: Cart? = null
 
     @Column(nullable = true)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy", timezone = "UTC")

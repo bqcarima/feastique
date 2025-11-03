@@ -1,5 +1,6 @@
 package com.qinet.feastique.model.entity.order.food
 
+import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.qinet.feastique.model.entity.addOn.AddOn
 import com.qinet.feastique.model.entity.discount.AppliedDiscount
@@ -10,25 +11,41 @@ import jakarta.persistence.*
 @Table(name = "food_cart_items")
 class FoodCartItem : FoodEntity() {
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cart_id")
+    @JoinColumn(name = "cart_id", nullable = false)
     @JsonIgnore
-    lateinit var cart: Cart
+    var cart: Cart? = null
+
+    @ManyToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+    @JoinTable(
+        name = "food_cart_item_addons",
+        joinColumns = [JoinColumn(name = "food_cart_item_id")],
+        inverseJoinColumns = [JoinColumn(name = "addon_id")]
+    )
+    var addOns: MutableSet<AddOn> = mutableSetOf()
 
     @OneToMany(
+        mappedBy = "foodCartItem",
         cascade = [CascadeType.ALL],
-        orphanRemoval = false
+        orphanRemoval = true
     )
-    @OrderColumn(name = "order_index")
-    var addOns: MutableList<AddOn> = mutableListOf()
+    var appliedDiscounts: MutableSet<AppliedDiscount> = mutableSetOf()
 
-    @OneToMany(
-        cascade = [CascadeType.ALL],
-        orphanRemoval = false
-    )
-    @OrderColumn(name = "order_index")
-    var appliedDiscounts: MutableList<AppliedDiscount> = mutableListOf()
+    override fun calculateTotal(): Long {
+        val basePrice = (food.basePrice ?: 0L) + (size.priceIncrease ?: 0L)
+        var total = basePrice.toDouble()
 
-    override fun calculateTotal() = (totalAmount ?: 0) * (quantity ?: 0)
+        total += complement.price ?: 0
+        total += addOns.sumOf { it.price ?: 0L }
+        total *= quantity
+        appliedDiscounts.forEach {
+            val percentage = it.discount.percentage ?: 0
+            total *= (1 - (percentage / 100.0))
+        }
+
+        totalAmount = total.toLong()
+        return totalAmount!!
+    }
 }
 

@@ -5,7 +5,8 @@ import java.util.UUID
 
 data class FoodSizeResponse(
     val id: UUID,
-    val size: Size,
+    val size: String,
+    val name: String?,
     val priceIncrease: Long
 )
 

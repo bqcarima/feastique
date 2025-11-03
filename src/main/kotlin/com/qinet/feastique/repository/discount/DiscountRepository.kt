@@ -12,3 +12,4 @@ interface DiscountRepository : JpaRepository<Discount, UUID> {
     fun deleteAllByVendorId(vendorId: UUID)
 
 }
+

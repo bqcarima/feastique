@@ -84,16 +84,16 @@ class DiscountService(
                 this.vendor = vendor
             }
         }
-
-        if (!getDuplicates(discountDto.discountName, vendorDetails)) {
-            discount.discountName = discountDto.discountName
+        val discountName = requireNotNull(discountDto.discountName) { "Please enter a discount name." }
+        if (!getDuplicates(discountName, vendorDetails)) {
+            discount.discountName = discountName
         } else {
-            discount.discountName = discountDto.discountName
+            discount.discountName = discountName
         }
 
-        discount.percentage = discountDto.percentage
-        discount.startDate = discountDto.startDate
-        discount.endDate = discountDto.endDate
+        discount.percentage = requireNotNull(discountDto.percentage) { "Enter a percentage." }
+        discount.startDate = requireNotNull(discountDto.startDate) { "A start date must be selected." }
+        discount.endDate = requireNotNull(discountDto.endDate) { "An end date must be selected." }
         discount = saveDiscount(discount)
         vendorRepository.save(vendor)
 

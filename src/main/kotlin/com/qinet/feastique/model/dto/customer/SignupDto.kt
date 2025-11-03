@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.qinet.feastique.common.validator.password.ValidPassword
 import com.qinet.feastique.common.validator.phoneNumber.ValidPhoneNumber
 import com.qinet.feastique.model.enums.AccountType
+import com.qinet.feastique.model.enums.Region
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import java.time.LocalDate
@@ -38,8 +39,8 @@ data class SignupDto(
 
     var country: String? = "Cameroon",
 
-    @field:NotBlank(message = "Region cannot be null or empty.")
-    var region: String,
+    @field:NotNull(message = "Region cannot be null or empty.")
+    var region: Region,
 
     @field:NotBlank(message = "City cannot be null or empty.")
     var city: String,

@@ -16,14 +16,14 @@ data class DiscountDto(
     @field:NotNull(message = "Percentage cannot be null")
     @field:Min(value = 1, message = "Percentage must be at least 1")
     @field:Max(value = 100, message = "Percentage cannot exceed 100")
-    val percentage: Int,
+    var percentage: Int,
 
     @field:NotNull(message = "Start date cannot be null")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-    val startDate: Date,
+    var startDate: Date,
 
     @field:NotNull(message = "End date cannot be null")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-    val endDate: Date
+    var endDate: Date
 
 )

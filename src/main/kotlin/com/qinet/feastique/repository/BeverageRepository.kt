@@ -11,4 +11,5 @@ interface BeverageRepository : JpaRepository<Beverage, UUID> {
     fun findAllByVendorId(vendorId: UUID): List<Beverage>
     fun findAllByIdInAndVendorId(beverageIds: List<UUID>, vendorId: UUID): List<Beverage>
     fun findFirstByBeverageNameIgnoreCaseAndVendorId(name: String, vendorId: UUID): Beverage?
+    fun existsByBeverageNameIgnoreCaseAndVendorId(name: String, vendorId: UUID): Boolean
 }

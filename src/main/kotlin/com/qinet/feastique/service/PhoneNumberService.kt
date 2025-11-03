@@ -109,6 +109,7 @@ class PhoneNumberService(
     @Transactional
     fun addOrUpdatePhoneNumber(phoneNumberDto: PhoneNumberDto, userDetails: UserSecurity): List<PhoneNumber> {
         val role = securityUtility.getSingleRole(userDetails)
+        val incomingPhoneNumber = requireNotNull(phoneNumberDto.phoneNumber) { "Please enter a phone number."}
 
         return when (role) {
             "CUSTOMER" -> {
@@ -127,11 +128,11 @@ class PhoneNumberService(
                 }
 
                 // Check if the phone number to be added is associated with another customer or vendor
-                if (duplicateUtility.isDuplicateFound(phoneNumber = phoneNumberDto.phoneNumber)) {
+                if (duplicateUtility.isDuplicateFound(phoneNumber = incomingPhoneNumber)) {
                     throw DuplicateFoundException("Phone number is already associated with another account.")
                 }
 
-                phoneNumber.phoneNumber = phoneNumberDto.phoneNumber
+                phoneNumber.phoneNumber = incomingPhoneNumber
                 if (phoneNumberDto.default == true) {
 
                     val currentPhoneNumbers = customerPhoneNumberRepository.findAllByCustomerId(userDetails.id)
@@ -163,7 +164,7 @@ class PhoneNumberService(
                     VendorPhoneNumber().apply { this.vendor = vendor }
                 }
 
-                phoneNumber.phoneNumber = phoneNumberDto.phoneNumber
+                phoneNumber.phoneNumber = incomingPhoneNumber
                 if (phoneNumberDto.default == true) {
                     val currentPhoneNumbers = vendorPhoneNumberRepository.findAllByVendorId(userDetails.id)
                         .takeIf { it.isNotEmpty() }
@@ -232,3 +233,4 @@ class PhoneNumberService(
     }
 
 }
+

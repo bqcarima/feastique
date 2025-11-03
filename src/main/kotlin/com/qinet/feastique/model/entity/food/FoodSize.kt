@@ -6,6 +6,8 @@ import com.github.f4b6a3.uuid.UuidCreator
 import com.qinet.feastique.model.entity.order.food.FoodOrderItem
 import com.qinet.feastique.model.enums.Size
 import jakarta.persistence.*
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import java.util.UUID
 
@@ -18,12 +20,15 @@ class FoodSize {
     var id: UUID = UuidCreator.getTimeOrdered()
 
     @NotNull(message = "Please select at least one size.")
-
     var size: Size? = null
 
     @Column(name = "price_increase")
     // @NotNull(message = "Please enter price increase.")
     var priceIncrease: Long? = 0
+
+    @NotBlank
+    @NotEmpty(message = "Food name cannot be empty.")
+    var name: String? = ""
 
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)

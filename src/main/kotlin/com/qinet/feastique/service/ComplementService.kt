@@ -74,19 +74,20 @@ class ComplementService(
             }
         }
 
+        val complementName = requireNotNull(complementDto.complementName) { "Please enter a complement name." }
         if(complementDto.id == null) {
 
             // Check if the vendor has already added a complement with the same name
-            if(!duplicateUtility.isDuplicationComplementFound(complementDto.complementName!!, vendorDetails.id)) {
-                complement.complementName = complementDto.complementName ?: throw IllegalArgumentException("Please enter a complement name")
+            if(!duplicateUtility.isDuplicationComplementFound(complementName, vendorDetails.id)) {
+                complement.complementName = complementName
             } else {
-                throw DuplicateFoundException("A complement with the name ${complementDto.complementName} already exist. Unable add a duplicate.")
+                throw DuplicateFoundException("A complement with the name $complementName already exist. Unable add a duplicate.")
             }
         } else {
-            complement.complementName = complementDto.complementName ?: throw IllegalArgumentException("Please enter a complement name")
+            complement.complementName = complementName
         }
 
-        complement.price = complementDto.price ?: throw IllegalArgumentException("Please enter a price.")
+        complement.price = requireNotNull(complementDto.price) { "Please enter a price." }
         complement = saveComplement(complement)
         vendorRepository.save(vendor)
 

@@ -69,12 +69,13 @@ class PostService (
             }
         }
 
-        post.title = postDto.title ?: throw IllegalArgumentException("Please enter a title")
+        post.title = requireNotNull(postDto.title) { "Please enter a title." }
         post.body = postDto.body
-        post.image = postDto.image ?: throw IllegalArgumentException("Please select an image")
+        post.image = requireNotNull(postDto.image) { "Please select at least one image." }
         post = savePost(post)
         vendorRepository.save(vendor)
 
         return post
     }
 }
+

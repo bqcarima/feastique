@@ -1,5 +1,6 @@
 package com.qinet.feastique.model.entity.order
 
+import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.github.f4b6a3.uuid.UuidCreator
 import com.qinet.feastique.model.entity.address.CustomerAddress
@@ -13,11 +14,11 @@ import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.util.UUID
+import java.util.*
 import kotlin.math.roundToLong
 
-@Suppress("JpaEntityGraphsInspection")
-@NamedEntityGraphs(
+//@Suppress("JpaEntityGraphsInspection")
+/*@NamedEntityGraphs(
     value = [
         NamedEntityGraph(
             name = "Order.withAllRelations",
@@ -34,13 +35,9 @@ import kotlin.math.roundToLong
                     subgraph = "Vendor.basic"
                 ),
                 NamedAttributeNode(
-                    value = "foodOrderItems",
-                    subgraph = "FoodOrderItem.full"
-                ),
-                NamedAttributeNode(
-                    value = "beverageOrderItems",
-                    subgraph = "BeverageOrderItem.basic"
-                ),
+                    value = "items",
+                    subgraph = "OrderItems.full"
+                )
             ],
             subgraphs = [
 
@@ -125,21 +122,10 @@ import kotlin.math.roundToLong
                         NamedAttributeNode("percentage")
                     ]
                 ),
-
-                // level 2
-                // Beverage item
-                NamedSubgraph(
-                    name = "BeverageOrderItem.basic",
-                    attributeNodes = [
-                        NamedAttributeNode("id"),
-                        NamedAttributeNode("quantity"),
-                        NamedAttributeNode("totalAmount")
-                    ]
-                ),
             ]
         )
     ]
-)
+)*/
 @Entity
 @Table(name = "orders")
 class Order {
@@ -156,7 +142,7 @@ class Order {
 
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
-    lateinit var customer: Customer
+    var customer: Customer? = null
 
     @ManyToOne
     @JoinColumn(name = "customer_address_id", nullable = true)
@@ -164,20 +150,26 @@ class Order {
 
     @ManyToOne
     @JoinColumn(name = "vendor_id", nullable = false)
-    lateinit var vendor: Vendor
+    var vendor: Vendor? = null
 
-    @OneToMany(
-        cascade = [CascadeType.ALL],
-        orphanRemoval = false
-    )
-    var foodOrderItems: MutableSet<FoodOrderItem> = mutableSetOf()
+    @get:Transient
+    val items: List<OrderEntity> get() = (foodOrderItems + beverageOrderItems).sortedBy { it.addedAt }
 
+    @JsonBackReference
     @OneToMany(
         mappedBy = "order",
         cascade = [CascadeType.ALL],
-        orphanRemoval = false
+        orphanRemoval = true
     )
-    var beverageOrderItems: MutableSet<BeverageOrderItem> = mutableSetOf()
+    var foodOrderItems: MutableList<FoodOrderItem> = mutableListOf()
+
+    @JsonBackReference
+    @OneToMany(
+        mappedBy = "order",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    var beverageOrderItems: MutableList<BeverageOrderItem> = mutableListOf()
 
     @Column(name = "placement_time", nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
@@ -217,21 +209,45 @@ class Order {
     @Column(name = "vendor_deleted_status", nullable = false)
     var vendorDeletedStatus: Boolean? = false
 
+    @Version
+    var version: Long? = null
+
+    fun addItem(item: OrderEntity) {
+        when (item) {
+            is FoodOrderItem -> { foodOrderItems.add(item.apply { order = this@Order }) }
+            is BeverageOrderItem -> { beverageOrderItems.add(item.apply { order = this@Order }) }
+        }
+    }
+
+    fun addAllItems(itemsList: List<OrderEntity>) {
+        for (item in itemsList) {
+            when(item) {
+                is FoodOrderItem -> { foodOrderItems.add(item.apply { order = this@Order }) }
+                is BeverageOrderItem -> {  beverageOrderItems.add(item.apply { order = this@Order }) }
+            }
+        }
+    }
+
     /**
      * Calculates the subtotal, delivery fee, and total including delivery.
-     * @returns a Triple: (subtotalWithoutDelivery, deliveryFee, totalWithDelivery)
+     * @returns [Triple]: (subtotalWithoutDelivery, deliveryFee, totalWithDelivery)
      */
     fun calculateTotals(): Triple<Long, Long, Long> {
 
         // Calculate subtotal (sum of food items + beverages)
-        val subtotal = foodOrderItems.sumOf { it.totalAmount ?: 0 } +
-                beverageOrderItems.sumOf { it.totalAmount ?: 0 }
+        val subtotal = items.sumOf { it.totalAmount ?: 0 }
 
         // Calculate delivery fee
-        val deliveryFee = if (foodOrderItems.isEmpty()) {
+        val deliveryFee = if (items.isEmpty()) {
             0L
         } else {
-            val fees = foodOrderItems.map { it.food.deliveryFee ?: 0L }
+            val fees = items.map {
+                when(it) {
+                    is FoodOrderItem -> it.food.deliveryFee ?: 0L
+                    else -> 0
+                }
+
+            }
 
             if (fees.size == 1) fees.first()
             else {

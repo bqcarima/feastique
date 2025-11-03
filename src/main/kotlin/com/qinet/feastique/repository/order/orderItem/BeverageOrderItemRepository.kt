@@ -1,4 +1,4 @@
-package com.qinet.feastique.repository.order
+package com.qinet.feastique.repository.order.orderItem
 
 import com.qinet.feastique.model.entity.order.beverage.BeverageOrderItem
 import org.springframework.data.jpa.repository.JpaRepository

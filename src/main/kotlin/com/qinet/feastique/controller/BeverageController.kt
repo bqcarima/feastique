@@ -2,7 +2,7 @@ package com.qinet.feastique.controller
 
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.BeverageDto
-import com.qinet.feastique.response.beverage.BeverageResponse
+import com.qinet.feastique.response.BeverageResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.BeverageService
 import com.qinet.feastique.utility.SecurityUtility

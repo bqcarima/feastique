@@ -2,7 +2,7 @@ package com.qinet.feastique.model.enums
 
 enum class Region(val type: String) {
     ADAMAWA("ADAMAWA"),
-    CENTER("CENTRE"),
+    CENTRE("CENTRE"),
     EAST("EAST"),
     FAR_NORTH("FAR_NORTH"),
     LITTORAL("LITTORAL"),
@@ -10,5 +10,12 @@ enum class Region(val type: String) {
     NORTHWEST("NORTHWEST"),
     SOUTH("SOUTH"),
     SOUTHWEST("SOUTHWEST"),
-    WEST("WEST")
+    WEST("WEST"),
+    NON_SELECTED("NONE");
+    companion object {
+        private val lookup = Region.entries.associateBy { it.name.uppercase() }
+        fun fromString(regionName: String): Region =
+            lookup[regionName.uppercase()] ?: throw IllegalArgumentException("$regionName is not a valid region.")
+    }
 }
+

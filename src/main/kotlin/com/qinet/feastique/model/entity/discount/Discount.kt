@@ -20,7 +20,7 @@ class Discount {
     var id: UUID = UuidCreator.getTimeOrdered()
 
     @Column(name = "discount_name")
-    @NotBlank(message = "Discount name cannot be null.")
+    @NotBlank
     @NotEmpty(message = "Discount name be empty.")
     var discountName: String? = ""
 

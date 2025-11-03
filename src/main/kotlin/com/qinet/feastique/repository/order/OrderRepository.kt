@@ -15,7 +15,8 @@ interface OrderRepository : JpaRepository<Order, UUID> {
     fun findAllByVendorDeletedStatusAndVendorId(vendorDeletedStatus: Boolean, vendorId: UUID): List<Order>
     fun findByIdAndCustomerIdAndOrderStatus(id: UUID, customerId: UUID, orderStatus: OrderStatus): Order?
     fun findByIdAndCustomerIdAndCustomerDeletedStatus(id: UUID, customerId: UUID, customerDeletedStatus: Boolean): Order?
-    fun findByIdAndVendorIdAndCustomerDeletedStatus(id: UUID, vendorId: UUID, customerDeletedStatus: Boolean): Order?
+    fun findByIdAndVendorIdAndVendorDeletedStatus(id: UUID, vendorId: UUID, vendorDeletedStatus: Boolean): Order?
+    fun findByIdAndVendorIdAndOrderStatus(id: UUID, vendorId: UUID, orderStatus: OrderStatus): Order?
 
     @EntityGraph("Order.withAllRelations")
     @Query("SELECT o FROM Order o WHERE o.id = :id")

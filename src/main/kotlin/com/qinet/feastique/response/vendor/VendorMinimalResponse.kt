@@ -6,6 +6,7 @@ import java.util.Date
 
 data class VendorMinimalResponse(
     val username: String,
+    val vendorCode: String,
     val firstName: String,
     val lastName: String,
     val chefName: String,

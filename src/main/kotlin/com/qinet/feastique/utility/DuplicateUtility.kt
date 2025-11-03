@@ -1,9 +1,11 @@
 package com.qinet.feastique.utility
 
+import com.qinet.feastique.repository.BeverageRepository
 import com.qinet.feastique.repository.addOn.AddOnRepository
 import com.qinet.feastique.repository.complement.ComplementRepository
 import com.qinet.feastique.repository.customer.CustomerPhoneNumberRepository
 import com.qinet.feastique.repository.customer.CustomerRepository
+import com.qinet.feastique.repository.food.FoodRepository
 import com.qinet.feastique.repository.phoneNumber.VendorPhoneNumberRepository
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -15,7 +17,9 @@ class DuplicateUtility(
     private val customerPhoneNumberRepository: CustomerPhoneNumberRepository,
     private val vendorPhoneNumberRepository: VendorPhoneNumberRepository,
     private val complementRepository: ComplementRepository,
-    private val addOnRepository: AddOnRepository
+    private val addOnRepository: AddOnRepository,
+    private val beverageRepository: BeverageRepository,
+    private val foodRepository: FoodRepository
 
 ) {
 
@@ -27,10 +31,18 @@ class DuplicateUtility(
             else -> throw IllegalArgumentException("Either username or phone must be provided")
         }
     }
+
+    fun isDuplicateFoodFound(foodName: String, vendorId: UUID): Boolean {
+        return foodRepository.existsByFoodNameIgnoreCaseAndVendorId(foodName, vendorId)
+    }
     fun isDuplicationComplementFound(complementName: String, vendorId: UUID): Boolean {
         return complementRepository.existsByComplementNameIgnoreCaseAndVendorId(complementName, vendorId)
     }
     fun isDuplicateAddOnFound(addOnName: String, vendorId: UUID): Boolean {
         return addOnRepository.existsByAddOnNameIgnoreCaseAndVendorId(addOnName, vendorId)
     }
+    fun isDuplicateBeverageFound(beverageName: String, vendorId: UUID): Boolean {
+        return beverageRepository.existsByBeverageNameIgnoreCaseAndVendorId(beverageName, vendorId)
+    }
 }
+

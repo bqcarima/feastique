@@ -8,9 +8,9 @@ import com.qinet.feastique.model.dto.LoginDto
 import com.qinet.feastique.model.dto.PasswordDto
 import com.qinet.feastique.model.dto.customer.SignupDto
 import com.qinet.feastique.model.dto.customer.UpdateDto
-import com.qinet.feastique.model.entity.user.Customer
 import com.qinet.feastique.model.entity.address.CustomerAddress
 import com.qinet.feastique.model.entity.phoneNumber.CustomerPhoneNumber
+import com.qinet.feastique.model.entity.user.Customer
 import com.qinet.feastique.model.enums.AccountType
 import com.qinet.feastique.repository.customer.CustomerPhoneNumberRepository
 import com.qinet.feastique.repository.customer.CustomerRepository
@@ -24,10 +24,9 @@ import com.qinet.feastique.utility.JwtUtility
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.security.core.userdetails.UserDetails
-import java.time.LocalDateTime
 
 @Service
 class CustomerService(
@@ -79,10 +78,10 @@ class CustomerService(
 
                 // Information meant for the customer table
                 val customer = Customer().apply {
-                    firstName = signupDto.firstName
-                    lastName = signupDto.lastName
-                    username = signupDto.username
-                    dob = signupDto.dob ?: throw IllegalArgumentException("Please enter a date of birth.")
+                    firstName = requireNotNull(signupDto.firstName) { "Please enter your first name." }
+                    lastName = requireNotNull(signupDto.lastName) { "Please enter your last name." }
+                    username = requireNotNull(signupDto.username) { "Please enter a username."}
+                    dob = requireNotNull(signupDto.dob) { "Please enter a date of birth." }
                     accountType = AccountType.CUSTOMER
                     anniversary = signupDto.anniversary
                     password = passwordEncoder.encode(signupDto.password)
@@ -93,11 +92,11 @@ class CustomerService(
                 // Information meant for the address table
                 val address = CustomerAddress().apply {
                     country = "Cameroon"
-                    region = signupDto.region
-                    city = signupDto.city
-                    neighbourhood = signupDto.neighbourhood
+                    region = requireNotNull(signupDto.region) { "Please select a region." }
+                    city = requireNotNull(signupDto.city) { "Please enter a city." }
+                    neighbourhood = requireNotNull(signupDto.neighbourhood) { "Please enter a neighbourhood." }
                     streetName = signupDto.streetName
-                    directions = signupDto.directions
+                    directions = requireNotNull(signupDto.directions) { "Please enter directions to exact location." }
                     longitude = signupDto.longitude
                     latitude = signupDto.latitude
                     default = true
@@ -108,7 +107,7 @@ class CustomerService(
 
                 // Information meant for the customer phone number table
                 val phoneNumber = CustomerPhoneNumber().apply {
-                    this.phoneNumber = signupDto.phoneNumber
+                    this.phoneNumber = requireNotNull(signupDto.phoneNumber) { "Please enter a phone number." }
                     this.default = true
                     this.customer = savedCustomer
                 }
@@ -166,15 +165,15 @@ class CustomerService(
             if (isDuplicateFound(username = updateDto.username)) {
                 throw DuplicateFoundException("Username ${updateDto.username} is unavailable.")
             }
-            customer.username = updateDto.username
+            customer.username = requireNotNull(updateDto.username) { "Please enter a username."}
         }
 
-        customer.firstName = updateDto.firstName
-        customer.lastName = updateDto.lastName
-        customer.dob = updateDto.dob
+        customer.firstName = requireNotNull(updateDto.firstName) { "Please enter your first name." }
+        customer.lastName = requireNotNull(updateDto.lastName) { "Please enter your last name." }
+        customer.dob = requireNotNull(updateDto.dob) { "Please enter a date of birth." }
         customer.anniversary = updateDto.anniversary
         customer.image = updateDto.image
-        customer.accountUpdated = LocalDateTime.now()
+
         val savedCustomer = saveCustomer(customer)
 
         if (oldUsername != savedCustomer.username) {
@@ -222,7 +221,6 @@ class CustomerService(
         if (passwordDto.newPassword != passwordDto.confirmedNewPassword) {
             throw IllegalArgumentException("Passwords do not match.")
         }
-        customer.accountUpdated = LocalDateTime.now()
         customer.password = passwordEncoder.encode(passwordDto.confirmedNewPassword)
         saveCustomer(customer)
     }

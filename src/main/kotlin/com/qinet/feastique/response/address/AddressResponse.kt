@@ -1,5 +1,6 @@
 package com.qinet.feastique.response.address
 
+import com.qinet.feastique.model.enums.Region
 import java.util.UUID
 
 data class AddressResponse(

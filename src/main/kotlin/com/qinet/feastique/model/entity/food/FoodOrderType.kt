@@ -3,9 +3,9 @@ package com.qinet.feastique.model.entity.food
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.github.f4b6a3.uuid.UuidCreator
+import com.qinet.feastique.model.enums.OrderType
 import jakarta.persistence.*
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotNull
 import java.util.*
 
 @Entity
@@ -17,9 +17,9 @@ class FoodOrderType {
     var id: UUID = UuidCreator.getTimeOrdered()
 
     @Column(name = "order_type", nullable = false)
-    @NotBlank(message = "FoodOrderType name cannot be null.")
-    @NotEmpty(message = "FoodOrderType name cannot be empty.")
-    var orderType: String? = ""
+    @NotNull(message = "FoodOrderType name cannot be empty.")
+    @Enumerated(EnumType.STRING)
+    var orderType: OrderType? = null
 
     @JsonBackReference // prevent infinite recursion for extra protection
     @ManyToOne(fetch = FetchType.LAZY)

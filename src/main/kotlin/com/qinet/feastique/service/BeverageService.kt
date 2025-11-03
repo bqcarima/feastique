@@ -1,13 +1,16 @@
 package com.qinet.feastique.service
 
+import com.qinet.feastique.exception.DuplicateFoundException
 import com.qinet.feastique.exception.PermissionDeniedException
 import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.model.dto.BeverageDto
 import com.qinet.feastique.model.entity.beverage.Beverage
+import com.qinet.feastique.model.enums.BeverageGroup
 import com.qinet.feastique.repository.BeverageRepository
 import com.qinet.feastique.repository.vendor.VendorRepository
 import com.qinet.feastique.security.UserSecurity
+import com.qinet.feastique.utility.DuplicateUtility
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
@@ -15,7 +18,8 @@ import java.util.*
 @Service
 class BeverageService(
     private val beverageRepository: BeverageRepository,
-    private val vendorRepository: VendorRepository
+    private val vendorRepository: VendorRepository,
+    private val duplicateUtility: DuplicateUtility
 ) {
 
     @Transactional(readOnly = true)
@@ -42,10 +46,6 @@ class BeverageService(
         }
         return beverages
     }
-
-    @Transactional(readOnly = true)
-    fun getDuplicates(beverageName: String, vendorDetails: UserSecurity) =
-        beverageRepository.findFirstByBeverageNameIgnoreCaseAndVendorId(beverageName, vendorDetails.id) != null
 
     @Transactional
     fun deleteBeverage(id: UUID, vendorDetails: UserSecurity) {
@@ -79,12 +79,16 @@ class BeverageService(
             }
         }
 
-        beverage.beverageName = beverageDto.beverageName ?: throw IllegalArgumentException("Please enter a name for the beverage.")
-
+        val beverageName = requireNotNull(beverageDto.beverageName) { "Please enter a name." }
+        if (!duplicateUtility.isDuplicateBeverageFound(beverageName, vendorDetails.id)) {
+            beverage.beverageName = beverageName
+        } else {
+            throw DuplicateFoundException("A beverage with the name $beverageName already exist. Cannot add duplicate.")
+        }
         beverage.alcoholic = beverageDto.alcoholic
-        beverage.percentage = beverageDto.percentage
-        beverage.beverageGroup = beverageDto.beverageGroup
-        beverage.price = beverageDto.price ?: throw IllegalArgumentException("Please enter a price.")
+        beverage.percentage = requireNotNull(beverageDto.percentage) { "Please enter a percentage value." }
+        beverage.beverageGroup = BeverageGroup.fromString(beverageDto.beverageGroup)
+        beverage.price = requireNotNull(beverageDto.price) { "Please enter a price." }
         beverage.delivery = beverageDto.delivery
 
         beverage = saveBeverage(beverage)

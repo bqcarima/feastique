@@ -28,3 +28,4 @@ class FoodImage {
     lateinit var food: Food
 
 }
+

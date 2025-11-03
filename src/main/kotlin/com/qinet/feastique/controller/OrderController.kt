@@ -1,7 +1,8 @@
 package com.qinet.feastique.controller
 
 import com.qinet.feastique.common.mapper.toResponse
-import com.qinet.feastique.model.dto.order.FoodOrderDto
+import com.qinet.feastique.model.dto.order.CartItemDto
+import com.qinet.feastique.model.dto.order.OrderItemDto
 import com.qinet.feastique.model.dto.order.FoodOrderUpdateDto
 import com.qinet.feastique.response.order.OrderResponse
 import com.qinet.feastique.security.UserSecurity
@@ -21,15 +22,27 @@ class OrderController(
     private val securityUtility: SecurityUtility
 ) {
     @PutMapping("/customers/{customerId}/orders")
-    fun placeOrder(
+    fun placeOrderFromFoodScreen(
         @PathVariable customerId: UUID,
-        @RequestBody @Valid foodOrderDto: FoodOrderDto,
+        @RequestBody @Valid orderItemDto: OrderItemDto,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<OrderResponse> {
         securityUtility.validatePath(customerId, customerDetails)
-        val order = orderService.placeFoodOrder(foodOrderDto, customerDetails)
+        val order = orderService.placeOrderFromFoodScreen(orderItemDto, customerDetails)
         return ResponseEntity(order.toResponse(), HttpStatus.CREATED)
+    }
+
+    @PutMapping("/customers/{customerId}/cart/orders")
+    fun placeOrderFromCart(
+        @PathVariable customerId: UUID,
+        @RequestBody @Valid cartItemDto: CartItemDto,
+        @AuthenticationPrincipal customerDetails: UserSecurity
+
+    ) : ResponseEntity<List<OrderResponse>> {
+        securityUtility.validatePath(customerId, customerDetails)
+        val orders = orderService.placeOrderFromCart(cartItemDto, customerDetails)
+        return ResponseEntity(orders.map { it.toResponse() }, HttpStatus.OK)
     }
 
     @PutMapping(

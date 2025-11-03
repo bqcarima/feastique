@@ -3,13 +3,12 @@ package com.qinet.feastique.model.entity.addOn
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.github.f4b6a3.uuid.UuidCreator
-import com.qinet.feastique.model.entity.order.food.FoodOrderItem
 import com.qinet.feastique.model.entity.user.Vendor
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
-import java.util.UUID
+import java.util.*
 
 @Entity
 @Table(name = "add_ons")

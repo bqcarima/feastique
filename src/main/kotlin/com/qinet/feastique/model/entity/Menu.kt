@@ -26,13 +26,13 @@ class Menu {
     @Column(name = "dine_in")
     var dineIn: Boolean? = false
 
-    var takeaway: Boolean? = false
+    var pickup: Boolean? = false
 
     @PostLoad
     fun resetFlags() {
         delivery = false
         dineIn = false
-        takeaway = false
+        pickup = false
     }
 
 }

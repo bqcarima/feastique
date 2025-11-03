@@ -12,11 +12,11 @@ import jakarta.persistence.Table
 @Table(name = "beverage_order_items")
 class BeverageOrderItem : BeverageEntity(){
 
-    @JsonBackReference // prevent infinite recursion for extra protection
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "order_id")
     @JsonIgnore
-    lateinit var order: Order
-    override fun calculateTotal() = (beverage.price ?: 0) * (quantity ?: 0)
+    var order: Order? = null
+    override fun calculateTotal() = (beverage.price ?: 0) * quantity
 }
 

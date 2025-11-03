@@ -99,8 +99,7 @@ class Food {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    @OrderColumn(name = "order_index")
-    var foodImage: MutableList<FoodImage> = mutableListOf()
+    var foodImage: MutableSet<FoodImage> = mutableSetOf()
 
     @JsonBackReference
     @OneToMany(
@@ -108,8 +107,7 @@ class Food {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    @OrderColumn(name = "order_index")
-    var foodAddOn: MutableList<FoodAddOn> = mutableListOf()
+    var foodAddOn: MutableSet<FoodAddOn> = mutableSetOf()
 
     @JsonBackReference
     @OneToMany(
@@ -117,8 +115,7 @@ class Food {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    @OrderColumn(name = "order_index")
-    var foodAvailability: MutableList<FoodAvailability> = mutableListOf()
+    var foodAvailability: MutableSet<FoodAvailability> = mutableSetOf()
 
     @JsonBackReference
     @OneToMany(
@@ -126,8 +123,7 @@ class Food {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    @OrderColumn(name = "order_index")
-    var foodComplement: MutableList<FoodComplement> = mutableListOf()
+    var foodComplement: MutableSet<FoodComplement> = mutableSetOf()
 
     @JsonBackReference
     @OneToMany(
@@ -135,8 +131,7 @@ class Food {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    @OrderColumn(name = "order_index")
-    var foodDiscount: MutableList<FoodDiscount> = mutableListOf()
+    var foodDiscount: MutableSet<FoodDiscount> = mutableSetOf()
 
     @JsonBackReference
     @OneToMany(
@@ -144,8 +139,7 @@ class Food {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    @OrderColumn(name = "order_index")
-    var foodOrderType: MutableList<FoodOrderType> = mutableListOf()
+    var foodOrderType: MutableSet<FoodOrderType> = mutableSetOf()
 
     @JsonBackReference
     @OneToMany(
@@ -153,8 +147,7 @@ class Food {
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    @OrderColumn(name = "order_index")
-    var foodSize: MutableList<FoodSize> = mutableListOf()
+    var foodSize: MutableSet<FoodSize> = mutableSetOf()
 
     @JsonManagedReference
     @OneToOne(

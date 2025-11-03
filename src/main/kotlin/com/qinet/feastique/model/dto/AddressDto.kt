@@ -1,7 +1,9 @@
 package com.qinet.feastique.model.dto
 
+import com.qinet.feastique.model.enums.Region
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotNull
 import java.util.*
 
 data class AddressDto(
@@ -9,9 +11,8 @@ data class AddressDto(
     var id: UUID? = null,
     var country: String = "Cameroon",
 
-    @field:NotBlank(message = "Region cannot be null.")
-    @field:NotEmpty(message = "Region cannot be empty.")
-    var region: String?,
+    @field:NotNull(message = "Region cannot be empty.")
+    var region: Region?,
 
     @field:NotBlank(message = "City cannot be null.")
     @field:NotEmpty(message = "City cannot be empty.")

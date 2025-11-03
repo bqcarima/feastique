@@ -18,7 +18,7 @@ class Complement {
     var id: UUID = UuidCreator.getTimeOrdered()
 
     @Column(name = "complement_name")
-    @NotBlank(message = "Complement name cannot be null.")
+    @NotBlank
     @NotEmpty(message = "Complement cannot be empty.")
     var complementName: String? = ""
 
