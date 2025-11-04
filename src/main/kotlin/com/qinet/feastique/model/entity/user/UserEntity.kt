@@ -53,5 +53,8 @@ abstract class UserEntity {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH-mm-ss-dd-MM-yyyy")
     @UpdateTimestamp
     var accountUpdated: LocalDateTime? = null
+
+    @Version
+    var version: Long = 0
 }
 

@@ -1,21 +1,18 @@
-package com.qinet.feastique.model.entity.food
+package com.qinet.feastique.model.entity.provisions.food
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonManagedReference
-import com.github.f4b6a3.uuid.UuidCreator
 import com.qinet.feastique.model.entity.Menu
-import com.qinet.feastique.model.entity.addOn.FoodAddOn
-import com.qinet.feastique.model.entity.complement.FoodComplement
+import com.qinet.feastique.model.entity.provisions.addOn.FoodAddOn
+import com.qinet.feastique.model.entity.provisions.complement.FoodComplement
 import com.qinet.feastique.model.entity.discount.FoodDiscount
-import com.qinet.feastique.model.entity.user.Vendor
+import com.qinet.feastique.model.entity.provisions.BaseEntity
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import java.time.LocalTime
-import java.util.UUID
 
 @Suppress("JpaEntityGraphsInspection")
 @Entity
@@ -50,19 +47,9 @@ import java.util.UUID
         )
     ]
 )
-class Food {
-
-    @Id
-    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
-    var id: UUID = UuidCreator.getTimeOrdered()
-
+class Food : BaseEntity() {
     @Column(name = "food_number", unique = true)
     var foodNumber: String? = null
-
-    @Column(name = "food_name")
-    @NotBlank(message = "Food name cannot be null.")
-    @NotEmpty(message = "Food name cannot be empty.")
-    var foodName: String? = ""
 
     @Column(name = "main_course")
     @NotBlank(message = "Main course cannot be null.")
@@ -72,9 +59,6 @@ class Food {
     @NotBlank(message = "Description cannot be null.")
     @NotEmpty(message = "Description cannot be empty.")
     var description: String? = ""
-
-    @Column(name = "base_price")
-    var basePrice: Long? = 0
 
     @Column(name = "preparation_time")
     @NotNull(message = "Preparation time cannot be empty.")
@@ -86,12 +70,6 @@ class Food {
 
     @Column(name = "delivery_fee")
     var deliveryFee: Long? = 0
-
-    @JsonBackReference // prevent infinite recursion for extra protection
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vendor_id", nullable = false)
-    @JsonIgnore
-    lateinit var vendor: Vendor
 
     @JsonBackReference
     @OneToMany(

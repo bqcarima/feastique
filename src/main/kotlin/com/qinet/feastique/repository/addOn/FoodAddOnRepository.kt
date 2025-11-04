@@ -1,6 +1,6 @@
 package com.qinet.feastique.repository.addOn
 
-import com.qinet.feastique.model.entity.addOn.FoodAddOn
+import com.qinet.feastique.model.entity.provisions.addOn.FoodAddOn
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.UUID

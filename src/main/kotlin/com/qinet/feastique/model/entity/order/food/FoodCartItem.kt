@@ -2,7 +2,7 @@ package com.qinet.feastique.model.entity.order.food
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.qinet.feastique.model.entity.addOn.AddOn
+import com.qinet.feastique.model.entity.provisions.addOn.AddOn
 import com.qinet.feastique.model.entity.discount.AppliedDiscount
 import com.qinet.feastique.model.entity.order.Cart
 import jakarta.persistence.*
@@ -33,7 +33,7 @@ class FoodCartItem : FoodEntity() {
     var appliedDiscounts: MutableSet<AppliedDiscount> = mutableSetOf()
 
     override fun calculateTotal(): Long {
-        val basePrice = (food.basePrice ?: 0L) + (size.priceIncrease ?: 0L)
+        val basePrice = (food.price ?: 0L) + (size.priceIncrease ?: 0L)
         var total = basePrice.toDouble()
 
         total += complement.price ?: 0

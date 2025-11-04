@@ -1,7 +1,7 @@
 package com.qinet.feastique.service
 
 import com.qinet.feastique.model.dto.AddOnDto
-import com.qinet.feastique.model.entity.addOn.AddOn
+import com.qinet.feastique.model.entity.provisions.addOn.AddOn
 import com.qinet.feastique.exception.DuplicateFoundException
 import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.PermissionDeniedException
@@ -80,12 +80,12 @@ class AddOnService(
             requireNotNull(addOnDto.addOnName) { "Please enter a name." }
             // check if the vendor has already added an add-on with the same name
             if (!duplicateUtility.isDuplicateAddOnFound(addOnDto.addOnName!!, vendorDetails.id)) {
-                addOn.addOnName = addOnDto.addOnName
+                addOn.name = addOnDto.addOnName
             } else {
                 throw DuplicateFoundException("An add-on with the name ${addOnDto.addOnName} already exists. Unable to add a duplicate ")
             }
         } else {
-            addOn.addOnName = requireNotNull(addOnDto.addOnName) { "Please enter a name." }
+            addOn.name = requireNotNull(addOnDto.addOnName) { "Please enter a name." }
         }
 
         addOn.price = requireNotNull(addOnDto.price) { "Please enter a price."}

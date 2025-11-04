@@ -3,7 +3,7 @@ package com.qinet.feastique.model.entity
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.github.f4b6a3.uuid.UuidCreator
-import com.qinet.feastique.model.entity.food.Food
+import com.qinet.feastique.model.entity.provisions.food.Food
 import jakarta.persistence.*
 import java.util.UUID
 

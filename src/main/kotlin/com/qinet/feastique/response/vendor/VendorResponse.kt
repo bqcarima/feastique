@@ -1,14 +1,12 @@
 package com.qinet.feastique.response.vendor
 
-import com.qinet.feastique.model.enums.AccountType
 import com.qinet.feastique.response.AddOnResponse
-import com.qinet.feastique.response.address.AddressResponse
 import com.qinet.feastique.response.ComplementResponse
 import com.qinet.feastique.response.DiscountResponse
 import com.qinet.feastique.response.PhoneNumberResponse
+import com.qinet.feastique.response.address.AddressResponse
 import com.qinet.feastique.response.food.FoodResponse
-import java.util.Date
-import java.util.UUID
+import java.util.*
 
 data class VendorResponse(
     val id: UUID,

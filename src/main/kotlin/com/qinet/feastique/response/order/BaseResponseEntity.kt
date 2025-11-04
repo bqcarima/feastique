@@ -1,7 +1,6 @@
 package com.qinet.feastique.response.order
 
-import com.qinet.feastique.model.enums.OrderType
-import java.util.UUID
+import java.util.*
 
 sealed interface BaseResponseEntity {
     val id: UUID

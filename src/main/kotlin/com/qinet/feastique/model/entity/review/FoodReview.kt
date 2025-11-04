@@ -1,10 +1,5 @@
 package com.qinet.feastique.model.entity.review
 
-import com.fasterxml.jackson.annotation.JsonBackReference
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.qinet.feastique.model.entity.food.Food
-import jakarta.persistence.*
-
 /*
 @Entity
 @Table(name = "food_review")

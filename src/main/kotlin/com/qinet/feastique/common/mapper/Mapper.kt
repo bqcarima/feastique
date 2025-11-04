@@ -1,15 +1,14 @@
 package com.qinet.feastique.common.mapper
 
-import com.qinet.feastique.model.entity.addOn.AddOn
-import com.qinet.feastique.model.entity.addOn.FoodAddOn
+import com.qinet.feastique.model.entity.provisions.addOn.AddOn
+import com.qinet.feastique.model.entity.provisions.addOn.FoodAddOn
 import com.qinet.feastique.model.entity.address.Address
 import com.qinet.feastique.model.entity.address.CustomerAddress
-import com.qinet.feastique.model.entity.beverage.Beverage
-import com.qinet.feastique.model.entity.complement.Complement
-import com.qinet.feastique.model.entity.complement.FoodComplement
+import com.qinet.feastique.model.entity.provisions.beverage.Beverage
+import com.qinet.feastique.model.entity.provisions.complement.Complement
+import com.qinet.feastique.model.entity.provisions.complement.FoodComplement
 import com.qinet.feastique.model.entity.discount.Discount
 import com.qinet.feastique.model.entity.discount.FoodDiscount
-import com.qinet.feastique.model.entity.food.*
 import com.qinet.feastique.model.entity.order.Cart
 import com.qinet.feastique.model.entity.order.Order
 import com.qinet.feastique.model.entity.order.beverage.BeverageCartItem
@@ -38,6 +37,11 @@ import com.qinet.feastique.response.order.FoodItemResponse
 import com.qinet.feastique.response.vendor.VendorMinimalResponse
 import com.qinet.feastique.response.vendor.VendorResponse
 import com.qinet.feastique.model.dto.order.BeverageItemDto
+import com.qinet.feastique.model.entity.provisions.food.Food
+import com.qinet.feastique.model.entity.provisions.food.FoodAvailability
+import com.qinet.feastique.model.entity.provisions.food.FoodImage
+import com.qinet.feastique.model.entity.provisions.food.FoodOrderType
+import com.qinet.feastique.model.entity.provisions.food.FoodSize
 import com.qinet.feastique.model.enums.Region
 import com.qinet.feastique.response.order.UnknownEntityResponse
 import java.text.SimpleDateFormat
@@ -51,7 +55,7 @@ import java.util.*
  */
 fun AddOn.toResponse() = AddOnResponse(
     id = this.id,
-    addOnName = this.addOnName.orEmpty(),
+    addOnName = this.name.orEmpty(),
     price = this.price ?: 0
 )
 
@@ -98,7 +102,7 @@ fun CustomerAddress.toResponse(): CustomerAddressResponse = CustomerAddressRespo
  */
 fun Beverage.toResponse() = BeverageResponse(
     id = id,
-    beverageName = beverageName.orEmpty(),
+    beverageName = name.orEmpty(),
     alcoholic = alcoholic ?: false,
     beverageGroup = beverageGroup?.type ?: "Unknown",
     percentage = percentage ?: 0,
@@ -167,7 +171,7 @@ fun Cart.toResponse() = CartResponse(
  */
 fun Complement.toResponse() = ComplementResponse(
     id = id,
-    name = complementName.orEmpty(),
+    name = name.orEmpty(),
     price = price ?: 0
 )
 
@@ -222,7 +226,7 @@ fun Discount.toResponse(): DiscountResponse = DiscountResponse(
 )
 
 /**
- * Converts a [Food] entity along with all its related entities
+ * Converts a [com.qinet.feastique.model.entity.provisions.food.Food] entity along with all its related entities
  * into a comprehensive [FoodResponse] DTO.
  *
  * This includes:
@@ -237,12 +241,12 @@ fun Discount.toResponse(): DiscountResponse = DiscountResponse(
 fun Food.toResponse() = FoodResponse(
     id = id,
     foodNumber = foodNumber.orEmpty(),
-    foodName = foodName.orEmpty(),
+    foodName = name.orEmpty(),
     vendorId = vendor.id,
     vendorName = vendor.chefName.orEmpty(),
     mainCourse = mainCourse.orEmpty(),
     description = description.orEmpty(),
-    basePrice = basePrice ?: 0,
+    basePrice = price ?: 0,
     preparationTime = preparationTime ?: 0,
     deliveryTime = deliveryTime,
     deliveryFee = deliveryFee ?: 0,
@@ -274,19 +278,19 @@ fun Food.toResponse() = FoodResponse(
  */
 fun Food.toMinimalResponse(): FoodMinimalResponse = FoodMinimalResponse(
     id = id,
-    foodName = foodName.orEmpty(),
+    foodName = name.orEmpty(),
     mainCourse = mainCourse.orEmpty(),
-    basePrice = basePrice ?: 0
+    basePrice = price ?: 0
 )
 
 fun FoodAddOn.toResponse() = AddOnResponse(
     id = addOn.id,
-    addOnName = addOn.addOnName.orEmpty(),
+    addOnName = addOn.name.orEmpty(),
     price = addOn.price ?: 0
 )
 
 /**
- * Maps a [FoodAvailability] entity to its API DTO [FoodAvailabilityResponse].
+ * Maps a [com.qinet.feastique.model.entity.provisions.food.FoodAvailability] entity to its API DTO [FoodAvailabilityResponse].
  *
  * @receiver `FoodAvailability` entity to map from.
  * @return [FoodAvailabilityResponse] DTO with id, and name.
@@ -322,7 +326,7 @@ fun FoodCartItem.toResponse(): FoodItemResponse = FoodItemResponse(
  */
 fun FoodComplement.toResponse() = ComplementResponse(
     id = complement.id,
-    name = complement.complementName.orEmpty(),
+    name = complement.name.orEmpty(),
     price = complement.price ?: 0,
 
     )
@@ -343,7 +347,7 @@ fun FoodDiscount.toResponse(): FoodDiscountResponse = FoodDiscountResponse(
 
 
 /**
- * Converts a [FoodImage] entity to its response DTO.
+ * Converts a [com.qinet.feastique.model.entity.provisions.food.FoodImage] entity to its response DTO.
  *
  * @receiver `FoodImage` entity to map from.
  * @return [FoodImageResponse] DTO with id, URL, and parent food id.
@@ -355,7 +359,7 @@ fun FoodImage.toResponse(): FoodImageResponse = FoodImageResponse(
 )
 
 /**
- * Converts a [FoodOrderType] entity to its response DTO.
+ * Converts a [com.qinet.feastique.model.entity.provisions.food.FoodOrderType] entity to its response DTO.
  *
  * @receiver `FoodOrderType` entity to map from.
  * @return [FoodOrderTypeResponse] DTO with id, parent food id, and order type string.
@@ -385,7 +389,7 @@ fun FoodOrderItem.toResponse(): FoodItemResponse = FoodItemResponse(
 )
 
 /**
- * Maps a [FoodSize] entity to its response DTO.
+ * Maps a [com.qinet.feastique.model.entity.provisions.food.FoodSize] entity to its response DTO.
  *
  * @receiver `FoodSize` entity to map from.
  * @return [FoodSizeResponse] DTO with id and size string.
@@ -393,7 +397,7 @@ fun FoodOrderItem.toResponse(): FoodItemResponse = FoodItemResponse(
 fun FoodSize.toResponse(): FoodSizeResponse = FoodSizeResponse(
     id = id,
     size = size?.type ?: Size.MEDIUM.type,
-    name = name ?: size.toString(),
+    name = name ?: size?.type,
     priceIncrease = priceIncrease ?: 0
 )
 
@@ -420,7 +424,7 @@ fun Order.toResponse(): OrderResponse = OrderResponse(
             )
         }
     },
-    orderType = orderType,
+    orderType = orderType?.type ?: OrderType.UNKNOWN.type,
     deliveryFee = deliveryFee ?: 0,
     orderStatus = orderStatus?.type ?: OrderStatus.PENDING.type,
     totalAmount = totalAmount ?: 0,

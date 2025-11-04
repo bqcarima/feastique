@@ -1,7 +1,6 @@
 package com.qinet.feastique.response.food
 
-import com.qinet.feastique.model.enums.Size
-import java.util.UUID
+import java.util.*
 
 data class FoodSizeResponse(
     val id: UUID,

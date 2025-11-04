@@ -210,7 +210,7 @@ class Order {
     var vendorDeletedStatus: Boolean? = false
 
     @Version
-    var version: Long? = null
+    var version: Long = 0
 
     fun addItem(item: OrderEntity) {
         when (item) {

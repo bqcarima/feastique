@@ -1,6 +1,5 @@
 package com.qinet.feastique.response.order
 
-import com.qinet.feastique.model.enums.OrderStatus
 import com.qinet.feastique.model.enums.OrderType
 import com.qinet.feastique.response.address.CustomerAddressResponse
 import java.time.LocalDateTime
@@ -14,7 +13,7 @@ data class OrderResponse(
     val customerAddress: CustomerAddressResponse?,
     val vendor: FoodOrderVendorResponse,
     val items: List<BaseResponseEntity>,
-    val orderType: OrderType?,
+    val orderType: String?,
     val deliveryFee: Long?,
     val orderStatus: String?,
     val totalAmount: Long,

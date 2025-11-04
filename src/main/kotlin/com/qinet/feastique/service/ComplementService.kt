@@ -1,7 +1,7 @@
 package com.qinet.feastique.service
 
 import com.qinet.feastique.model.dto.ComplementDto
-import com.qinet.feastique.model.entity.complement.Complement
+import com.qinet.feastique.model.entity.provisions.complement.Complement
 import com.qinet.feastique.exception.DuplicateFoundException
 import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.PermissionDeniedException
@@ -79,12 +79,12 @@ class ComplementService(
 
             // Check if the vendor has already added a complement with the same name
             if(!duplicateUtility.isDuplicationComplementFound(complementName, vendorDetails.id)) {
-                complement.complementName = complementName
+                complement.name = complementName
             } else {
                 throw DuplicateFoundException("A complement with the name $complementName already exist. Unable add a duplicate.")
             }
         } else {
-            complement.complementName = complementName
+            complement.name = complementName
         }
 
         complement.price = requireNotNull(complementDto.price) { "Please enter a price." }

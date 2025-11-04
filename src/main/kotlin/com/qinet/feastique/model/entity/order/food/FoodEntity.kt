@@ -3,9 +3,9 @@ package com.qinet.feastique.model.entity.order.food
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonManagedReference
-import com.qinet.feastique.model.entity.complement.Complement
-import com.qinet.feastique.model.entity.food.Food
-import com.qinet.feastique.model.entity.food.FoodSize
+import com.qinet.feastique.model.entity.provisions.complement.Complement
+import com.qinet.feastique.model.entity.provisions.food.Food
+import com.qinet.feastique.model.entity.provisions.food.FoodSize
 import com.qinet.feastique.model.entity.order.OrderEntity
 import jakarta.persistence.*
 

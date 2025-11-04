@@ -1,4 +1,4 @@
-package com.qinet.feastique.model.entity.food
+package com.qinet.feastique.model.entity.provisions.food
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore

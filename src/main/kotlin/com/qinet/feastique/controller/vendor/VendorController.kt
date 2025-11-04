@@ -55,3 +55,4 @@ class VendorController(
         return ResponseEntity(vendor.toMinimalResponse(), HttpStatus.OK)
     }
 }
+

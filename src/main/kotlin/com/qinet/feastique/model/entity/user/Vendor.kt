@@ -2,11 +2,11 @@ package com.qinet.feastique.model.entity.user
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonManagedReference
-import com.qinet.feastique.model.entity.addOn.AddOn
+import com.qinet.feastique.model.entity.provisions.addOn.AddOn
 import com.qinet.feastique.model.entity.address.VendorAddress
-import com.qinet.feastique.model.entity.complement.Complement
+import com.qinet.feastique.model.entity.provisions.complement.Complement
 import com.qinet.feastique.model.entity.discount.Discount
-import com.qinet.feastique.model.entity.food.Food
+import com.qinet.feastique.model.entity.provisions.food.Food
 import com.qinet.feastique.model.entity.phoneNumber.VendorPhoneNumber
 import com.qinet.feastique.model.enums.Region
 import jakarta.persistence.CascadeType

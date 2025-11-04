@@ -1,28 +1,32 @@
-package com.qinet.feastique.model.entity.addOn
+package com.qinet.feastique.model.entity.provisions
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.github.f4b6a3.uuid.UuidCreator
 import com.qinet.feastique.model.entity.user.Vendor
-import jakarta.persistence.*
+import jakarta.persistence.Column
+import jakarta.persistence.FetchType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.MappedSuperclass
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
-import jakarta.validation.constraints.NotNull
-import java.util.*
+import java.util.UUID
 
-@Entity
-@Table(name = "add_ons")
-class AddOn {
+@MappedSuperclass
+abstract class BaseEntity {
+
     @Id
     @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
     var id: UUID = UuidCreator.getTimeOrdered()
 
-    @Column(name = "add_on_name")
+    @Column(name = "name")
     @NotBlank(message = "Name cannot be null.")
     @NotEmpty(message = "Name cannot be empty.")
-    var addOnName: String? = ""
+    var name: String? = ""
 
-    @NotNull(message = "Price cannot be null.")
+    @Column(name = "price")
     var price: Long? = 0
 
     @JsonBackReference // prevent infinite recursion for extra protection
@@ -30,13 +34,5 @@ class AddOn {
     @JoinColumn(name = "vendor_id", nullable = false)
     @JsonIgnore
     lateinit var vendor: Vendor
-
-    @JsonBackReference
-    @OneToMany(
-        mappedBy = "addOn",
-        cascade = [CascadeType.ALL],
-        orphanRemoval = true
-    )
-    var foodAddOn: MutableList<FoodAddOn> = mutableListOf()
 }
 

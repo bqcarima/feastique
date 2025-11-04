@@ -5,7 +5,7 @@ import com.qinet.feastique.exception.PermissionDeniedException
 import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.model.dto.BeverageDto
-import com.qinet.feastique.model.entity.beverage.Beverage
+import com.qinet.feastique.model.entity.provisions.beverage.Beverage
 import com.qinet.feastique.model.enums.BeverageGroup
 import com.qinet.feastique.repository.BeverageRepository
 import com.qinet.feastique.repository.vendor.VendorRepository
@@ -81,7 +81,7 @@ class BeverageService(
 
         val beverageName = requireNotNull(beverageDto.beverageName) { "Please enter a name." }
         if (!duplicateUtility.isDuplicateBeverageFound(beverageName, vendorDetails.id)) {
-            beverage.beverageName = beverageName
+            beverage.name = beverageName
         } else {
             throw DuplicateFoundException("A beverage with the name $beverageName already exist. Cannot add duplicate.")
         }

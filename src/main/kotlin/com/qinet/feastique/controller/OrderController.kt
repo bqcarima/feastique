@@ -3,7 +3,7 @@ package com.qinet.feastique.controller
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.order.CartItemDto
 import com.qinet.feastique.model.dto.order.OrderItemDto
-import com.qinet.feastique.model.dto.order.FoodOrderUpdateDto
+import com.qinet.feastique.model.dto.order.OrderUpdateDto
 import com.qinet.feastique.response.order.OrderResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.order.OrderService
@@ -55,13 +55,13 @@ class OrderController(
         @PathVariable id: UUID,
         @PathVariable(required = false) customerId: UUID?,
         @PathVariable(required = false) vendorId: UUID?,
-        @RequestBody @Valid foodOrderUpdateDto: FoodOrderUpdateDto,
+        @RequestBody @Valid orderUpdateDto: OrderUpdateDto,
         @AuthenticationPrincipal userDetails: UserSecurity
 
     ) : ResponseEntity<String> {
         val pathId = customerId ?: vendorId
         securityUtility.validatePath(pathId!!, userDetails)
-        orderService.cancelOrUpdateOrder(id, foodOrderUpdateDto, userDetails)
+        orderService.cancelOrUpdateOrder(id, orderUpdateDto, userDetails)
         return ResponseEntity("Order updated successfully.", HttpStatus.OK)
     }
 

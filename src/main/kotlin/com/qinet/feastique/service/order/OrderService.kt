@@ -4,7 +4,7 @@ import com.qinet.feastique.exception.PermissionDeniedException
 import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.model.dto.order.CartItemDto
-import com.qinet.feastique.model.dto.order.FoodOrderUpdateDto
+import com.qinet.feastique.model.dto.order.OrderUpdateDto
 import com.qinet.feastique.model.dto.order.OrderItemDto
 import com.qinet.feastique.model.entity.discount.AppliedDiscount
 import com.qinet.feastique.model.entity.order.Cart
@@ -14,6 +14,10 @@ import com.qinet.feastique.model.entity.order.beverage.BeverageCartItem
 import com.qinet.feastique.model.entity.order.beverage.BeverageOrderItem
 import com.qinet.feastique.model.entity.order.food.FoodCartItem
 import com.qinet.feastique.model.entity.order.food.FoodOrderItem
+import com.qinet.feastique.model.entity.sales.AddOnSale
+import com.qinet.feastique.model.entity.sales.BeverageSale
+import com.qinet.feastique.model.entity.sales.ComplementSale
+import com.qinet.feastique.model.entity.sales.FoodSale
 import com.qinet.feastique.model.enums.OrderStatus
 import com.qinet.feastique.model.enums.OrderType
 import com.qinet.feastique.repository.BeverageRepository
@@ -23,22 +27,26 @@ import com.qinet.feastique.repository.discount.DiscountRepository
 import com.qinet.feastique.repository.food.FoodRepository
 import com.qinet.feastique.repository.order.CartRepository
 import com.qinet.feastique.repository.order.OrderRepository
+import com.qinet.feastique.repository.sales.AddOnSaleRepository
+import com.qinet.feastique.repository.sales.BeverageSaleRepository
+import com.qinet.feastique.repository.sales.ComplementSaleRepository
+import com.qinet.feastique.repository.sales.FoodSaleRepository
 import com.qinet.feastique.repository.vendor.VendorRepository
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.utility.GeneralUtility
 import com.qinet.feastique.utility.SecurityUtility
 import com.qinet.feastique.utility.toLocalDate
 import jakarta.persistence.OptimisticLockException
+import org.slf4j.LoggerFactory
+import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.*
 import kotlin.jvm.optionals.getOrElse
-import org.slf4j.LoggerFactory
-import org.springframework.dao.OptimisticLockingFailureException
-import org.springframework.transaction.annotation.Propagation
 
 @Service
 class OrderService(
@@ -50,10 +58,15 @@ class OrderService(
     private val beverageRepository: BeverageRepository,
     private val securityUtility: SecurityUtility,
     private val discountRepository: DiscountRepository,
-    private val cartRepository: CartRepository
+    private val cartRepository: CartRepository,
+    private val foodSaleRepository: FoodSaleRepository,
+    private val addOnSaleRepository: AddOnSaleRepository,
+    private val beverageSaleRepository: BeverageSaleRepository,
+    private val complementSaleRepository: ComplementSaleRepository
 ) {
 
     private val logger = LoggerFactory.getLogger(javaClass)
+
     @Transactional(readOnly = true)
     fun getOrder(id: UUID, userDetails: UserSecurity): Order? {
         val role = securityUtility.getRole(userDetails)
@@ -146,8 +159,9 @@ class OrderService(
 
         // Assigning a complement
         // Get the matching complement from the back reference.
-        val matchingComplement = food.foodComplement.firstOrNull { it.complement.id == orderItemDto.complementId }?.complement
-            ?: throw IllegalArgumentException("Unable to place order. Complement cannot be gotten from food.")
+        val matchingComplement =
+            food.foodComplement.firstOrNull { it.complement.id == orderItemDto.complementId }?.complement
+                ?: throw IllegalArgumentException("Unable to place order. Complement cannot be gotten from food.")
 
         newFoodOrderItem.complement = matchingComplement
 
@@ -168,7 +182,7 @@ class OrderService(
             newOrder.deliveryTime = null
         }
 
-        val orderTypeAsString = requireNotNull(orderItemDto.orderType) { "Please select an order type."}
+        val orderTypeAsString = requireNotNull(orderItemDto.orderType) { "Please select an order type." }
         val orderTypeAsEnum = OrderType.fromString(orderTypeAsString)
 
         // check if delivery fee is applicable to the order
@@ -210,7 +224,7 @@ class OrderService(
         newOrder.addItem(newFoodOrderItem)
 
         // Beverages added directly from the food order page
-        orderItemDto.beverageIds?.takeIf { it.isNotEmpty()}?.let { beverageMap ->
+        orderItemDto.beverageIds?.takeIf { it.isNotEmpty() }?.let { beverageMap ->
             val beverages = beverageRepository.findAllByIdInAndVendorId(beverageMap.keys.toList(), vendor.id)
             beverages.forEach { beverage ->
                 val quantity = beverageMap[beverage.id] ?: 1
@@ -473,7 +487,7 @@ class OrderService(
     /**
      * The method is used to change the status of an order.
      * @param UUID
-     * @param FoodOrderUpdateDto
+     * @param OrderUpdateDto
      * @param UserSecurity`
      * @return [Order]
      * @throws RequestedEntityNotFoundException
@@ -483,7 +497,7 @@ class OrderService(
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = [Exception::class])
     fun cancelOrUpdateOrder(
         orderId: UUID,
-        foodOrderUpdateDto: FoodOrderUpdateDto,
+        orderUpdateDto: OrderUpdateDto,
         userDetails: UserSecurity,
         maxAttempts: Int = 3
     ): Order {
@@ -494,7 +508,7 @@ class OrderService(
             try {
                 val order = when (role) {
                     "CUSTOMER" -> handleCustomerCancellation(orderId, userDetails.id)
-                    "VENDOR" -> handleVendorOrderUpdate(orderId, foodOrderUpdateDto, userDetails.id)
+                    "VENDOR" -> handleVendorOrderUpdate(orderId, orderUpdateDto, userDetails.id)
                     else -> throw PermissionDeniedException("Unrecognized role: $role")
                 }
 
@@ -505,15 +519,15 @@ class OrderService(
 
             } catch (ex: OptimisticLockingFailureException) {
                 attempt++
-                if (attempt >= maxAttempts) throw IllegalStateException("Oder update failed after $maxAttempts retries. Please retry. ${ex.message}.")
+                if (attempt >= maxAttempts) throw IllegalStateException("Order update failed after $maxAttempts retries. Please retry. ${ex.message}.")
 
                 // Delay the thread before retrying
                 Thread.sleep(50L)
             } catch (ex: Exception) {
                 logger.error(
                     "Failed to cancel/update order. orderId={}, userId={}, role={}, payload={}, cause={}",
-                    orderId, userDetails.id, role, foodOrderUpdateDto, ex.message
-                    , ex)
+                    orderId, userDetails.id, role, orderUpdateDto, ex.message, ex
+                )
                 throw ex
             }
         }
@@ -590,15 +604,15 @@ class OrderService(
 
     private fun handleVendorOrderUpdate(
         orderId: UUID,
-        foodOrderUpdateDto: FoodOrderUpdateDto,
+        orderUpdateDto: OrderUpdateDto,
         vendorId: UUID
 
-    ) : Order {
+    ): Order {
         val order: Order = orderRepository.findByIdAndVendorIdAndOrderStatus(orderId, vendorId, OrderStatus.PENDING)
             ?: throw RequestedEntityNotFoundException("Order not found or has already been confirmed or cancelled.")
 
         when (order.orderStatus) {
-            OrderStatus.PENDING -> handlePendingOrder(order, foodOrderUpdateDto)
+            OrderStatus.PENDING -> handlePendingOrder(order, orderUpdateDto)
             OrderStatus.CONFIRMED -> handleConfirmedOrder(order)
             OrderStatus.EN_ROUTE -> markOrderAsDelivered(order)
             OrderStatus.READY -> markReadyOrderAsCompleted(order)
@@ -607,20 +621,30 @@ class OrderService(
         return order
     }
 
-    private fun handlePendingOrder(order: Order, foodOrderUpdateDto: FoodOrderUpdateDto) {
-        when(foodOrderUpdateDto.orderStatus) {
-            OrderStatus.CONFIRMED -> order.orderStatus = OrderStatus.CONFIRMED
+    private fun handlePendingOrder(order: Order, orderUpdateDto: OrderUpdateDto) {
+        when (orderUpdateDto.orderStatus) {
+            OrderStatus.CONFIRMED -> {
+                order.orderStatus = OrderStatus.CONFIRMED
+
+                // Calculate "read by" time only for non-delivery orders.
+                if (order.orderType != OrderType.DELIVERY) {
+                    order.readyBy = calculateOrderReadyTime(order)
+                }
+
+                // record as a sale
+                recordFoodSale(order)
+                recordBeverageSale(order)
+            }
+
             OrderStatus.DECLINED -> order.orderStatus = OrderStatus.DECLINED
-            else -> throw IllegalArgumentException("Unsupported status: ${foodOrderUpdateDto.orderStatus}.")
+            else -> throw IllegalArgumentException("Unsupported status: ${orderUpdateDto.orderStatus}.")
         }
         order.responseTime = LocalDateTime.now()
-        if (order.orderType != OrderType.DELIVERY) {
-            order.readyBy = calculateOrderReadyTime(order)
-        }
+
     }
 
     private fun handleConfirmedOrder(order: Order) {
-        order.orderStatus = when(order.orderType) {
+        order.orderStatus = when (order.orderType) {
             OrderType.DELIVERY -> OrderStatus.EN_ROUTE
             OrderType.DINE_IN, OrderType.PICKUP -> OrderStatus.READY
             else -> throw IllegalArgumentException("Invalid order type: ${order.orderType}.")
@@ -639,6 +663,107 @@ class OrderService(
             else -> throw IllegalArgumentException("Invalid order type: ${order.orderType}.")
         }
         order.completedTime = LocalDateTime.now()
+    }
+
+    private fun recordFoodSale(order: Order) {
+        val vendor = order.vendor ?: throw IllegalStateException("Order does not have an associated vendor.")
+        var vendorBalance = vendor.balance
+        val foodOrderItems = order.foodOrderItems
+            .takeIf { it.isNotEmpty() }
+            ?: return // nothing to record
+
+        val foodSales = foodOrderItems.map { foodOrderItem ->
+            FoodSale().apply {
+                food = foodOrderItem.food
+                quantity = foodOrderItem.quantity
+                amount = foodOrderItem.totalAmount
+                this.vendor = vendor
+                saleDate = order.responseTime ?: LocalDateTime.now()
+                this.foodOrderItem = foodOrderItem
+
+                vendorBalance += foodOrderItem.totalAmount ?: 0L
+            }
+        }
+
+        recordComplementSale(order) // record complement
+        recordAddOnSale(order) // record add-ons
+
+        vendorBalance += order.deliveryFee ?: 0
+        vendor.balance = vendorBalance
+        vendorRepository.save(vendor)
+        foodSaleRepository.saveAll(foodSales)
+    }
+
+    private fun recordComplementSale(order: Order) {
+        val vendor = order.vendor ?: throw IllegalStateException("Order does not have an associated vendor.")
+        val foodOrderItems = order.foodOrderItems
+            .takeIf { it.isNotEmpty() }
+            ?: return // nothing to record
+
+        val complementSales = foodOrderItems.map { foodOrderItem ->
+            val price = foodOrderItem.complement.price ?: 0L
+            val quantity = foodOrderItem.quantity
+
+            ComplementSale().apply {
+                complement = foodOrderItem.complement
+                this.quantity = quantity
+                amount = price.times(quantity)
+                this.vendor = vendor
+                saleDate = order.responseTime ?: LocalDateTime.now()
+                this.foodOrderItem = foodOrderItem
+            }
+        }
+        complementSaleRepository.saveAll(complementSales)
+    }
+
+    private fun recordAddOnSale(order: Order) {
+        val vendor = order.vendor ?: throw IllegalStateException("Order does not have an associated vendor.")
+        val foodOrderItems = order.foodOrderItems
+            .takeIf { it.isNotEmpty() }
+            ?: return // nothing to record
+
+        val addOnSales: MutableList<AddOnSale> = mutableListOf()
+        foodOrderItems.forEach { foodOrderItem ->
+            for (addOn in foodOrderItem.addOns) {
+                val price = addOn.price ?: 0L
+                val quantity = foodOrderItem.quantity
+                val addOnSale = AddOnSale().apply {
+                    this.addOn = addOn
+                    this.quantity = quantity
+                    this.amount = price.times(quantity)
+                    this.vendor = vendor
+                    saleDate = order.responseTime ?: LocalDateTime.now()
+                    this.foodOrderItem = foodOrderItem
+                }
+                addOnSales.add(addOnSale)
+            }
+        }
+
+        addOnSaleRepository.saveAll(addOnSales)
+    }
+
+    private fun recordBeverageSale(order: Order) {
+        val vendor = order.vendor ?: throw IllegalStateException("Order does not have an associated vendor.")
+        var vendorBalance = vendor.balance
+        val beverageOrderItems = order.beverageOrderItems
+            .takeIf { it.isNotEmpty() }
+            ?: return // nothing to record
+
+        val beverageSales = beverageOrderItems.map { beverageOrderItem ->
+            BeverageSale().apply {
+                beverage = beverageOrderItem.beverage
+                quantity = beverageOrderItem.quantity
+                amount = beverageOrderItem.totalAmount
+                this.vendor = vendor
+                saleDate = order.responseTime ?: LocalDateTime.now()
+                this.beverageOrderItem = beverageOrderItem
+
+                vendorBalance += beverageOrderItem.totalAmount ?: 0L
+            }
+        }
+        vendor.balance = vendorBalance
+        vendorRepository.save(vendor)
+        beverageSaleRepository.saveAll(beverageSales)
     }
 
     @Suppress("unused")
@@ -668,7 +793,7 @@ class OrderService(
     private fun calculateOrderReadyTime(order: Order): LocalTime {
         val maxPreparationTime = order.items
             .maxOfOrNull {
-                when(it) {
+                when (it) {
                     is FoodOrderItem -> it.food.preparationTime ?: 0
                     else -> 0
                 }
