@@ -2,8 +2,8 @@ package com.qinet.feastique.service
 
 import com.qinet.feastique.model.dto.LoginDto
 import com.qinet.feastique.model.dto.LogoutDto
-import com.qinet.feastique.model.dto.customer.SignupDto
-import com.qinet.feastique.model.dto.vendor.VendorSignupDto
+import com.qinet.feastique.model.dto.user.CustomerSignupDto
+import com.qinet.feastique.model.dto.user.VendorSignupDto
 import com.qinet.feastique.model.entity.user.Customer
 import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.response.token.AccessTokenResponse
@@ -27,8 +27,8 @@ class AuthenticationService(
     /**
      * Delegate signup to customer service
      */
-    fun handleCustomerSignup(signupDto: SignupDto): Customer {
-        return customerService.signupCustomer(signupDto)
+    fun handleCustomerSignup(customerSignupDto: CustomerSignupDto): Customer {
+        return customerService.signupCustomer(customerSignupDto)
     }
 
     /**

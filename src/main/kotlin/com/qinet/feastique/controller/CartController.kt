@@ -2,7 +2,7 @@ package com.qinet.feastique.controller
 
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.order.CartItemDto
-import com.qinet.feastique.model.dto.order.OrderItemDto
+import com.qinet.feastique.model.dto.order.ItemDto
 import com.qinet.feastique.response.order.CartResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.order.CartService
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*
 import java.util.*
 
 @RestController
-@RequestMapping("/api/customers/{customerId}/cart")
+@RequestMapping("/api/v1/customers/{customerId}/cart")
 class CartController(
     private val cartService: CartService,
     private val securityUtility: SecurityUtility
@@ -34,12 +34,12 @@ class CartController(
     @PutMapping
     fun addOrUpdateCartItem(
         @PathVariable customerId: UUID,
-        @RequestBody orderItemDto: OrderItemDto,
+        @RequestBody itemDto: ItemDto,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<CartResponse> {
         securityUtility.validatePath(customerId, customerDetails)
-        val cart = cartService.addItemToCart(orderItemDto, customerDetails)
+        val cart = cartService.addItemToCart(itemDto, customerDetails)
         return ResponseEntity(cart.toResponse(), HttpStatus.CREATED)
     }
 

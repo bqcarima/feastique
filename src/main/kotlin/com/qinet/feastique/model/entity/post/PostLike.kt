@@ -27,3 +27,4 @@ class PostLike {
     @JsonIgnore
     lateinit var customer: Customer
 }
+

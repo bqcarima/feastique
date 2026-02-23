@@ -4,7 +4,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Date
+import java.util.*
 import kotlin.random.Random
 
 
@@ -27,6 +27,5 @@ class GeneralUtility {
         }
     }
 }
-fun Date.toLocalDate(): LocalDate =
-    this.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+fun Date.toLocalDate(): LocalDate = this.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
 

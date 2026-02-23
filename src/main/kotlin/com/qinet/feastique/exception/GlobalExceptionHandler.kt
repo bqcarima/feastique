@@ -22,6 +22,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     fun init() {
         println("GlobalExceptionHandler initialized!")
     }
+
     @ExceptionHandler(RequestedEntityNotFoundException::class)
     fun handleRequestedEntityNotFoundException(e: RequestedEntityNotFoundException): ResponseEntity<ErrorResponse> {
 
@@ -74,12 +75,12 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return ResponseEntity(
             ErrorResponse.fromMessage(
                 status,
-                e. message ?: message
+                e.message ?: message
             ),
             status
         )
     }
-    
+
     @ExceptionHandler(MultipleRolesException::class)
     fun handleMultipleRolesException(e: MultipleRolesException): ResponseEntity<ErrorResponse> {
         val status = HttpStatus.MULTI_STATUS
@@ -125,7 +126,8 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(PhoneNumberUnavailableException::class)
     fun handlePhoneNumberUnavailableException(e: PhoneNumberUnavailableException): ResponseEntity<ErrorResponse> {
         val status = HttpStatus.CONFLICT
-        val message = "The phone number is already associated with a different account. Contact customer support to claim."
+        val message =
+            "The phone number is already associated with a different account. Contact customer support to claim."
 
         return ResponseEntity(
             ErrorResponse.fromMessage(
@@ -191,3 +193,4 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         )
     }
 }
+

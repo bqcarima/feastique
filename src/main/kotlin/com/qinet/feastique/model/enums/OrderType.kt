@@ -8,8 +8,10 @@ enum class OrderType(val type: String) {
 
     companion object {
         private val lookup = OrderType.entries.associateBy { it.name.uppercase() }
-        fun fromString(orderTypeName: String): OrderType =
-            lookup[orderTypeName.uppercase()] ?: throw IllegalArgumentException("$orderTypeName is not a valid entry.")
+        fun fromString(orderType: String?): OrderType {
+            val key = orderType ?: throw IllegalArgumentException("null is not a valid entry.")
+            return lookup[key.uppercase()] ?: throw IllegalArgumentException("$orderType is not a valid entry.")
+        }
     }
 }
 

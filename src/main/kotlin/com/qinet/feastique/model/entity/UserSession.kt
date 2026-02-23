@@ -55,3 +55,4 @@ data class UserSession(
     fun isExpired(currentEpochMillis: Long = System.currentTimeMillis()): Boolean =
         expiresAtEpochMillis <= currentEpochMillis
 }
+

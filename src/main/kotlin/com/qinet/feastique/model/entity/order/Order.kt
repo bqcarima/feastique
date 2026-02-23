@@ -4,8 +4,9 @@ import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.github.f4b6a3.uuid.UuidCreator
 import com.qinet.feastique.model.entity.address.CustomerAddress
-import com.qinet.feastique.model.entity.order.beverage.BeverageOrderItem
-import com.qinet.feastique.model.entity.order.food.FoodOrderItem
+import com.qinet.feastique.model.entity.order.item.BeverageOrderItem
+import com.qinet.feastique.model.entity.order.item.DessertOrderItem
+import com.qinet.feastique.model.entity.order.item.FoodOrderItem
 import com.qinet.feastique.model.entity.user.Customer
 import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.enums.OrderStatus
@@ -15,7 +16,6 @@ import org.hibernate.annotations.CreationTimestamp
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.*
-import kotlin.math.roundToLong
 
 //@Suppress("JpaEntityGraphsInspection")
 /*@NamedEntityGraphs(
@@ -152,8 +152,11 @@ class Order {
     @JoinColumn(name = "vendor_id", nullable = false)
     var vendor: Vendor? = null
 
+    @Column(name = "quick_delivery")
+    var quickDelivery: Boolean = false
+
     @get:Transient
-    val items: List<OrderEntity> get() = (foodOrderItems + beverageOrderItems).sortedBy { it.addedAt }
+    val items: List<OrderEntity> get() = (foodOrderItems + beverageOrderItems + dessertOrderItems).sortedBy { it.addedAt }
 
     @JsonBackReference
     @OneToMany(
@@ -170,6 +173,14 @@ class Order {
         orphanRemoval = true
     )
     var beverageOrderItems: MutableList<BeverageOrderItem> = mutableListOf()
+
+    @JsonBackReference
+    @OneToMany(
+        mappedBy = "order",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    var dessertOrderItems: MutableList<DessertOrderItem> = mutableListOf()
 
     @Column(name = "placement_time", nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
@@ -203,27 +214,47 @@ class Order {
     @Column(name = "completed_time", nullable = true)
     var completedTime: LocalDateTime? = null
 
-    @Column(name = "customer_deleted_status", nullable = false)
-    var customerDeletedStatus: Boolean? = false
+    @Column(name = "customer_deleted_at", nullable = true)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    var customerDeletedAt: LocalDateTime? = null
 
-    @Column(name = "vendor_deleted_status", nullable = false)
-    var vendorDeletedStatus: Boolean? = false
+    @Column(name = "vendor_deleted_at", nullable = true)
+    var vendorDeletedAt: LocalDateTime? = null
 
+    @Suppress("unused")
     @Version
     var version: Long = 0
 
     fun addItem(item: OrderEntity) {
         when (item) {
-            is FoodOrderItem -> { foodOrderItems.add(item.apply { order = this@Order }) }
-            is BeverageOrderItem -> { beverageOrderItems.add(item.apply { order = this@Order }) }
+            is FoodOrderItem -> {
+                foodOrderItems.add(item.apply { order = this@Order })
+            }
+
+            is BeverageOrderItem -> {
+                beverageOrderItems.add(item.apply { order = this@Order })
+            }
+
+            is DessertOrderItem -> {
+                dessertOrderItems.add(item.apply { order = this@Order })
+            }
         }
     }
 
     fun addAllItems(itemsList: List<OrderEntity>) {
         for (item in itemsList) {
-            when(item) {
-                is FoodOrderItem -> { foodOrderItems.add(item.apply { order = this@Order }) }
-                is BeverageOrderItem -> {  beverageOrderItems.add(item.apply { order = this@Order }) }
+            when (item) {
+                is FoodOrderItem -> {
+                    foodOrderItems.add(item.apply { order = this@Order })
+                }
+
+                is BeverageOrderItem -> {
+                    beverageOrderItems.add(item.apply { order = this@Order })
+                }
+
+                is DessertOrderItem -> {
+                    dessertOrderItems.add(item.apply { order = this@Order })
+                }
             }
         }
     }
@@ -233,40 +264,47 @@ class Order {
      * @returns [Triple]: (subtotalWithoutDelivery, deliveryFee, totalWithDelivery)
      */
     fun calculateTotals(): Triple<Long, Long, Long> {
-
-        // Calculate subtotal (sum of food items + beverages)
         val subtotal = items.sumOf { it.totalAmount ?: 0 }
+        val allFees = mutableListOf<Long>()
 
-        // Calculate delivery fee
-        val deliveryFee = if (items.isEmpty()) {
-            0L
-        } else {
-            val fees = items.map {
-                when(it) {
-                    is FoodOrderItem -> it.food.deliveryFee ?: 0L
-                    else -> 0
-                }
-
+        // Include food & dessert fees based on quantity
+        if (foodOrderItems.isNotEmpty() || dessertOrderItems.isNotEmpty()) {
+            allFees += foodOrderItems.flatMap { item ->
+                val fee = item.food.deliveryFee
+                if (fee != null) List(item.quantity) { fee } else emptyList()
             }
 
-            if (fees.size == 1) fees.first()
-            else {
-                val maxFee = fees.maxOrNull() ?: 0L
-                val sumOfOthers = fees.filter { it != maxFee }.sum()
-                val averageDividedByTwo = (sumOfOthers.toDouble() / (fees.size - 1) / 2)
-                (maxFee + averageDividedByTwo).roundToLong()
+            allFees += dessertOrderItems.flatMap { item ->
+                val fee = item.dessert.deliveryFee
+                if (fee != null) List(item.quantity) { fee } else emptyList()
+            }
+        } else {
+            allFees += beverageOrderItems.flatMap { item ->
+                val fee = item.beverage.deliveryFee
+                if (fee != null) List(item.quantity) { fee } else emptyList()
             }
         }
 
-        // Assign deliveryFee to the order for persistence
-        this.deliveryFee = if (this.orderType == OrderType.DELIVERY) {
-            deliveryFee
-        } else 0L
+        val finalDeliveryFee: Long = if (allFees.isEmpty()) {
+            0L
+        } else {
+            val maxFee = allFees.maxOrNull() ?: 0L
+            val sumOfOthers = allFees.filter { it != maxFee }
 
-        // Calculate total including delivery
-        val total = subtotal + deliveryFee
+            val averageOfOthers = if (sumOfOthers.isNotEmpty()) sumOfOthers.average() else 0.0
+            val totalCount = allFees.size
 
-        return Triple(subtotal, deliveryFee, total)
+            // Scale the average by (list consumableSize / 3)
+            val scalingFactor = totalCount.toDouble() / 3.0
+            val adjustedAverage = averageOfOthers * scalingFactor
+
+            // Add max fee and round up to the nearest 50
+            val rawTotal = maxFee + adjustedAverage
+            ((rawTotal + 49) / 50).toLong() * 50
+        }
+
+        val orderTotal = subtotal + finalDeliveryFee
+        return Triple(subtotal, finalDeliveryFee, orderTotal)
     }
 }
 

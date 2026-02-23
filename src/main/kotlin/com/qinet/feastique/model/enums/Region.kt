@@ -14,8 +14,10 @@ enum class Region(val type: String) {
     NON_SELECTED("None");
     companion object {
         private val lookup = Region.entries.associateBy { it.name.uppercase() }
-        fun fromString(regionName: String): Region =
-            lookup[regionName.uppercase()] ?: throw IllegalArgumentException("$regionName is not a valid region.")
+        fun fromString(region: String?): Region {
+            val key = region ?: throw IllegalArgumentException("null is not a valid entry.")
+            return lookup[key.uppercase()] ?: throw IllegalArgumentException("$region is not a valid region.")
+        }
     }
 }
 

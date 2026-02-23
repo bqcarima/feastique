@@ -5,16 +5,17 @@ import com.qinet.feastique.exception.PhoneNumberUnavailableException
 import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.exception.UsernameUnavailableException
 import com.qinet.feastique.model.dto.LoginDto
-import com.qinet.feastique.model.dto.PasswordDto
-import com.qinet.feastique.model.dto.customer.SignupDto
-import com.qinet.feastique.model.dto.customer.UpdateDto
+import com.qinet.feastique.model.dto.user.CustomerSignupDto
+import com.qinet.feastique.model.dto.user.CustomerUpdateDto
+import com.qinet.feastique.model.dto.user.PasswordChangeDto
 import com.qinet.feastique.model.entity.address.CustomerAddress
-import com.qinet.feastique.model.entity.phoneNumber.CustomerPhoneNumber
+import com.qinet.feastique.model.entity.contact.CustomerPhoneNumber
 import com.qinet.feastique.model.entity.user.Customer
 import com.qinet.feastique.model.enums.AccountType
-import com.qinet.feastique.repository.customer.CustomerPhoneNumberRepository
-import com.qinet.feastique.repository.customer.CustomerRepository
-import com.qinet.feastique.repository.phoneNumber.VendorPhoneNumberRepository
+import com.qinet.feastique.model.enums.Region
+import com.qinet.feastique.repository.contact.CustomerPhoneNumberRepository
+import com.qinet.feastique.repository.contact.VendorPhoneNumberRepository
+import com.qinet.feastique.repository.user.CustomerRepository
 import com.qinet.feastique.response.token.TokenPairResponse
 import com.qinet.feastique.security.PasswordEncoder
 import com.qinet.feastique.security.UserSecurity
@@ -61,7 +62,10 @@ class CustomerService(
     fun isDuplicateFound(username: String? = null, phoneNumber: String? = null): Boolean {
         return when {
             username != null -> customerRepository.existsByUsernameIgnoreCase(username)
-            phoneNumber != null -> (customerPhoneNumberRepository.existsByPhoneNumber(phoneNumber) && vendorPhoneNumberRepository.existsByPhoneNumber(phoneNumber))
+            phoneNumber != null -> (customerPhoneNumberRepository.existsByPhoneNumber(phoneNumber) && vendorPhoneNumberRepository.existsByPhoneNumber(
+                phoneNumber
+            ))
+
             else -> throw IllegalArgumentException("Either username or phone must be provided")
         }
     }
@@ -72,19 +76,19 @@ class CustomerService(
     }
 
     @Transactional
-    fun signupCustomer(signupDto: SignupDto): Customer {
-        if(!isDuplicateFound(username = signupDto.username)) {
-            if(!isDuplicateFound(phoneNumber = signupDto.phoneNumber)) {
+    fun signupCustomer(customerSignupDto: CustomerSignupDto): Customer {
+        if (!isDuplicateFound(username = customerSignupDto.username)) {
+            if (!isDuplicateFound(phoneNumber = customerSignupDto.phoneNumber)) {
 
                 // Information meant for the customer table
                 val customer = Customer().apply {
-                    firstName = requireNotNull(signupDto.firstName) { "Please enter your first name." }
-                    lastName = requireNotNull(signupDto.lastName) { "Please enter your last name." }
-                    username = requireNotNull(signupDto.username) { "Please enter a username."}
-                    dob = requireNotNull(signupDto.dob) { "Please enter a date of birth." }
+                    firstName = requireNotNull(customerSignupDto.firstName) { "Please enter your first name." }
+                    lastName = requireNotNull(customerSignupDto.lastName) { "Please enter your last name." }
+                    username = requireNotNull(customerSignupDto.username) { "Please enter a username." }
+                    dob = requireNotNull(customerSignupDto.dob) { "Please enter a date of birth." }
                     accountType = AccountType.CUSTOMER
-                    anniversary = signupDto.anniversary
-                    password = passwordEncoder.encode(signupDto.password)
+                    anniversary = customerSignupDto.anniversary
+                    password = passwordEncoder.encode(customerSignupDto.password)
                 }
 
                 var savedCustomer = saveCustomer(customer)
@@ -92,13 +96,14 @@ class CustomerService(
                 // Information meant for the address table
                 val address = CustomerAddress().apply {
                     country = "Cameroon"
-                    region = requireNotNull(signupDto.region) { "Please select a region." }
-                    city = requireNotNull(signupDto.city) { "Please enter a city." }
-                    neighbourhood = requireNotNull(signupDto.neighbourhood) { "Please enter a neighbourhood." }
-                    streetName = signupDto.streetName
-                    directions = requireNotNull(signupDto.directions) { "Please enter directions to exact location." }
-                    longitude = signupDto.longitude
-                    latitude = signupDto.latitude
+                    region = Region.fromString(customerSignupDto.region)
+                    city = requireNotNull(customerSignupDto.city) { "Please enter a city." }
+                    neighbourhood = requireNotNull(customerSignupDto.neighbourhood) { "Please enter a neighbourhood." }
+                    streetName = customerSignupDto.streetName
+                    directions =
+                        requireNotNull(customerSignupDto.directions) { "Please enter directions to exact location." }
+                    longitude = customerSignupDto.longitude
+                    latitude = customerSignupDto.latitude
                     default = true
                     this.customer = savedCustomer
                 }
@@ -107,7 +112,7 @@ class CustomerService(
 
                 // Information meant for the customer phone number table
                 val phoneNumber = CustomerPhoneNumber().apply {
-                    this.phoneNumber = requireNotNull(signupDto.phoneNumber) { "Please enter a phone number." }
+                    this.phoneNumber = requireNotNull(customerSignupDto.phoneNumber) { "Please enter a phone number." }
                     this.default = true
                     this.customer = savedCustomer
                 }
@@ -158,71 +163,68 @@ class CustomerService(
     }
 
     @Transactional
-    fun updateCustomer(updateDto: UpdateDto, customerDetails: UserSecurity): Any? {
+    fun updateCustomer(customerUpdateDto: CustomerUpdateDto, customerDetails: UserSecurity): TokenPairResponse {
         val customer = getCustomerById(customerDetails)
-        val oldUsername = customerDetails.username
-        if (customer.username != updateDto.username) {
-            if (isDuplicateFound(username = updateDto.username)) {
-                throw DuplicateFoundException("Username ${updateDto.username} is unavailable.")
+        customerDetails.username
+        if (customer.username != customerUpdateDto.username) {
+            if (isDuplicateFound(username = customerUpdateDto.username)) {
+                throw DuplicateFoundException("Username ${customerUpdateDto.username} is unavailable.")
             }
-            customer.username = requireNotNull(updateDto.username) { "Please enter a username."}
+            customer.username = requireNotNull(customerUpdateDto.username) { "Please enter a username." }
         }
 
-        customer.firstName = requireNotNull(updateDto.firstName) { "Please enter your first name." }
-        customer.lastName = requireNotNull(updateDto.lastName) { "Please enter your last name." }
-        customer.dob = requireNotNull(updateDto.dob) { "Please enter a date of birth." }
-        customer.anniversary = updateDto.anniversary
-        customer.image = updateDto.image
+        customer.firstName = requireNotNull(customerUpdateDto.firstName) { "Please enter your first name." }
+        customer.lastName = requireNotNull(customerUpdateDto.lastName) { "Please enter your last name." }
+        customer.dob = requireNotNull(customerUpdateDto.dob) { "Please enter a date of birth." }
+        customer.anniversary = customerUpdateDto.anniversary
+        customer.image = customerUpdateDto.image
 
         val savedCustomer = saveCustomer(customer)
 
-        if (oldUsername != savedCustomer.username) {
+        // delete old refresh token and old session
+        userSessionService.resetSessions(savedCustomer.id, savedCustomer.accountType?.name ?: AccountType.CUSTOMER.name)
 
-            // delete old refresh token and old session
-            userSessionService.resetSessions(savedCustomer.id, savedCustomer.accountType?.name ?: AccountType.CUSTOMER.name)
+        // Generate a new token pair
+        val newTokenPair = jwtUtility.generateTokenPair(
+            savedCustomer.id,
+            savedCustomer.username,
+            AccountType.CUSTOMER
+        )
 
-            // Generate a new token pair
-            val newTokenPair = jwtUtility.generateTokenPair(
-                savedCustomer.id,
-                savedCustomer.username,
-                AccountType.CUSTOMER
-            )
+        // Extract token identifier and expiry from the access token
+        val accessToken = newTokenPair.accessToken
+        val tokenIdentifier = jwtUtility.getTokenIdentifier(accessToken)
+        val accessTokenExpiryEpochMillis = jwtUtility.getExpirationEpochMillis(accessToken)
 
-            // Extract token identifier and expiry from the access token
-            val accessToken = newTokenPair.accessToken
-            val tokenIdentifier = jwtUtility.getTokenIdentifier(accessToken)
-            val accessTokenExpiryEpochMillis = jwtUtility.getExpirationEpochMillis(accessToken)
+        val customerId = jwtUtility.getUserId(accessToken)
+        val userType = jwtUtility.getUserType(accessToken)
 
-            val customerId = jwtUtility.getUserId(accessToken)
-            val userType = jwtUtility.getUserType(accessToken)
+        // Persist server-side session
+        val refreshToken = jwtUtility.parseToken(customerId, userType, newTokenPair.refreshToken)
+        refreshTokenService.storeRefreshToken(refreshToken)
 
-            // Persist server-side session
-            val refreshToken = jwtUtility.parseToken(customerId, userType,newTokenPair.refreshToken)
-            refreshTokenService.storeRefreshToken(refreshToken)
+        userSessionService.createSession(
+            tokenIdentifier = tokenIdentifier,
+            userId = customerId,
+            userType = userType,
+            expiresAtEpocMillis = accessTokenExpiryEpochMillis,
+        )
+        return newTokenPair
 
-            userSessionService.createSession(
-                tokenIdentifier = tokenIdentifier,
-                userId = customerId,
-                userType = userType,
-                expiresAtEpocMillis = accessTokenExpiryEpochMillis,
-            )
-            return newTokenPair
-        } else {
-            return getCustomerWithPhoneNumberAndAddress(customerDetails)
-        }
     }
 
     @Transactional
-    fun changePassword(passwordDto: PasswordDto, customerDetails: UserSecurity) {
+    fun changePassword(passwordChangeDto: PasswordChangeDto, customerDetails: UserSecurity) {
         val customer = getCustomerById(customerDetails)
-        if (!passwordEncoder.matches(passwordDto.currentPassword, customer.password!!))
+        if (!passwordEncoder.matches(passwordChangeDto.currentPassword, customer.password!!))
             throw IllegalArgumentException("Invalid password.")
 
-        if (passwordDto.newPassword != passwordDto.confirmedNewPassword) {
+        if (passwordChangeDto.newPassword != passwordChangeDto.confirmedNewPassword) {
             throw IllegalArgumentException("Passwords do not match.")
         }
-        customer.password = passwordEncoder.encode(passwordDto.confirmedNewPassword)
+        customer.password = passwordEncoder.encode(passwordChangeDto.confirmedNewPassword)
         saveCustomer(customer)
     }
+
 }
 

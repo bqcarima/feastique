@@ -1,7 +1,7 @@
 package com.qinet.feastique.service.user
 
-import com.qinet.feastique.repository.customer.CustomerRepository
-import com.qinet.feastique.repository.vendor.VendorRepository
+import com.qinet.feastique.repository.user.CustomerRepository
+import com.qinet.feastique.repository.user.VendorRepository
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
@@ -15,7 +15,7 @@ class UserDetailService(
     private val customerRepository: CustomerRepository,
     private val vendorRepository: VendorRepository
 ) : UserDetailsService {
-    override fun loadUserByUsername(username: String): UserDetails? {
+    override fun loadUserByUsername(username: String): UserDetails {
 
         val customer = customerRepository.findFirstByUsername(username)
         if (customer != null) {
@@ -40,3 +40,4 @@ class UserDetailService(
         throw UsernameNotFoundException("User not found with username: $username")
     }
 }
+

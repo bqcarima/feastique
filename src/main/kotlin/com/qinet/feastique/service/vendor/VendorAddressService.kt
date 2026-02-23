@@ -1,17 +1,17 @@
 package com.qinet.feastique.service.vendor
 
-import com.qinet.feastique.model.dto.AddressDto
-import com.qinet.feastique.model.entity.address.VendorAddress
-import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.PermissionDeniedException
+import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
-import com.qinet.feastique.repository.vendor.VendorAddressRepository
-import com.qinet.feastique.repository.vendor.VendorRepository
+import com.qinet.feastique.model.dto.address.AddressDto
+import com.qinet.feastique.model.entity.address.VendorAddress
+import com.qinet.feastique.repository.address.VendorAddressRepository
+import com.qinet.feastique.repository.user.VendorRepository
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 
 @Service
 class VendorAddressService(

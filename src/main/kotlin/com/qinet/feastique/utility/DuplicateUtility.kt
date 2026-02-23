@@ -1,12 +1,13 @@
 package com.qinet.feastique.utility
 
-import com.qinet.feastique.repository.BeverageRepository
-import com.qinet.feastique.repository.addOn.AddOnRepository
-import com.qinet.feastique.repository.complement.ComplementRepository
-import com.qinet.feastique.repository.customer.CustomerPhoneNumberRepository
-import com.qinet.feastique.repository.customer.CustomerRepository
-import com.qinet.feastique.repository.food.FoodRepository
-import com.qinet.feastique.repository.phoneNumber.VendorPhoneNumberRepository
+import com.qinet.feastique.repository.consumables.beverage.BeverageRepository
+import com.qinet.feastique.repository.consumables.addOn.AddOnRepository
+import com.qinet.feastique.repository.consumables.complement.ComplementRepository
+import com.qinet.feastique.repository.contact.CustomerPhoneNumberRepository
+import com.qinet.feastique.repository.user.CustomerRepository
+import com.qinet.feastique.repository.consumables.food.FoodRepository
+import com.qinet.feastique.repository.contact.VendorPhoneNumberRepository
+import com.qinet.feastique.repository.consumables.dessert.DessertRepository
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
@@ -19,7 +20,8 @@ class DuplicateUtility(
     private val complementRepository: ComplementRepository,
     private val addOnRepository: AddOnRepository,
     private val beverageRepository: BeverageRepository,
-    private val foodRepository: FoodRepository
+    private val foodRepository: FoodRepository,
+    private val dessertRepository: DessertRepository
 
 ) {
 
@@ -33,16 +35,20 @@ class DuplicateUtility(
     }
 
     fun isDuplicateFoodFound(foodName: String, vendorId: UUID): Boolean {
-        return foodRepository.existsByFoodNameIgnoreCaseAndVendorId(foodName, vendorId)
+        return foodRepository.existsByNameIgnoreCaseAndVendorId(foodName, vendorId)
     }
     fun isDuplicationComplementFound(complementName: String, vendorId: UUID): Boolean {
-        return complementRepository.existsByComplementNameIgnoreCaseAndVendorId(complementName, vendorId)
+        return complementRepository.existsByNameIgnoreCaseAndVendorId(complementName, vendorId)
     }
     fun isDuplicateAddOnFound(addOnName: String, vendorId: UUID): Boolean {
-        return addOnRepository.existsByAddOnNameIgnoreCaseAndVendorId(addOnName, vendorId)
+        return addOnRepository.existsByNameIgnoreCaseAndVendorId(addOnName, vendorId)
     }
     fun isDuplicateBeverageFound(beverageName: String, vendorId: UUID): Boolean {
-        return beverageRepository.existsByBeverageNameIgnoreCaseAndVendorId(beverageName, vendorId)
+        return beverageRepository.existsByNameIgnoreCaseAndVendorId(beverageName, vendorId)
+    }
+
+    fun isDuplicateDessertFound(dessertName: String, vendorId: UUID): Boolean {
+        return dessertRepository.existsByNameIgnoreCaseAndVendorId(dessertName, vendorId)
     }
 }
 

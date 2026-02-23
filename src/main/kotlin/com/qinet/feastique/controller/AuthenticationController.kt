@@ -3,12 +3,12 @@ package com.qinet.feastique.controller
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.LoginDto
 import com.qinet.feastique.model.dto.LogoutDto
-import com.qinet.feastique.model.dto.customer.SignupDto
-import com.qinet.feastique.model.dto.vendor.VendorSignupDto
-import com.qinet.feastique.response.CustomerResponse
-import com.qinet.feastique.response.vendor.VendorResponse
+import com.qinet.feastique.model.dto.user.CustomerSignupDto
+import com.qinet.feastique.model.dto.user.VendorSignupDto
 import com.qinet.feastique.response.token.AccessTokenResponse
 import com.qinet.feastique.response.token.TokenPairResponse
+import com.qinet.feastique.response.user.CustomerResponse
+import com.qinet.feastique.response.user.VendorResponse
 import com.qinet.feastique.service.AuthenticationService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -17,13 +17,13 @@ import org.springframework.web.bind.annotation.*
 
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 class AuthenticationController(
     private val authenticationService: AuthenticationService,
 ) {
     @PostMapping("/signup")
-    fun signup(@RequestBody @Valid signupDto: SignupDto): ResponseEntity<CustomerResponse> {
-        val customer = authenticationService.handleCustomerSignup(signupDto)
+    fun signup(@RequestBody @Valid customerSignupDto: CustomerSignupDto): ResponseEntity<CustomerResponse> {
+        val customer = authenticationService.handleCustomerSignup(customerSignupDto)
         return ResponseEntity(customer.toResponse(), HttpStatus.CREATED)
     }
 

@@ -3,10 +3,10 @@ package com.qinet.feastique.service
 import com.qinet.feastique.exception.PermissionDeniedException
 import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
-import com.qinet.feastique.model.dto.DiscountDto
+import com.qinet.feastique.model.dto.discount.DiscountDto
 import com.qinet.feastique.model.entity.discount.Discount
 import com.qinet.feastique.repository.discount.DiscountRepository
-import com.qinet.feastique.repository.vendor.VendorRepository
+import com.qinet.feastique.repository.user.VendorRepository
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

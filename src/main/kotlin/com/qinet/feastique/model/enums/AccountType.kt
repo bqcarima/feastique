@@ -2,7 +2,7 @@ package com.qinet.feastique.model.enums
 
 enum class AccountType(val type: String) {
     CUSTOMER("Customer"),
-    VENDOR("Customer");
+    VENDOR("Vendor");
 
     companion object {
         private val lookup = AccountType.entries.associateBy { it.name.uppercase() }

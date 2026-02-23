@@ -20,3 +20,4 @@ data class RefreshToken(
     val hashedToken: String,
     val createdAt: Instant = Instant.now()
 )
+

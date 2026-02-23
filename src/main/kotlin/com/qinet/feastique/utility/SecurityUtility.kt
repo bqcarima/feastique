@@ -1,5 +1,6 @@
 package com.qinet.feastique.utility
 
+import com.qinet.feastique.exception.NoRoleException
 import com.qinet.feastique.exception.MalformedUrlException
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.security.core.GrantedAuthority
@@ -38,7 +39,7 @@ class SecurityUtility {
     fun getSingleRole(user: UserSecurity): String {
         val roles = user.authorities
             .map(GrantedAuthority::getAuthority)
-            .map { it.removePrefix("ROLE_").uppercase() }
+            .map { it?.removePrefix("ROLE_")?.uppercase() ?: throw NoRoleException() }
 
         if (roles.size != 1) {
             throw IllegalStateException("Expected exactly 1 role, but found: $roles")

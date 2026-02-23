@@ -6,7 +6,7 @@ import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.model.dto.PostDto
 import com.qinet.feastique.model.entity.post.Post
 import com.qinet.feastique.repository.post.PostRepository
-import com.qinet.feastique.repository.vendor.VendorRepository
+import com.qinet.feastique.repository.user.VendorRepository
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
