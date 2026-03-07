@@ -54,6 +54,7 @@ abstract class UserEntity {
     @UpdateTimestamp
     var accountUpdated: LocalDateTime? = null
 
+    @Suppress("unused")
     @Version
     var version: Long = 0
 }

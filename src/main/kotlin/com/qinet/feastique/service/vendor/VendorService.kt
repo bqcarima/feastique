@@ -1,24 +1,20 @@
 package com.qinet.feastique.service.vendor
 
-import com.qinet.feastique.exception.DuplicateFoundException
-import com.qinet.feastique.exception.PhoneNumberUnavailableException
-import com.qinet.feastique.exception.RequestedEntityNotFoundException
-import com.qinet.feastique.exception.UserNotFoundException
-import com.qinet.feastique.exception.UsernameUnavailableException
-import com.qinet.feastique.model.dto.PasswordDto
+import com.qinet.feastique.exception.*
 import com.qinet.feastique.model.dto.LoginDto
-import com.qinet.feastique.model.dto.vendor.VendorSignupDto
-import com.qinet.feastique.model.dto.vendor.VendorUpdateDto
-import com.qinet.feastique.model.entity.user.Vendor
+import com.qinet.feastique.model.dto.user.PasswordChangeDto
+import com.qinet.feastique.model.dto.user.VendorSignupDto
+import com.qinet.feastique.model.dto.user.VendorUpdateDto
 import com.qinet.feastique.model.entity.address.VendorAddress
-import com.qinet.feastique.model.entity.phoneNumber.VendorPhoneNumber
+import com.qinet.feastique.model.entity.contact.VendorPhoneNumber
+import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.enums.AccountType
 import com.qinet.feastique.model.enums.Region
 import com.qinet.feastique.model.enums.RegionCode
-import com.qinet.feastique.repository.customer.CustomerPhoneNumberRepository
-import com.qinet.feastique.repository.phoneNumber.VendorPhoneNumberRepository
-import com.qinet.feastique.repository.vendor.VendorAddressRepository
-import com.qinet.feastique.repository.vendor.VendorRepository
+import com.qinet.feastique.repository.address.VendorAddressRepository
+import com.qinet.feastique.repository.contact.CustomerPhoneNumberRepository
+import com.qinet.feastique.repository.contact.VendorPhoneNumberRepository
+import com.qinet.feastique.repository.user.VendorRepository
 import com.qinet.feastique.response.token.TokenPairResponse
 import com.qinet.feastique.security.PasswordEncoder
 import com.qinet.feastique.security.UserSecurity
@@ -30,7 +26,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 
 @Service
 class VendorService(
@@ -84,15 +80,17 @@ class VendorService(
             if (!isDuplicateFound(phoneNumber = vendorSignupDto.phoneNumber)) {
                 // Information meant for the vendor table
                 val vendor = Vendor().apply {
-                    this.username = requireNotNull(vendorSignupDto.username) { "Please enter a username."}
-                    this.firstName = requireNotNull(vendorSignupDto.firstName) { "Please enter a first name."}
-                    this.lastName = requireNotNull(vendorSignupDto.lastName) { "Please enter a last name."}
-                    this.chefName = requireNotNull(vendorSignupDto.chefName) { "Please enter a chef name."}
+                    this.username = requireNotNull(vendorSignupDto.username) { "Please enter a username." }
+                    this.firstName = requireNotNull(vendorSignupDto.firstName) { "Please enter a first name." }
+                    this.lastName = requireNotNull(vendorSignupDto.lastName) { "Please enter a last name." }
+                    this.chefName = requireNotNull(vendorSignupDto.chefName) { "Please enter a chef name." }
 
                     this.restaurantName = vendorSignupDto.restaurantName
 
                     this.password = passwordEncoder.encode(vendorSignupDto.password!!)
                     this.accountType = AccountType.VENDOR
+                    this.openingTime = requireNotNull(vendorSignupDto.openingTime) { "Please specify an opening time." }
+                    this.closingTime = requireNotNull(vendorSignupDto.closingTime) { "Please specify a closing time." }
                 }
 
                 val regionAsString = requireNotNull(vendorSignupDto.region) { "Please select a region." }
@@ -127,9 +125,11 @@ class VendorService(
                     this.country = "Cameroon"
                     this.region = regionAsEnum
                     this.city = requireNotNull(vendorSignupDto.city) { "Please enter a city." }
-                    this.neighbourhood = requireNotNull(vendorSignupDto.neighbourhood) { "Please enter a neighbourhood." }
+                    this.neighbourhood =
+                        requireNotNull(vendorSignupDto.neighbourhood) { "Please enter a neighbourhood." }
                     this.streetName = vendorSignupDto.streetName
-                    this.directions = requireNotNull(vendorSignupDto.directions) { "Please enter directions to you location"}
+                    this.directions =
+                        requireNotNull(vendorSignupDto.directions) { "Please enter directions to you location" }
                     this.longitude = vendorSignupDto.longitude
                     this.latitude = vendorSignupDto.latitude
                     this.vendor = savedVendor
@@ -171,70 +171,67 @@ class VendorService(
     }
 
     @Transactional
-    fun updateVendor(vendorUpdateDto: VendorUpdateDto, vendorDetails: UserSecurity): Any? {
+    fun updateVendor(vendorUpdateDto: VendorUpdateDto, vendorDetails: UserSecurity): TokenPairResponse {
         val vendor = getVendorById(vendorDetails.id)
-        val oldUsername = vendor.username
+        vendor.username
         if (vendor.username != vendorUpdateDto.username) {
             if (isDuplicateFound(username = vendorUpdateDto.username)) {
                 throw DuplicateFoundException("Username ${vendorUpdateDto.username} is unavailable.")
             }
-            vendor.username = requireNotNull(vendorUpdateDto.username) { "Please enter a username."}
+            vendor.username = requireNotNull(vendorUpdateDto.username) { "Please enter a username." }
         }
 
-        vendor.firstName = requireNotNull(vendorUpdateDto.firstName) { "Please enter a first name."}
-        vendor.lastName = requireNotNull(vendorUpdateDto.lastName) { "Please enter a last name."}
-        vendor.chefName = requireNotNull(vendorUpdateDto.chefName) { "Please enter a chef name."}
-        vendor.restaurantName = requireNotNull(vendorUpdateDto.restaurantName) { "Please enter a restaurant name."}
-        vendor.image = requireNotNull(vendorUpdateDto.image) { "Please select an image."}
+        vendor.firstName = requireNotNull(vendorUpdateDto.firstName) { "Please enter a first name." }
+        vendor.lastName = requireNotNull(vendorUpdateDto.lastName) { "Please enter a last name." }
+        vendor.chefName = requireNotNull(vendorUpdateDto.chefName) { "Please enter a chef name." }
+        vendor.restaurantName = requireNotNull(vendorUpdateDto.restaurantName) { "Please enter a restaurant name." }
+        vendor.image = requireNotNull(vendorUpdateDto.image) { "Please select an image." }
         val savedVendor = saveVendor(vendor)
 
-        if (oldUsername != savedVendor.username) {
 
-            // delete old refresh token and old session
-            userSessionService.resetSessions(savedVendor.id, savedVendor.accountType.toString())
+        // delete old refresh token and old session
+        userSessionService.resetSessions(savedVendor.id, savedVendor.accountType.toString())
 
-            // Generate a new token par.
-            val newTokenPair = jwtUtility.generateTokenPair(
-                savedVendor.id,
-                savedVendor.username,
-                savedVendor.accountType ?: AccountType.VENDOR
-            )
+        // Generate a new token par.
+        val newTokenPair = jwtUtility.generateTokenPair(
+            savedVendor.id,
+            savedVendor.username,
+            savedVendor.accountType ?: AccountType.VENDOR
+        )
 
-            // Extract tokenIdentifier and expiry from the access token
-            val accessToken = newTokenPair.accessToken
-            val tokenIdentifier = jwtUtility.getTokenIdentifier(accessToken)
-            val accessTokenExpiryEpochMillis = jwtUtility.getExpirationEpochMillis(accessToken)
+        // Extract tokenIdentifier and expiry from the access token
+        val accessToken = newTokenPair.accessToken
+        val tokenIdentifier = jwtUtility.getTokenIdentifier(accessToken)
+        val accessTokenExpiryEpochMillis = jwtUtility.getExpirationEpochMillis(accessToken)
 
-            val vendorId = jwtUtility.getUserId(accessToken)
-            val userType = jwtUtility.getUserType(accessToken)
+        val vendorId = jwtUtility.getUserId(accessToken)
+        val userType = jwtUtility.getUserType(accessToken)
 
-            // Persist server-side session
-            val refreshToken = jwtUtility.parseToken(vendorId, userType, newTokenPair.refreshToken)
-            refreshTokenService.storeRefreshToken(refreshToken)
+        // Persist server-side session
+        val refreshToken = jwtUtility.parseToken(vendorId, userType, newTokenPair.refreshToken)
+        refreshTokenService.storeRefreshToken(refreshToken)
 
-            userSessionService.createSession(
-                tokenIdentifier = tokenIdentifier,
-                userId = vendorId,
-                userType = userType,
-                expiresAtEpocMillis = accessTokenExpiryEpochMillis
-            )
-            return newTokenPair
-        } else {
-            return savedVendor
-        }
+        userSessionService.createSession(
+            tokenIdentifier = tokenIdentifier,
+            userId = vendorId,
+            userType = userType,
+            expiresAtEpocMillis = accessTokenExpiryEpochMillis
+        )
+        return newTokenPair
+
     }
 
     @Transactional
-    fun changePassword(passwordDto: PasswordDto, vendorDetails: UserSecurity) {
+    fun changePassword(passwordChangeDto: PasswordChangeDto, vendorDetails: UserSecurity) {
         val vendor = getVendorById(vendorDetails.id)
-        if (!passwordEncoder.matches(passwordDto.currentPassword, vendor.password!!))
+        if (!passwordEncoder.matches(passwordChangeDto.currentPassword, vendor.password!!))
             throw IllegalArgumentException("Invalid password.")
 
-        if (passwordDto.newPassword != passwordDto.confirmedNewPassword) {
+        if (passwordChangeDto.newPassword != passwordChangeDto.confirmedNewPassword) {
             throw IllegalArgumentException("Passwords do not match.")
         }
 
-        vendor.password = passwordEncoder.encode(passwordDto.confirmedNewPassword)
+        vendor.password = passwordEncoder.encode(passwordChangeDto.confirmedNewPassword)
         vendor.accountUpdated = LocalDateTime.now()
         saveVendor(vendor)
     }

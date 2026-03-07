@@ -61,9 +61,9 @@ class SecurityConfig(
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/api/auth/**").permitAll()
-                    .requestMatchers("/api/customer/**").hasRole("CUSTOMER")
-                    .requestMatchers("/api/vendor/**").hasRole("VENDOR")
+                    .requestMatchers("/api/v1/auth/**").permitAll()
+                    .requestMatchers("/api/v1/customer/**").hasRole("CUSTOMER")
+                    .requestMatchers("/api/v1/vendor/**").hasRole("VENDOR")
                     .anyRequest().authenticated()
             }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }

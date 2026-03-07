@@ -1,7 +1,7 @@
 package com.qinet.feastique.controller
 
 import com.qinet.feastique.common.mapper.toResponse
-import com.qinet.feastique.model.dto.DiscountDto
+import com.qinet.feastique.model.dto.discount.DiscountDto
 import com.qinet.feastique.response.DiscountResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.DiscountService
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*
 import java.util.UUID
 
 @RestController
-@RequestMapping("/api/vendors/{vendorId}/discounts")
+@RequestMapping("/api/v1/vendors/{vendorId}/discounts")
 class DiscountController(
     private val discountService: DiscountService,
     private val securityUtility: SecurityUtility

@@ -10,3 +10,4 @@ import java.util.UUID
 interface CartRepository : JpaRepository<Cart, UUID> {
     fun findByCustomerId(customerId: UUID): Optional<Cart>
 }
+

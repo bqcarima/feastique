@@ -1,9 +1,11 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
-	kotlin("jvm") version "1.9.25"
-	kotlin("plugin.spring") version "1.9.25"
-	id("org.springframework.boot") version "3.5.4"
-	id("io.spring.dependency-management") version "1.1.7"
-	kotlin("plugin.jpa") version "1.9.25"
+	kotlin("jvm") version "2.2.20"
+	kotlin("plugin.spring") version "2.2.20"
+    kotlin("plugin.jpa") version "2.2.20"
+    id("org.springframework.boot") version "4.0.0"
+    id("io.spring.dependency-management") version "1.1.7"
 }
 
 group = "com.qinet"
@@ -27,7 +29,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.security:spring-security-crypto")
-	testImplementation("org.springframework.security:spring-security-test")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    testImplementation("org.springframework.security:spring-security-test")
 	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
@@ -53,6 +56,9 @@ dependencies {
     // UUIDv7 generator
     implementation("com.github.f4b6a3:uuid-creator:5.3.2")
 
+	// Mockito core + Kotlin extensions (mockito-kotlin)
+	testImplementation("org.mockito:mockito-core:5.15.2")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
 
 }
 
@@ -70,4 +76,8 @@ allOpen {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.compilerOptions {
+    freeCompilerArgs.set(listOf("-Xannotation-default-target=param-property"))
 }

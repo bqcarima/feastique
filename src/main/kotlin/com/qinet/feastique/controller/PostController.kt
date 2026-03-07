@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*
 import java.util.UUID
 
 @RestController
-@RequestMapping("/api/vendors/{vendorId}/posts")
+@RequestMapping("/api/v1/vendors/{vendorId}/posts")
 class PostController(
     private val postService: PostService,
     private val securityUtility: SecurityUtility

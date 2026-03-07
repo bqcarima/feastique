@@ -2,10 +2,10 @@ package com.qinet.feastique.service.customer
 
 import com.qinet.feastique.exception.PermissionDeniedException
 import com.qinet.feastique.exception.RequestedEntityNotFoundException
-import com.qinet.feastique.model.dto.AddressDto
+import com.qinet.feastique.model.dto.address.AddressDto
 import com.qinet.feastique.model.entity.address.CustomerAddress
-import com.qinet.feastique.repository.customer.CustomerAddressRepository
-import com.qinet.feastique.repository.customer.CustomerRepository
+import com.qinet.feastique.repository.address.CustomerAddressRepository
+import com.qinet.feastique.repository.user.CustomerRepository
 import com.qinet.feastique.security.UserSecurity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

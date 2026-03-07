@@ -1,7 +1,6 @@
 package com.qinet.feastique.response.order
 
-import com.qinet.feastique.model.enums.OrderType
-import com.qinet.feastique.response.address.CustomerAddressResponse
+import com.qinet.feastique.response.user.CustomerAddressResponse
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.*

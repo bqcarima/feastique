@@ -1,22 +1,19 @@
 package com.qinet.feastique.common.mapper
 
-import com.qinet.feastique.model.entity.provisions.addOn.AddOn
-import com.qinet.feastique.model.entity.provisions.addOn.FoodAddOn
+import com.qinet.feastique.model.entity.consumables.addOn.AddOn
+import com.qinet.feastique.model.entity.consumables.addOn.FoodAddOn
 import com.qinet.feastique.model.entity.address.Address
 import com.qinet.feastique.model.entity.address.CustomerAddress
-import com.qinet.feastique.model.entity.provisions.beverage.Beverage
-import com.qinet.feastique.model.entity.provisions.complement.Complement
-import com.qinet.feastique.model.entity.provisions.complement.FoodComplement
+import com.qinet.feastique.model.entity.consumables.beverage.Beverage
+import com.qinet.feastique.model.entity.consumables.complement.Complement
+import com.qinet.feastique.model.entity.consumables.complement.FoodComplement
 import com.qinet.feastique.model.entity.discount.Discount
 import com.qinet.feastique.model.entity.discount.FoodDiscount
 import com.qinet.feastique.model.entity.order.Cart
 import com.qinet.feastique.model.entity.order.Order
-import com.qinet.feastique.model.entity.order.beverage.BeverageCartItem
-import com.qinet.feastique.model.entity.order.beverage.BeverageOrderItem
-import com.qinet.feastique.model.entity.order.food.FoodCartItem
-import com.qinet.feastique.model.entity.order.food.FoodOrderItem
-import com.qinet.feastique.model.entity.phoneNumber.PhoneNumber
-import com.qinet.feastique.model.entity.phoneNumber.VendorPhoneNumber
+import com.qinet.feastique.model.entity.order.item.*
+import com.qinet.feastique.model.entity.contact.PhoneNumber
+import com.qinet.feastique.model.entity.contact.VendorPhoneNumber
 import com.qinet.feastique.model.entity.post.Post
 import com.qinet.feastique.model.entity.user.Customer
 import com.qinet.feastique.model.entity.user.Vendor
@@ -24,29 +21,50 @@ import com.qinet.feastique.model.enums.OrderStatus
 import com.qinet.feastique.model.enums.OrderType
 import com.qinet.feastique.model.enums.Size
 import com.qinet.feastique.response.*
-import com.qinet.feastique.response.address.AddressResponse
-import com.qinet.feastique.response.address.CustomerAddressResponse
-import com.qinet.feastique.response.BeverageResponse
-import com.qinet.feastique.response.food.*
-import com.qinet.feastique.response.order.CartResponse
-import com.qinet.feastique.response.order.FoodOrderCustomerResponse
-import com.qinet.feastique.response.order.FoodOrderVendorResponse
-import com.qinet.feastique.response.order.OrderResponse
-import com.qinet.feastique.response.order.BeverageItemResponse
-import com.qinet.feastique.response.order.FoodItemResponse
-import com.qinet.feastique.response.vendor.VendorMinimalResponse
-import com.qinet.feastique.response.vendor.VendorResponse
+import com.qinet.feastique.response.user.AddressResponse
+import com.qinet.feastique.response.user.CustomerAddressResponse
+import com.qinet.feastique.response.consumables.beverage.BeverageResponse
+import com.qinet.feastique.response.order.*
 import com.qinet.feastique.model.dto.order.BeverageItemDto
-import com.qinet.feastique.model.entity.provisions.food.Food
-import com.qinet.feastique.model.entity.provisions.food.FoodAvailability
-import com.qinet.feastique.model.entity.provisions.food.FoodImage
-import com.qinet.feastique.model.entity.provisions.food.FoodOrderType
-import com.qinet.feastique.model.entity.provisions.food.FoodSize
+import com.qinet.feastique.model.entity.DessertAvailability
+import com.qinet.feastique.model.entity.FoodAvailability
+import com.qinet.feastique.model.entity.discount.DessertDiscount
+import com.qinet.feastique.model.entity.consumables.food.Food
+import com.qinet.feastique.model.entity.consumables.dessert.Dessert
+import com.qinet.feastique.model.entity.consumables.filling.HandheldFilling
+import com.qinet.feastique.model.entity.consumables.flavour.BeverageFlavour
+import com.qinet.feastique.model.entity.consumables.flavour.DessertFlavour
+import com.qinet.feastique.model.entity.consumables.filling.Filling
+import com.qinet.feastique.model.entity.consumables.handheld.Handheld
+import com.qinet.feastique.model.entity.discount.HandheldDiscount
+import com.qinet.feastique.model.entity.image.DessertImage
+import com.qinet.feastique.model.entity.image.FoodImage
+import com.qinet.feastique.model.entity.image.HandheldImage
+import com.qinet.feastique.model.entity.size.BeverageFlavourSize
+import com.qinet.feastique.model.entity.size.DessertFlavourSize
+import com.qinet.feastique.model.entity.size.FoodSize
+import com.qinet.feastique.model.entity.size.HandheldSize
+import com.qinet.feastique.model.enums.Availability
+import com.qinet.feastique.model.enums.DessertType
+import com.qinet.feastique.model.enums.HandHeldType
 import com.qinet.feastique.model.enums.Region
 import com.qinet.feastique.response.order.UnknownEntityResponse
+import com.qinet.feastique.response.consumables.dessert.*
+import com.qinet.feastique.response.AvailabilityResponse
+import com.qinet.feastique.response.consumables.beverage.BeverageFlavourResponse
+import com.qinet.feastique.response.consumables.beverage.BeverageFlavourSizeResponse
+import com.qinet.feastique.response.consumables.food.*
+import com.qinet.feastique.response.consumables.handheld.FillingResponse
+import com.qinet.feastique.response.consumables.handheld.HandheldMinimalResponse
+import com.qinet.feastique.response.consumables.handheld.HandheldResponse
+import com.qinet.feastique.response.consumables.handheld.HandheldSizeResponse
+import com.qinet.feastique.response.user.*
+import org.springframework.data.domain.Page
 import java.text.SimpleDateFormat
 import java.util.*
 
+
+val dateFormatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
 /**
  * Maps an [AddOn] entity to its API DTO [AddOnResponse].
  *
@@ -56,7 +74,8 @@ import java.util.*
 fun AddOn.toResponse() = AddOnResponse(
     id = this.id,
     addOnName = this.name.orEmpty(),
-    price = this.price ?: 0
+    price = this.price ?: 0,
+    availability = availability?.type ?: Availability.UNAVAILABLE.type
 )
 
 /**
@@ -68,7 +87,7 @@ fun AddOn.toResponse() = AddOnResponse(
 fun Address.toResponse(): AddressResponse = AddressResponse(
     id = id,
     country = country,
-    region = region?.type ?: Region.NON_SELECTED.type,
+    region = region?.type ?: Region.NON_SELECTED.name,
     city = city ?: "Not selected",
     neighbourhood = neighbourhood ?: "Not selected",
     streetName = streetName ?: "None",
@@ -85,7 +104,7 @@ fun Address.toResponse(): AddressResponse = AddressResponse(
 fun CustomerAddress.toResponse(): CustomerAddressResponse = CustomerAddressResponse(
     id = id,
     country = country,
-    region = region?.type ?: Region.NON_SELECTED.type,
+    region = region?.name ?: Region.NON_SELECTED.name,
     city = city ?: "Not selected",
     neighbourhood = neighbourhood ?: "Not selected",
     streetName = streetName ?: "None",
@@ -106,8 +125,13 @@ fun Beverage.toResponse() = BeverageResponse(
     alcoholic = alcoholic ?: false,
     beverageGroup = beverageGroup?.type ?: "Unknown",
     percentage = percentage ?: 0,
-    price = price ?: 0,
-    delivery = delivery ?: false,
+    availability = availability?.type ?: Availability.UNAVAILABLE.type,
+    deliverable = deliverable ?: false,
+    orderTypes = orderTypes.map { it.type }.toSet(),
+    preparationTime = preparationTime ?: 0,
+    readyAsFrom = readyAsFrom,
+    deliveryFee = deliveryFee ?: 0,
+    beverageFlavours = beverageFlavours.map { it.toResponse() }.toSet(),
 )
 
 /**
@@ -140,6 +164,22 @@ fun BeverageOrderItem.toBeverageItemResponse() = BeverageItemResponse(
     totalAmount = totalAmount ?: 0
 )
 
+fun BeverageFlavour.toResponse() = BeverageFlavourResponse(
+    id = id,
+    name = name!!,
+    description = description.orEmpty(),
+    availability = availability?.type ?: Availability.UNAVAILABLE.type,
+    flavourSizes = beverageFlavourSizes.map { it.toResponse() }.toSet()
+)
+
+fun BeverageFlavourSize.toResponse() = BeverageFlavourSizeResponse(
+    id = id,
+    size = this@toResponse.size!!.type,
+    sizeName = name,
+    price = price ?: 0,
+    availability = availability?.type ?: Availability.UNAVAILABLE.type
+)
+
 /**
  * Converts a [Cart] entity to its API response DTO [CartResponse].
  *
@@ -152,6 +192,8 @@ fun Cart.toResponse() = CartResponse(
         when (it) {
             is FoodCartItem -> it.toResponse()
             is BeverageCartItem -> it.toResponse()
+            is DessertCartItem -> it.toResponse()
+            is HandheldCartItem -> it.toResponse()
             else -> UnknownEntityResponse(
                 id = id,
                 quantity = 0,
@@ -172,7 +214,8 @@ fun Cart.toResponse() = CartResponse(
 fun Complement.toResponse() = ComplementResponse(
     id = id,
     name = name.orEmpty(),
-    price = price ?: 0
+    price = price ?: 0,
+    availability = availability?.type ?: Availability.UNAVAILABLE.type
 )
 
 /**
@@ -209,7 +252,106 @@ fun Customer.orderResponse(): FoodOrderCustomerResponse = FoodOrderCustomerRespo
     lastName = lastName.orEmpty(),
 )
 
-val dateFormatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+
+/**
+ * Converts a [Dessert] entity to its API response DTO [DessertResponse].
+ *
+ * @receiver `Dessert` entity to map from.
+ * @return [DessertResponse] DTO with id, name, type, description, flavours and order types.
+ */
+fun Dessert.toResponse(): DessertResponse = DessertResponse(
+    id = id,
+    dessertName = name.orEmpty(),
+    dessertType = dessertType?.type ?: DessertType.OTHER.type,
+    description = description.orEmpty(),
+    availability = availability?.type ?: Availability.UNAVAILABLE.type,
+    deliverable = deliverable ?: false,
+    deliveryFee = deliveryFee ?: 0,
+    dessertFlavours = dessertFlavours.map { it.toResponse() },
+    preparationTime = preparationTime ?: 0,
+    readyAsFrom = readyAsFrom,
+    orderTypes = dessertOrderTypes.map { it.type },
+    availableDays = availableDays.map { it.type },
+    discounts = dessertDiscounts.map { it.discount.toResponse() }.toSet(),
+    dessertImages = dessertImages.map { it.toResponse() }
+)
+
+fun DessertAvailability.toResponse() = AvailabilityResponse(
+    id = this.id,
+    availability = this.availableDay?.type ?: "Unknown"
+)
+
+/**
+ * Converts a [DessertCartItem] entity to its API response DTO [DessertResponse].
+ *
+ * @receiver [DessertCartItem] entity to map from.
+ * @return [DessertItemResponse] DTO with id, name, price, etc.
+ */
+fun DessertCartItem.toResponse() = DessertItemResponse(
+    id = id,
+    dessert = dessert.toResponse(),
+    unitPrice = totalAmount!!.div(quantity),
+    quantity = quantity,
+    orderType = orderType?.type ?: OrderType.DINE_IN.type,
+    totalAmount = totalAmount ?: 0
+)
+
+/**
+ * Maps a [DessertOrderItem] entity to an API DTO [DessertOrderItem].
+ *
+ * @receiver [DessertOrderItem] entity to map from.
+ * @return [DessertItemResponse] DTO with id, beverage name, quantity, and total amount.
+ */
+fun DessertOrderItem.toDessertItemResponse() = DessertItemResponse(
+    id = id,
+    dessert = dessert.toResponse(),
+    unitPrice = totalAmount!!.div(quantity),
+    quantity = quantity,
+    orderType = orderType?.type ?: OrderType.DINE_IN.type,
+    totalAmount = totalAmount ?: 0
+)
+fun DessertDiscount.toResponse(): DiscountResponse = DiscountResponse(
+    id = discount.id,
+    discountName = discount.discountName!!,
+    percentage = discount.percentage ?: 0,
+    startDate = discount.startDate!!,
+    endDate = discount.endDate!!,
+)
+
+/**
+ * Converts a [DessertFlavour] entity to its API DTO [DessertFlavourResponse].
+ *
+ * @receiver `DessertFlavour` entity to map from.
+ * @return [DessertFlavourResponse] DTO with id, flavour name, description and options.
+ */
+fun DessertFlavour.toResponse(): DessertFlavourResponse = DessertFlavourResponse(
+    id = id,
+    flavourName = name.orEmpty(),
+    description = description.orEmpty(),
+    availability = availability?.type ?: Availability.UNAVAILABLE.type,
+    flavourSizes = dessertFlavourSizes.map { it.toResponse() }
+)
+
+/**
+ * Maps a [DessertFlavourSize] entity to its response DTO [DessertFlavourSizeResponse].
+ *
+ * @receiver `DessertFlavourSize` entity to map from.
+ * @return [DessertFlavourSizeResponse] DTO with id, consumableSize, sizeName and price.
+ */
+fun DessertFlavourSize.toResponse(): DessertFlavourSizeResponse = DessertFlavourSizeResponse(
+    id = id,
+    size = this@toResponse.size?.type ?: Size.MEDIUM.type,
+    sizeName = name,
+    price = price ?: 0,
+    availability = availability?.type ?: Availability.UNAVAILABLE.type,
+)
+
+fun DessertImage.toResponse(): ImageResponse = ImageResponse(
+    id = id,
+    imageUrl = imageUrl!!
+)
+
+
 
 /**
  * Converts a [Discount] entity to its response DTO.
@@ -225,8 +367,15 @@ fun Discount.toResponse(): DiscountResponse = DiscountResponse(
     endDate = endDate ?: dateFormatter.parse("00-00-0000")
 )
 
+
+fun Filling.toResponse() = FillingResponse(
+    id = id,
+    fillingName = name.orEmpty(),
+    description = description
+)
+
 /**
- * Converts a [com.qinet.feastique.model.entity.provisions.food.Food] entity along with all its related entities
+ * Converts a [Food] entity along with all its related entities
  * into a comprehensive [FoodResponse] DTO.
  *
  * This includes:
@@ -246,25 +395,28 @@ fun Food.toResponse() = FoodResponse(
     vendorName = vendor.chefName.orEmpty(),
     mainCourse = mainCourse.orEmpty(),
     description = description.orEmpty(),
-    basePrice = price ?: 0,
+    basePrice = basePrice ?: 0,
     preparationTime = preparationTime ?: 0,
+    readyAsFrom = readyAsFrom,
+    deliverable = deliverable ?: false,
+    dailyDeliveryQuantity = dailyDeliveryQuantity,
     deliveryTime = deliveryTime,
     deliveryFee = deliveryFee ?: 0,
 
     // Map each related entity collection to its response DTO
-    images = this.foodImage.map { image ->
-        FoodImageResponse(
+    images = this.foodImages.map { image ->
+        ImageResponse(
             id = image.id,
             imageUrl = image.imageUrl.orEmpty(),
-            foodId = id // use parent food id, not image.food.id
         )
     },
-    size = foodSize.map { it.toResponse() },
-    complements = foodComplement.map { it.toResponse() },
-    addOn = foodAddOn.map { it.toResponse() },
-    orderType = foodOrderType.map { it.toResponse() },
-    availability = foodAvailability.map { it.toResponse() },
-    discount = foodDiscount.map { it.toResponse() }
+    size = foodSizes.map { it.toResponse() },
+    complements = foodComplements.map { it.toResponse() },
+    addOn = foodAddOns.map { it.toResponse() },
+    orderType = orderTypes.map { it.type },
+    availableDays = availableDays.map { it.type },
+    discount = foodDiscounts.map { it.toResponse() },
+    availability = availability?.type ?: Availability.UNAVAILABLE.type
 )
 
 /**
@@ -280,24 +432,31 @@ fun Food.toMinimalResponse(): FoodMinimalResponse = FoodMinimalResponse(
     id = id,
     foodName = name.orEmpty(),
     mainCourse = mainCourse.orEmpty(),
-    basePrice = price ?: 0
-)
-
-fun FoodAddOn.toResponse() = AddOnResponse(
-    id = addOn.id,
-    addOnName = addOn.name.orEmpty(),
-    price = addOn.price ?: 0
+    basePrice = basePrice ?: 0
 )
 
 /**
- * Maps a [com.qinet.feastique.model.entity.provisions.food.FoodAvailability] entity to its API DTO [FoodAvailabilityResponse].
+ * Converts a [FoodAddOn] entity to its API response DTO [AddOnResponse].
+ *
+ * @receiver `FoodAddOn` entity to map from.
+ * @return [AddOnResponse] DTO with id, name, and price.
+ */
+fun FoodAddOn.toResponse() = AddOnResponse(
+    id = addOn.id,
+    addOnName = addOn.name.orEmpty(),
+    price = addOn.price ?: 0,
+    availability = addOn.availability?.type ?: Availability.UNAVAILABLE.type
+)
+
+/**
+ * Maps a [FoodAvailability] entity to its API DTO [AvailabilityResponse].
  *
  * @receiver `FoodAvailability` entity to map from.
- * @return [FoodAvailabilityResponse] DTO with id, and name.
+ * @return [AvailabilityResponse] DTO with id, and name.
  */
-fun FoodAvailability.toResponse() = FoodAvailabilityResponse(
+fun FoodAvailability.toResponse() = AvailabilityResponse(
     id = this.id,
-    availability = this.availability?.type ?: "Unknown"
+    availability = this.availableDay?.type ?: "Unknown"
 )
 
 /**
@@ -328,7 +487,7 @@ fun FoodComplement.toResponse() = ComplementResponse(
     id = complement.id,
     name = complement.name.orEmpty(),
     price = complement.price ?: 0,
-
+    availability = complement.availability?.type ?: Availability.UNAVAILABLE.type
     )
 
 /**
@@ -345,29 +504,15 @@ fun FoodDiscount.toResponse(): FoodDiscountResponse = FoodDiscountResponse(
     endDate = discount.endDate ?: dateFormatter.parse("00-00-0000"),
 )
 
-
 /**
- * Converts a [com.qinet.feastique.model.entity.provisions.food.FoodImage] entity to its response DTO.
+ * Converts a [FoodImage] entity to its response DTO.
  *
  * @receiver `FoodImage` entity to map from.
- * @return [FoodImageResponse] DTO with id, URL, and parent food id.
+ * @return [ImageResponse] DTO with id, URL, and parent food id.
  */
-fun FoodImage.toResponse(): FoodImageResponse = FoodImageResponse(
+fun FoodImage.toResponse() = ImageResponse(
     id = id,
     imageUrl = imageUrl.orEmpty(),
-    foodId = food.id
-)
-
-/**
- * Converts a [com.qinet.feastique.model.entity.provisions.food.FoodOrderType] entity to its response DTO.
- *
- * @receiver `FoodOrderType` entity to map from.
- * @return [FoodOrderTypeResponse] DTO with id, parent food id, and order type string.
- */
-fun FoodOrderType.toResponse(): FoodOrderTypeResponse = FoodOrderTypeResponse(
-    id = id,
-    foodId = food.id,
-    orderType = orderType?.type ?: "Unknown"
 )
 
 /**
@@ -389,16 +534,96 @@ fun FoodOrderItem.toResponse(): FoodItemResponse = FoodItemResponse(
 )
 
 /**
- * Maps a [com.qinet.feastique.model.entity.provisions.food.FoodSize] entity to its response DTO.
+ * Maps a [FoodSize] entity to its response DTO.
  *
  * @receiver `FoodSize` entity to map from.
- * @return [FoodSizeResponse] DTO with id and size string.
+ * @return [FoodSizeResponse] DTO with id and consumableSize string.
  */
 fun FoodSize.toResponse(): FoodSizeResponse = FoodSizeResponse(
     id = id,
-    size = size?.type ?: Size.MEDIUM.type,
-    name = name ?: size?.type,
-    priceIncrease = priceIncrease ?: 0
+    size = this@toResponse.size?.type ?: Size.MEDIUM.type,
+    name = name,
+    priceIncrease = priceIncrease ?: 0,
+    availability = availability?.type ?: Availability.UNAVAILABLE.type
+)
+
+
+fun Handheld.toResponse() = HandheldResponse(
+    id = id,
+    handheldNumber = handheldNumber.orEmpty(),
+    handheldName = name.orEmpty(),
+    vendorId = vendor.id,
+    vendorName = vendor.chefName.orEmpty(),
+    description = description,
+    images = handheldImages.map { it.toResponse() },
+    sizes = handheldSizes.map { it.toResponse() },
+    fillings = handheldFillings.map { it.toResponse() },
+    availability = availability?.type ?: Availability.UNAVAILABLE.type,
+    preparationTime = preparationTime ?: 0,
+    readyAsFrom = readyAsFrom,
+    orderType = orderTypes.map { it.type },
+    handheldType = handHeldType?.type ?: HandHeldType.OTHER.type,
+    availableDays = availableDays.map { it.type },
+    deliverable = deliverable ?: false,
+    deliveryFee = deliveryFee ?: 0,
+    discounts = handheldDiscounts.map { it.toResponse() }.toSet()
+)
+
+fun Handheld.toMinimalResponse() = HandheldMinimalResponse(
+    id = id,
+    handheldNumber = handheldNumber.orEmpty(),
+    handheldName = name.orEmpty(),
+    description = description,
+)
+
+fun HandheldCartItem.toResponse() = HandheldItemResponse(
+    id = id,
+    handheld = handheld.toMinimalResponse(),
+    fillings = fillings.map { it.toResponse() },
+    size = this@toResponse.size.toResponse(),
+    quantity = quantity,
+    discounts = appliedDiscounts.map { it.discount.toResponse() },
+    orderType = orderType?.type ?: OrderType.PICKUP.type,
+    totalAmount = totalAmount ?: 0
+)
+
+fun HandheldDiscount.toResponse() = DiscountResponse(
+    id = discount.id,
+    discountName = discount.discountName.orEmpty(),
+    percentage = discount.percentage ?: 0,
+    startDate = discount.startDate ?: dateFormatter.parse("00-00-000"),
+    endDate = discount.endDate ?: dateFormatter.parse("00-00-0000"),
+)
+
+fun HandheldFilling.toResponse() = FillingResponse(
+    id = filling.id,
+    fillingName = filling.name.orEmpty(),
+    description = filling.description,
+)
+
+private fun HandheldImage.toResponse() = ImageResponse(
+    id = id,
+    imageUrl = imageUrl.orEmpty()
+)
+
+fun HandheldOrderItem.toHandheldItemResponse() = HandheldItemResponse(
+    id = id,
+    handheld = handheld.toMinimalResponse(),
+    fillings = fillings.map { it.toResponse() },
+    size = size.toResponse(),
+    quantity = quantity,
+    orderType = orderType?.type ?: OrderType.DINE_IN.type,
+    discounts = appliedDiscounts.map { it.discount.toResponse() },
+    totalAmount = totalAmount ?: 0
+)
+
+private fun HandheldSize.toResponse() = HandheldSizeResponse(
+    id = id,
+    numberOfFillings = numberOfFillings ?: 0,
+    size = this@toResponse.size?.type ?: Size.MEDIUM.type,
+    sizeName = name,
+    price = price ?: 0,
+    availability = availability?.type
 )
 
 /**
@@ -416,6 +641,8 @@ fun Order.toResponse(): OrderResponse = OrderResponse(
         when(it) {
             is FoodOrderItem -> it.toResponse()
             is BeverageOrderItem -> it.toBeverageItemResponse()
+            is DessertOrderItem -> it.toDessertItemResponse()
+            is HandheldOrderItem -> it.toHandheldItemResponse()
             else -> UnknownEntityResponse(
                 id = id,
                 quantity = 0,
@@ -433,6 +660,23 @@ fun Order.toResponse(): OrderResponse = OrderResponse(
     deliveryTime = deliveryTime,
     completedTime = completedTime,
     customerAddress = customerAddress?.toResponse()
+)
+
+
+/**
+ * Maps a [Page] of entities to a [PageResponse] DTO.
+ *
+ * @receiver `Page` of entities to map from.
+ * @return [PageResponse] DTO with items, page number, size, total pages, total elements, has next and has previous.
+ */
+fun <T: Any> Page<T>.toResponse() =  PageResponse(
+    items = this.content,
+    pageNumber = this.number,
+    pageSize = this.size,
+    totalPages = this.totalPages,
+    totalElements = this.totalElements,
+    hasNext = this.hasNext(),
+    hasPrevious = this.hasPrevious()
 )
 
 /**
@@ -489,6 +733,8 @@ fun Vendor.toResponse(): VendorResponse = VendorResponse(
     chefName = chefName.orEmpty(),
     restaurantName = restaurantName.orEmpty(),
     balance = balance,
+    openingTime = openingTime,
+    closingTime = closingTime,
     verified = verified ?: false,
     accountType = accountType?.type,
     imageUrl = image.orEmpty(),
@@ -509,6 +755,7 @@ fun Vendor.toResponse(): VendorResponse = VendorResponse(
  * @return [VendorMinimalResponse] DTO with id, username, chef name. and reduced information.
  */
 fun Vendor.toMinimalResponse(): VendorMinimalResponse = VendorMinimalResponse(
+    id = id,
     username = username,
     vendorCode = vendorCode.orEmpty(),
     firstName = firstName.orEmpty(),
@@ -520,6 +767,8 @@ fun Vendor.toMinimalResponse(): VendorMinimalResponse = VendorMinimalResponse(
     phoneNumber = vendorPhoneNumber.map { it.toResponse() },
     address = address!!.toResponse(),
     registrationDate = registrationDate ?: dateFormatter.parse("00-00-0000"),
+    openingTime = openingTime,
+    closingTime = closingTime
 )
 
 /**

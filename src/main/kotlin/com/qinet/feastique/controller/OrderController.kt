@@ -2,8 +2,9 @@ package com.qinet.feastique.controller
 
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.order.CartItemDto
-import com.qinet.feastique.model.dto.order.OrderItemDto
+import com.qinet.feastique.model.dto.order.ItemDto
 import com.qinet.feastique.model.dto.order.OrderUpdateDto
+import com.qinet.feastique.response.PageResponse
 import com.qinet.feastique.response.order.OrderResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.order.OrderService
@@ -13,10 +14,10 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
-import java.util.UUID
+import java.util.*
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 class OrderController(
     private val orderService: OrderService,
     private val securityUtility: SecurityUtility
@@ -24,12 +25,12 @@ class OrderController(
     @PutMapping("/customers/{customerId}/orders")
     fun placeOrderFromFoodScreen(
         @PathVariable customerId: UUID,
-        @RequestBody @Valid orderItemDto: OrderItemDto,
+        @RequestBody @Valid itemDto: ItemDto,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<OrderResponse> {
         securityUtility.validatePath(customerId, customerDetails)
-        val order = orderService.placeOrderFromFoodScreen(orderItemDto, customerDetails)
+        val order = orderService.placeOrderFromItemScreen(itemDto, customerDetails)
         return ResponseEntity(order.toResponse(), HttpStatus.CREATED)
     }
 
@@ -45,7 +46,7 @@ class OrderController(
         return ResponseEntity(orders.map { it.toResponse() }, HttpStatus.OK)
     }
 
-    @PutMapping(
+    @PatchMapping(
         path = [
             "/customers/{customerId}/orders/cancel/{id}",
             "/vendors/{vendorId}/orders/update/{id}"
@@ -110,15 +111,18 @@ class OrderController(
         ]
     )
     fun getAllOrders(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "10") size: Int,
         @PathVariable(required = false) customerId: UUID?,
         @PathVariable(required = false) vendorId: UUID?,
         @AuthenticationPrincipal userDetails: UserSecurity
 
-    ) : ResponseEntity<List<OrderResponse>> {
+    ) : ResponseEntity<PageResponse<OrderResponse>> {
         val pathId = customerId ?: vendorId
         securityUtility.validatePath(pathId!!, userDetails)
-        val orders = orderService.getAllOrders(userDetails)
-        return ResponseEntity(orders.map {it.toResponse()}, HttpStatus.OK)
+
+        val ordersPage = orderService.getAllOrders(userDetails, page, size)
+        return ResponseEntity(ordersPage.toResponse(), HttpStatus.OK)
     }
 }
 

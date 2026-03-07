@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonManagedReference
 import com.qinet.feastique.model.entity.address.CustomerAddress
 import com.qinet.feastique.model.entity.order.Cart
-import com.qinet.feastique.model.entity.phoneNumber.CustomerPhoneNumber
+import com.qinet.feastique.model.entity.contact.CustomerPhoneNumber
 import jakarta.persistence.*
 import java.time.LocalDate
 
