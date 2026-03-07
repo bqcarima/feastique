@@ -1,6 +1,7 @@
 package com.qinet.feastique.controller.consumables
 
 import com.qinet.feastique.common.mapper.toResponse
+import com.qinet.feastique.model.dto.BeverageAvailabilityDto
 import com.qinet.feastique.model.dto.consumables.BeverageDto
 import com.qinet.feastique.response.PageResponse
 import com.qinet.feastique.response.consumables.beverage.BeverageResponse
@@ -20,7 +21,7 @@ class BeverageController(private val beverageService: BeverageService, private v
 
     @PutMapping
     fun addOrUpdateBeverage(
-        @PathVariable("vendorId") vendorId: UUID,
+        @PathVariable vendorId: UUID,
         @RequestBody @Valid beverageDto: BeverageDto,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
@@ -32,8 +33,8 @@ class BeverageController(private val beverageService: BeverageService, private v
 
     @DeleteMapping("/{id}")
     fun deleteBeverage(
-        @PathVariable("id") id: UUID,
-        @PathVariable("vendorId") vendorId: UUID,
+        @PathVariable id: UUID,
+        @PathVariable vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ): ResponseEntity<String> {
@@ -44,8 +45,8 @@ class BeverageController(private val beverageService: BeverageService, private v
 
     @GetMapping("/{id}")
     fun getBeverage(
-        @PathVariable("id") id: UUID,
-        @PathVariable("vendorId") vendorId: UUID,
+        @PathVariable id: UUID,
+        @PathVariable vendorId: UUID,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<BeverageResponse> {
@@ -56,16 +57,27 @@ class BeverageController(private val beverageService: BeverageService, private v
 
     @GetMapping
     fun getAllBeverages(
-        @PathVariable("vendorId") vendorId: UUID,
+        @PathVariable vendorId: UUID,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "10") size: Int,
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<PageResponse<BeverageResponse>> {
         securityUtility.validatePath(vendorId, vendorDetails)
-
         val beveragePage = beverageService.getAllBeverages(vendorDetails, page, size)
         return ResponseEntity(beveragePage.toResponse() , HttpStatus.OK)
+    }
+
+    @PatchMapping("/availability/{id}")
+    fun changeBeverageAvailability(
+        @PathVariable id: UUID,
+        @PathVariable vendorId: UUID,
+        @RequestBody @Valid beverageAvailabilityDto: BeverageAvailabilityDto,
+        @AuthenticationPrincipal vendorDetails: UserSecurity
+    ) : ResponseEntity<BeverageResponse> {
+        securityUtility.validatePath(vendorId, vendorDetails)
+        val beverage = beverageService.changeBeverageAvailability(beverageAvailabilityDto, id, vendorDetails)
+        return ResponseEntity(beverage.toResponse(), HttpStatus.OK)
     }
 }
 

@@ -21,6 +21,7 @@ data class FoodSizeResponse(
     val id: UUID,
     val size: String,
     val name: String?,
-    val priceIncrease: Long
+    val priceIncrease: Long,
+    val availability: String
 )
 

@@ -8,6 +8,9 @@ import com.qinet.feastique.response.consumables.food.AddOnResponse
 import com.qinet.feastique.response.consumables.food.ComplementResponse
 import com.qinet.feastique.response.consumables.food.FoodMinimalResponse
 import com.qinet.feastique.response.consumables.food.FoodSizeResponse
+import com.qinet.feastique.response.consumables.handheld.FillingResponse
+import com.qinet.feastique.response.consumables.handheld.HandheldMinimalResponse
+import com.qinet.feastique.response.consumables.handheld.HandheldSizeResponse
 import java.util.*
 
 sealed interface BaseResponseEntity {
@@ -63,6 +66,21 @@ data class FoodItemResponse(
     override val orderType: String,
 ) : FoodResponseEntity
 
+sealed interface HandheldResponseEntity : BaseResponseEntity {
+    val handheld: HandheldMinimalResponse
+    val size: HandheldSizeResponse
+}
+
+data class HandheldItemResponse(
+    override val id: UUID,
+    override val handheld: HandheldMinimalResponse,
+    val fillings: List<FillingResponse>,
+    override val size: HandheldSizeResponse,
+    override val quantity: Int,
+    override val orderType: String,
+    val discounts: List<DiscountResponse>,
+    override val totalAmount: Long
+) : HandheldResponseEntity
 
 data class UnknownEntityResponse(
     // Generate a random UUID that is never saved to fulfil non-null constraint

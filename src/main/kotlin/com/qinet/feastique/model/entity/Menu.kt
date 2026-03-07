@@ -6,6 +6,7 @@ import com.github.f4b6a3.uuid.UuidCreator
 import com.qinet.feastique.model.entity.consumables.beverage.Beverage
 import com.qinet.feastique.model.entity.consumables.dessert.Dessert
 import com.qinet.feastique.model.entity.consumables.food.Food
+import com.qinet.feastique.model.entity.consumables.handheld.Handheld
 import jakarta.persistence.*
 import java.util.UUID
 
@@ -35,6 +36,12 @@ class Menu {
     @JsonIgnore
     var beverage: Beverage? = null
 
+    @JsonBackReference
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "handheld_id", nullable = true)
+    @JsonIgnore
+    var handheld: Handheld? = null
+
     var delivery: Boolean? = false
 
     @Column(name = "delivery_items_left")
@@ -44,13 +51,6 @@ class Menu {
     var dineIn: Boolean? = false
 
     var pickup: Boolean? = false
-
-   /* @PostLoad
-    fun resetFlags() {
-        delivery = false
-        dineIn = false
-        pickup = false
-    }*/
 
     @Suppress("unused")
     @Version

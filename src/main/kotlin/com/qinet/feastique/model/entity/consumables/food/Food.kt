@@ -52,6 +52,9 @@ import java.time.LocalTime
 )
 class Food : EdibleEntity() {
 
+    @Column(name = "food_number", unique = true)
+    var foodNumber: String? = null
+
     @Column(name = "ready_as_from", nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "hh:mm a")
     var readyAsFrom: LocalTime? = null
@@ -74,9 +77,6 @@ class Food : EdibleEntity() {
     @Column(name = "order_types")
     var orderTypes: MutableSet<OrderType> = mutableSetOf()
 
-    @Column(name = "food_number", unique = true)
-    var foodNumber: String? = null
-
     @Column(name = "main_course")
     @NotEmpty(message = "Main course cannot be empty.")
     @NotNull(message = "Main course cannot be empty.")
@@ -93,7 +93,7 @@ class Food : EdibleEntity() {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "hh:mm a")
     var deliveryTime: LocalTime? = null
 
-    @Column(name = "delivery_fee")
+    @Column(name = "delivery_fee", nullable = false)
     var deliveryFee: Long? = 0
 
     @JsonBackReference

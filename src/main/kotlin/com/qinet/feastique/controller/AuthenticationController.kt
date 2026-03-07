@@ -1,5 +1,6 @@
 package com.qinet.feastique.controller
 
+import com.qinet.feastique.common.mapper.toMinimalResponse
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.LoginDto
 import com.qinet.feastique.model.dto.LogoutDto
@@ -8,6 +9,7 @@ import com.qinet.feastique.model.dto.user.VendorSignupDto
 import com.qinet.feastique.response.token.AccessTokenResponse
 import com.qinet.feastique.response.token.TokenPairResponse
 import com.qinet.feastique.response.user.CustomerResponse
+import com.qinet.feastique.response.user.VendorMinimalResponse
 import com.qinet.feastique.response.user.VendorResponse
 import com.qinet.feastique.service.AuthenticationService
 import jakarta.validation.Valid
@@ -33,9 +35,9 @@ class AuthenticationController(
     }
 
     @PostMapping("/vendors/signup")
-    fun vendorSignup(@RequestBody @Valid vendorSignupDto: VendorSignupDto): ResponseEntity<VendorResponse> {
+    fun vendorSignup(@RequestBody @Valid vendorSignupDto: VendorSignupDto): ResponseEntity<VendorMinimalResponse> {
         val vendor = authenticationService.handleVendorSignup(vendorSignupDto)
-        return ResponseEntity(vendor.toResponse(), HttpStatus.CREATED)
+        return ResponseEntity(vendor.toMinimalResponse(), HttpStatus.CREATED)
     }
 
 

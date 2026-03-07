@@ -12,14 +12,8 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
-import java.util.UUID
+import org.springframework.web.bind.annotation.*
+import java.util.*
 
 @RestController
 @RequestMapping("/api/v1/customers/{customerId}/account")
@@ -28,9 +22,9 @@ class CustomerController(
     private val securityUtility: SecurityUtility,
 ) {
 
-    @PutMapping("/profile")
+    @PatchMapping("/profile")
     fun updateProfile(
-        @PathVariable("customerId") customerId: UUID,
+        @PathVariable customerId: UUID,
         @RequestBody @Valid customerUpdateDto: CustomerUpdateDto,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
@@ -40,9 +34,9 @@ class CustomerController(
         return ResponseEntity(tokenPairResponse, HttpStatus.OK)
     }
 
-    @PostMapping("/password")
+    @PatchMapping("/password")
     fun changePassword(
-        @PathVariable("customerId") customerId: UUID,
+        @PathVariable customerId: UUID,
         @RequestBody @Valid passwordChangeDto: PasswordChangeDto,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
@@ -54,7 +48,7 @@ class CustomerController(
 
     @GetMapping("/me")
     fun getAccountDetails(
-        @PathVariable("customerId") customerId: UUID,
+        @PathVariable customerId: UUID,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<CustomerResponse> {
@@ -62,5 +56,5 @@ class CustomerController(
         val customer = customerService.getCustomerWithPhoneNumberAndAddress(customerDetails)
         return ResponseEntity(customer.toResponse(), HttpStatus.OK)
     }
-
 }
+

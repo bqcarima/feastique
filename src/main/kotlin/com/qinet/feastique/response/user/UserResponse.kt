@@ -48,6 +48,7 @@ data class VendorResponse(
 )
 
 data class VendorMinimalResponse(
+    val id: UUID,
     val username: String,
     val vendorCode: String,
     val firstName: String,
@@ -59,5 +60,7 @@ data class VendorMinimalResponse(
     val phoneNumber: List<PhoneNumberResponse>,
     val address: AddressResponse,
     val registrationDate: Date,
+    val openingTime: LocalTime?,
+    val closingTime: LocalTime?
 )
 

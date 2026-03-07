@@ -6,6 +6,7 @@ import com.github.f4b6a3.uuid.UuidCreator
 import com.qinet.feastique.model.entity.consumables.flavour.BeverageFlavour
 import com.qinet.feastique.model.entity.consumables.flavour.DessertFlavour
 import com.qinet.feastique.model.entity.consumables.food.Food
+import com.qinet.feastique.model.entity.consumables.handheld.Handheld
 import com.qinet.feastique.model.enums.Availability
 import com.qinet.feastique.model.enums.Size
 import jakarta.persistence.Column
@@ -85,5 +86,24 @@ class FoodSize : ConsumableSize() {
     @JoinColumn(name = "food_id", nullable = false)
     @JsonIgnore
     lateinit var food: Food
+}
+
+@Entity
+@Table(name = "handheld_sizes")
+class HandheldSize : ConsumableSize() {
+
+    @Column(name = "number_of_fillings")
+    @NotNull(message = "Please enter number of contents.")
+    var numberOfFillings: Long? = 0
+
+    @Column(name = "price")
+    @NotNull(message = "Price cannot be empty.")
+    var price: Long? = 0
+
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "handheld_id", nullable = false)
+    @JsonIgnore
+    lateinit var handheld: Handheld
 }
 

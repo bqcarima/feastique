@@ -46,7 +46,7 @@ class OrderController(
         return ResponseEntity(orders.map { it.toResponse() }, HttpStatus.OK)
     }
 
-    @PutMapping(
+    @PatchMapping(
         path = [
             "/customers/{customerId}/orders/cancel/{id}",
             "/vendors/{vendorId}/orders/update/{id}"

@@ -1,7 +1,8 @@
 package com.qinet.feastique.exception
 
 class DuplicateFoundException(message: String? = "Cannot add duplicates.") : RuntimeException(message)
-class EntityNotDeliverableException(message: String? = "This is not available for delivery.") : RuntimeException(message)
+class EntityNotDeliverableException(message: String? = "This item is not available for delivery.") : RuntimeException(message)
+class EntityNotAvailableException(message: String? = "This item is not available for purchase.") : RuntimeException(message)
 
 class MalformedUrlException(message: String? = "Malformed URL, cannot process request.") : RuntimeException(message)
 

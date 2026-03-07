@@ -1,37 +1,31 @@
 package com.qinet.feastique.service.order
 
 import com.qinet.feastique.common.mapper.toResponse
-import com.qinet.feastique.exception.EntityNotDeliverableException
-import com.qinet.feastique.exception.PermissionDeniedException
-import com.qinet.feastique.exception.RequestedEntityNotFoundException
-import com.qinet.feastique.exception.UserNotFoundException
+import com.qinet.feastique.exception.*
 import com.qinet.feastique.model.dto.order.CartItemDto
 import com.qinet.feastique.model.dto.order.FoodItemDto
 import com.qinet.feastique.model.dto.order.ItemDto
 import com.qinet.feastique.model.dto.order.OrderUpdateDto
+import com.qinet.feastique.model.entity.consumables.EdibleEntity
+import com.qinet.feastique.model.entity.consumables.flavour.Flavour
 import com.qinet.feastique.model.entity.discount.AppliedDiscount
 import com.qinet.feastique.model.entity.order.Cart
 import com.qinet.feastique.model.entity.order.Order
 import com.qinet.feastique.model.entity.order.OrderEntity
 import com.qinet.feastique.model.entity.order.item.*
-import com.qinet.feastique.model.entity.sales.AddOnSale
-import com.qinet.feastique.model.entity.sales.BeverageSale
-import com.qinet.feastique.model.entity.sales.ComplementSale
-import com.qinet.feastique.model.entity.sales.DessertSale
-import com.qinet.feastique.model.entity.sales.FoodSale
+import com.qinet.feastique.model.entity.sales.*
+import com.qinet.feastique.model.entity.size.ConsumableSize
+import com.qinet.feastique.model.enums.Availability
 import com.qinet.feastique.model.enums.OrderStatus
 import com.qinet.feastique.model.enums.OrderType
 import com.qinet.feastique.repository.address.CustomerAddressRepository
 import com.qinet.feastique.repository.consumables.beverage.BeverageRepository
 import com.qinet.feastique.repository.consumables.dessert.DessertRepository
 import com.qinet.feastique.repository.consumables.food.FoodRepository
+import com.qinet.feastique.repository.consumables.handheld.HandheldRepository
 import com.qinet.feastique.repository.order.CartRepository
 import com.qinet.feastique.repository.order.OrderRepository
-import com.qinet.feastique.repository.sales.AddOnSaleRepository
-import com.qinet.feastique.repository.sales.BeverageSaleRepository
-import com.qinet.feastique.repository.sales.ComplementSaleRepository
-import com.qinet.feastique.repository.sales.DessertSaleRepository
-import com.qinet.feastique.repository.sales.FoodSaleRepository
+import com.qinet.feastique.repository.sales.*
 import com.qinet.feastique.repository.user.CustomerRepository
 import com.qinet.feastique.repository.user.VendorRepository
 import com.qinet.feastique.response.order.OrderResponse
@@ -67,7 +61,9 @@ class OrderService(
     private val addOnSaleRepository: AddOnSaleRepository,
     private val beverageSaleRepository: BeverageSaleRepository,
     private val complementSaleRepository: ComplementSaleRepository,
-    private val dessertSaleRepository: DessertSaleRepository
+    private val dessertSaleRepository: DessertSaleRepository,
+    private val handheldRepository: HandheldRepository,
+    private val handheldSaleRepository: HandheldSaleRepository
 ) {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -143,6 +139,7 @@ class OrderService(
             itemDto.beverageItemDto != null -> prepareBeverageOrderItem(itemDto, newOrder)
             itemDto.dessertItemDto != null -> prepareDessertOrderItem(itemDto, newOrder)
             itemDto.foodItemDto != null -> prepareFoodOrderItem(itemDto, newOrder)
+            itemDto.handheldItemDto != null -> prepareHandheldOrderItem(itemDto, newOrder)
         }
 
         // check if delivery fee is applicable to the order
@@ -254,6 +251,7 @@ class OrderService(
         val currentDate = Date()
         return when (cartItem) {
             is FoodCartItem -> {
+                validateAvailability(item = cartItem.food, itemSize = cartItem.size)
                 FoodOrderItem().apply outer@{
                     this.food = cartItem.food
                     this.complement = cartItem.complement
@@ -263,7 +261,6 @@ class OrderService(
                     this.orderType = cartItem.orderType
                     this.vendor = cartItem.vendor
                     this.order = order
-
 
                     val activeAppliedDiscounts = cartItem.appliedDiscounts.filter { applied ->
                         val discount = applied.discount
@@ -292,6 +289,7 @@ class OrderService(
             }
 
             is BeverageCartItem -> {
+                validateAvailability(item = cartItem.beverage, itemFlavour = cartItem.beverageFlavour, itemSize = cartItem.beverageFlavourSize)
                 BeverageOrderItem().apply outer@{
                     this.beverage = cartItem.beverage
                     this.beverageFlavour = cartItem.beverageFlavour
@@ -328,6 +326,7 @@ class OrderService(
             }
 
             is DessertCartItem -> {
+                validateAvailability(item = cartItem.dessert, itemFlavour = cartItem.dessertFlavour, itemSize = cartItem.dessertFlavourSize)
                 DessertOrderItem().apply outer@{
                     this.dessert = cartItem.dessert
                     this.dessertFlavour = cartItem.dessertFlavour
@@ -358,6 +357,43 @@ class OrderService(
                     }
                     this.totalAmount = this.calculateTotal()
                     cartItem.cart?.removeItem(cartItem)
+                }
+            }
+
+            is HandheldCartItem -> {
+                validateAvailability(item = cartItem.handheld, itemSize = cartItem.size)
+                HandheldOrderItem().apply outer@{
+                    this.handheld = cartItem.handheld
+                    this.size = cartItem.size
+                    this.fillings = cartItem.fillings
+                    this.quantity = cartItem.quantity
+                    this.orderType = cartItem.orderType
+                    this.vendor = cartItem.vendor
+                    this.order = order
+
+                    val activeAppliedDiscounts = cartItem.appliedDiscounts.filter { applied ->
+                        val discount = applied.discount
+                        val start = discount.startDate
+                        val end = discount.endDate
+
+                        when {
+                            start == null && end == null -> true
+                            start == null -> currentDate.before(end)
+                            end == null -> currentDate.after(start)
+                            else -> currentDate.after(start) && currentDate.before(end)
+                        }
+                    }
+
+                    activeAppliedDiscounts.forEach { activeDiscount ->
+                        val appliedCopy = AppliedDiscount().apply {
+                            discount = activeDiscount.discount
+                            this.handheldOrderItem = this@outer
+                        }
+                        this@outer.appliedDiscounts.add(appliedCopy)
+                    }
+
+                    this.totalAmount = this.calculateTotal()
+                    cartItem.cart?.removeItem(cartItem) // remove from cart
                 }
             }
 
@@ -516,6 +552,7 @@ class OrderService(
                 recordBeverageSale(order)
                 recordDessertSale(order)
                 recordFoodSale(order)
+                recordHandheldSale(order)
             }
 
             OrderStatus.DECLINED -> order.orderStatus = OrderStatus.DECLINED
@@ -675,6 +712,31 @@ class OrderService(
         dessertSaleRepository.saveAllAndFlush(dessertSales)
     }
 
+    private fun recordHandheldSale(order: Order) {
+        val vendor = order.vendor ?: throw IllegalStateException("Order does not have an associated vendor.")
+        var vendorBalance = vendor.balance
+        val handheldOrderItems = order.handheldOrderItems
+            .takeIf { it.isNotEmpty() }
+            ?: return
+
+        val handheldSales = handheldOrderItems.map { handheldOrderItem ->
+            HandheldSale().apply {
+                handheld = handheldOrderItem.handheld
+                quantity = handheldOrderItem.quantity
+                amount = handheldOrderItem.totalAmount
+                this.vendor = vendor
+                saleDate = order.responseTime ?: LocalDateTime.now()
+                this.handheldOrderItem = handheldOrderItem
+
+                vendorBalance += handheldOrderItem.totalAmount ?: 0
+            }
+        }
+
+        vendor.balance = vendorBalance
+        vendorRepository.saveAndFlush(vendor)
+        handheldSaleRepository.saveAllAndFlush(handheldSales)
+    }
+
 
     /**
      * Prepare and attach a [BeverageOrderItem] to the provided [order] using data from [itemDto].
@@ -682,6 +744,7 @@ class OrderService(
      * The method:
      * - Loads the referenced beverage, flavour and flavour size from their repositories,
      * - Validates presence of vendor and assigns it to the order,
+     * - Determines if the user's selection is available.
      * - Builds a new [BeverageOrderItem], applies any active discounts and computes its total,
      * - Enforces delivery rules (prevents ordering a low-priced beverage alone for delivery),
      * - Adds the prepared item to the given [order].
@@ -693,17 +756,19 @@ class OrderService(
      * @throws EntityNotDeliverableException if the beverage cannot be ordered alone for delivery (price < 5000).
      */
     private fun prepareBeverageOrderItem(itemDto: ItemDto, order: Order) {
-        val beverageDto = itemDto.beverageItemDto!!
-        val beverage = beverageRepository.findById(beverageDto.beverageId)
+        val beverageItemDto = itemDto.beverageItemDto!!
+        val beverage = beverageRepository.findById(beverageItemDto.beverageId)
             .orElseThrow {
                 throw RequestedEntityNotFoundException("Unable to place order. Beverage not found.")
             }
 
-        val beverageFlavour = beverage.beverageFlavours.firstOrNull { it.id == beverageDto.beverageFlavourId }
+        val beverageFlavour = beverage.beverageFlavours.firstOrNull { it.id == beverageItemDto.beverageFlavourId }
             ?: throw RequestedEntityNotFoundException("Unable to place order. Beverage flavour not found.")
 
-        val beverageFlavourSize = beverageFlavour.beverageFlavourSizes.firstOrNull { it.id == beverageDto.id }
+        val beverageFlavourSize = beverageFlavour.beverageFlavourSizes.firstOrNull { it.id == beverageItemDto.id }
             ?: throw RequestedEntityNotFoundException("Unable to place order. Beverage flavour size not found.")
+
+        validateAvailability(item = beverage, itemFlavour = beverageFlavour, itemSize = beverageFlavourSize)
 
         val vendor = vendorRepository.findById(beverage.vendor.id)
             .orElseThrow { throw UserNotFoundException("Unable to place order. Vendor not found.") }
@@ -715,7 +780,7 @@ class OrderService(
             this.beverage = beverage
             this.beverageFlavour = beverageFlavour
             this.beverageFlavourSize = beverageFlavourSize
-            this.quantity = beverageDto.quantity ?: 1
+            this.quantity = beverageItemDto.quantity ?: 1
             this.orderType = OrderType.fromString(itemDto.orderType)
         }
 
@@ -737,6 +802,7 @@ class OrderService(
      * The method:
      * - Loads the referenced dessert, flavour and flavour size from the repository,
      * - Validates presence of vendor and assigns it to the order,
+     * - Determines if the user's selection is available.
      * - Builds a new [DessertOrderItem], applies any active discounts and computes its total,
      * - Enforces delivery rules (prevents ordering non\-deliverable desserts for delivery),
      * - Adds the prepared item to the given [order].
@@ -754,11 +820,18 @@ class OrderService(
                 throw RequestedEntityNotFoundException("Unable to place order. Dessert not found.")
             }
 
+        // if dessert is not deliverable, order type cannot be delivery
+        if (!dessert.deliverable!! && order.orderType == OrderType.DELIVERY) {
+            throw IllegalArgumentException("Dessert is not deliverable. Change order type.")
+        }
+
         val dessertFlavour = dessert.dessertFlavours.firstOrNull { it.id == dessertItemDto.dessertFlavourId }
             ?: throw RequestedEntityNotFoundException("Unable to place order. Dessert flavour not found.")
 
         val dessertFlavourSize = dessertFlavour.dessertFlavourSizes.firstOrNull { it.id == dessertItemDto.dessertFlavourSizeId }
             ?: throw RequestedEntityNotFoundException("Unable to place order. Dessert flavour size not found.")
+
+        validateAvailability(item = dessert, itemFlavour = dessertFlavour, itemSize = dessertFlavourSize)
 
         val vendor = vendorRepository.findById(dessert.vendor.id)
             .orElseThrow { throw UserNotFoundException("Unable to place order. Vendor not found.") }
@@ -779,11 +852,6 @@ class OrderService(
         }
 
         newDessertOrderItem.totalAmount = newDessertOrderItem.calculateTotal()
-
-        // if dessert is not deliverable, order type cannot be delivery
-        if (!dessert.deliverable!! && order.orderType == OrderType.DELIVERY) {
-            throw IllegalArgumentException("Dessert is not deliverable. Change order type.")
-        }
         order.addItem(newDessertOrderItem)
     }
 
@@ -793,6 +861,7 @@ class OrderService(
      * The method:
      * - Loads the referenced food (with all relations) from the repository,
      * - Validates presence of vendor and assigns it to the order,
+     * - Determines if the user's selection is available.
      * - Builds a new [FoodOrderItem], assigns complement and requested add-ons, applies any active discounts and computes its total,
      * - Enforces delivery rules (prevents ordering non-deliverable food for delivery),
      * - Adds the prepared item to the given [order].
@@ -810,8 +879,21 @@ class OrderService(
             .orElseThrow {
                 throw RequestedEntityNotFoundException("Unable to place order. Food not found.")
             }
+
+        // Check if food is deliverable via backreference.
+        // If a food cannot be delivered,the order type cannot be delivery
+        if (!food.deliverable!! && order.orderType == OrderType.DELIVERY) {
+            throw IllegalArgumentException("Food is not deliverable. Please change order type.")
+        }
+
         val vendor = vendorRepository.findById(food.vendor.id)
             .orElseThrow { throw UserNotFoundException("Unable to place order. Vendor not found.") }
+
+        val foodSize =  food.foodSizes.firstOrNull { it.id == foodItemDto.foodSizeId }
+            ?: throw RequestedEntityNotFoundException("Unable to place order. Food size not found.")
+
+        validateAvailability(item = food, itemSize = foodSize)
+
         order.vendor = vendor
 
         val newFoodOrderItem = FoodOrderItem().apply {
@@ -825,8 +907,7 @@ class OrderService(
 
         // Assigning a complement
         // Get the matching complement from the back reference.
-        val matchingComplement =
-            food.foodComplements.firstOrNull { it.complement.id == foodItemDto.complementId }?.complement
+        val matchingComplement = food.foodComplements.firstOrNull { it.complement.id == foodItemDto.complementId }?.complement
                 ?: throw IllegalArgumentException("Unable to place order. Complement cannot be gotten from food.")
 
         newFoodOrderItem.complement = matchingComplement
@@ -847,13 +928,65 @@ class OrderService(
             prepareAppliedDiscounts(newFoodOrderItem)
         }
         newFoodOrderItem.totalAmount = newFoodOrderItem.calculateTotal()
-
-        // Check if food is deliverable via backreference.
-        // If a food cannot be delivered,the order type cannot be delivery
-        if (!food.deliverable!! && order.orderType == OrderType.DELIVERY) {
-            throw IllegalArgumentException("Food is not deliverable. Please change order type.")
-        }
         order.addItem(newFoodOrderItem)
+    }
+
+    /**
+     * Prepare and attach a [HandheldOrderItem] to the provided [order] using data from [itemDto].
+     *
+     * The method:
+     * - Loads the referenced handheld item (with all relations) from the repository,
+     * - Validates presence of vendor and assigns it to the order,
+     * - Determines if the user's selection is available.
+     * - Builds a new [HandheldOrderItem], assigns fillings, applies any active discounts and computes its total,
+     * - Enforces delivery rules (prevents ordering non-deliverable handheld item for delivery),
+     * - Adds the prepared item to the given [order].
+     *
+     * @param itemDto DTO containing handheld selection, size id, and quantity.
+     * @param order Order to which the prepared food item will be added.
+     * @throws RequestedEntityNotFoundException if the handheld item or any referenced size/address cannot be found.
+     * @throws UserNotFoundException if the handheld vendor cannot be loaded.
+     * @throws IllegalArgumentException if handheld resolution fails or if the handheld is not deliverable but the order type is `DELIVERY`.
+     */
+    private fun prepareHandheldOrderItem(itemDto: ItemDto, order: Order) {
+        val handheldItemDto = itemDto.handheldItemDto!!
+        val handheld = handheldRepository.findById(handheldItemDto.handheldId)
+            .orElseThrow {
+                throw RequestedEntityNotFoundException("Unable to place order. Handheld not found.")
+            }
+
+        if (!handheld.deliverable!! && order.orderType == OrderType.DELIVERY) {
+            throw IllegalArgumentException("Handheld is not deliverable. Please change order type.")
+        }
+
+        val handheldSize = handheld.handheldSizes.firstOrNull { it.id == handheldItemDto.handheldSizeId }
+            ?: throw RequestedEntityNotFoundException("Unable to place order. Handheld size not found.")
+
+        validateAvailability(item = handheld, itemSize = handheldSize)
+
+        val vendor = vendorRepository.findById(handheld.vendor.id)
+            .orElseThrow { throw UserNotFoundException("Unable to place order. Vendor not found.") }
+        order.vendor = vendor
+
+
+        val newHandheldOrderItem = HandheldOrderItem().apply {
+            this.order = order
+            this.vendor = handheld.vendor
+            this.handheld = handheld
+            this.quantity = handheldItemDto.quantity ?: 1
+            this.size = handheldSize
+            this.orderType = OrderType.fromString(itemDto.orderType)
+        }
+
+        for (handheldFilling in handheld.handheldFillings) {
+            newHandheldOrderItem.fillings.add(handheldFilling.filling)
+        }
+
+        if (handheld.handheldDiscounts.isNotEmpty()) {
+            prepareAppliedDiscounts(newHandheldOrderItem)
+        }
+        newHandheldOrderItem.totalAmount = newHandheldOrderItem.calculateTotal()
+        order.addItem(newHandheldOrderItem)
     }
 
     private fun prepareAppliedDiscounts(orderItem: OrderEntity) {
@@ -924,6 +1057,29 @@ class OrderService(
                     val appliedCopy = AppliedDiscount().apply {
                         discount = activeDiscount.discount
                         this.foodOrderItem = orderItem
+                    }
+                    orderItem.appliedDiscounts.add(appliedCopy)
+                }
+            }
+
+            is HandheldOrderItem -> {
+                val activeAppliedDiscounts = orderItem.appliedDiscounts.filter { applied ->
+                    val discount = applied.discount
+                    val start = discount.startDate
+                    val end = discount.endDate
+
+                    when {
+                        start == null && end == null -> true
+                        start == null -> currentDate.before(end)
+                        end == null -> currentDate.after(start)
+                        else -> currentDate.after(start) && currentDate.before(end)
+                    }
+                }
+
+                activeAppliedDiscounts.forEach { activeDiscount ->
+                    val appliedCopy = AppliedDiscount().apply {
+                        discount = activeDiscount.discount
+                        this.handheldOrderItem = orderItem
                     }
                     orderItem.appliedDiscounts.add(appliedCopy)
                 }
@@ -1119,233 +1275,22 @@ class OrderService(
                 order.deliveryTime = order.readyBy
             }
         }
-
-        // Fallback
-        // return currentTime
-
-        /*val readyTime = if (order.orderStatus == OrderStatus.PENDING) {
-
-            // Determine if the order is a delivery or not
-            if (order.orderType != OrderType.DELIVERY) {
-
-                // Tentative ready time
-                if (LocalTime.now() < openingTime) { // if the order was placed outside of working hours
-                    openingTime.plusMinutes(maxPreparationTime)
-                }
-
-                // if the order was placed within working hours
-                LocalDateTime.now().plusMinutes(maxPreparationTime)
-
-            } else {
-                if (order.quickDelivery) { // if the order is marked as a quick delivery
-                    itemWithMaxReadyAsFrom.plusMinutes(maxPreparationTime)
-
-                } else {
-
-                }
-            }
-
-        } else {
-
-            // Confirmed order ready time
-            order.responseTime?.plusMinutes(maxPreparationTime)
-                ?: throw IllegalStateException("responseTime should not be null for non-pending orders")
-        }
-        return readyTime!!.toLocalTime()*/
     }
-    /*private fun calculateOrderReadyTime(order: Order): LocalTime {
-        val currentTime = LocalTime.now()
-        val vendor = order.vendor!!
-        val openingTime = vendor.openingTime!!
-        val closingTime = vendor.closingTime
-        val isDelivery = order.orderType == OrderType.DELIVERY
-        val hasFoodItems = order.items.any { it is FoodOrderItem }
 
-        // check if current time is within working house
-        val isWithinWorkingHours = currentTime.isAfter(openingTime) && currentTime.isBefore(closingTime)
+    private fun validateAvailability(item: EdibleEntity, itemFlavour: Flavour? = null, itemSize: ConsumableSize) {
+        if (item.availability != Availability.AVAILABLE) {
+            throw EntityNotAvailableException("Unable to place order. Item is ${item.availability!!.type}.")
+        }
 
-        // Check if any item is available for quick delivery
-        val hasQuickDeliveryItem = order.items.any {
-            when (it) {
-                is BeverageOrderItem -> it.beverage.quickDelivery == true
-                is DessertOrderItem -> it.dessert.quickDelivery == true
-                is FoodOrderItem -> it.food.quickDelivery == true
-                else -> false
+        itemFlavour?.let {
+            if (it.availability != Availability.AVAILABLE) {
+                throw EntityNotAvailableException("Unable to place order. Item flavour is ${it.availability!!.type}.")
             }
         }
 
-        // For pending orders, calculate tentative ready time/delivery time
-        if (order.orderStatus == OrderStatus.PENDING) {
-
-            // non-delivery (pickup or dine-in)
-            if (!isDelivery) {
-                val maxPreparationTime = order.items.maxOfOrNull {
-                    when (it) {
-                        is BeverageOrderItem -> it.beverage.preparationTime ?: 0
-                        is FoodOrderItem -> it.food.preparationTime ?: 0
-                        is DessertOrderItem -> it.dessert.preparationTime ?: 0
-                        else -> 0
-                    }
-
-                }?.toLong() ?: 0
-
-                return if (isWithinWorkingHours) {
-                    currentTime.plusMinutes(maxPreparationTime)
-
-                } else {
-                    openingTime.plusMinutes(maxPreparationTime)
-                }
-            }
-
-            // for delivery orders
-            // Quick delivery: order.quickDelivery is true AND at least one item supports quick delivery
-            val isQuickDelivery = (isDelivery && hasQuickDeliveryItem)
-            if (isQuickDelivery) {
-
-                val itemReadyTimes = order.items.map { item ->
-                    val (readyAsFrom, preparationTime) = when (item) {
-                        is BeverageOrderItem -> item.beverage.readyAsFrom to item.beverage.preparationTime
-                        is DessertOrderItem -> item.dessert.readyAsFrom to item.dessert.preparationTime
-                        is FoodOrderItem -> item.food.readyAsFrom to item.food.preparationTime
-                        else -> openingTime to 0
-                    }
-
-                    // if readyAsFrom is null, use openingTime
-                    val startTime = readyAsFrom ?: openingTime
-                    val prepTime = preparationTime ?: 0
-
-                    // add preparation time (in minutes) to the readyAsFrom time
-                    startTime.plusMinutes(prepTime.toLong())
-                }
-
-                // Get the farthest ready time and if null, use vendor opening time
-                val maxItemReadyTime = itemReadyTimes.maxOrNull() ?: openingTime
-
-                // Get maximum readyAsFrom from all items
-                val maxReadyAsFrom = order.items.mapNotNull {
-                    when (it) {
-                        is BeverageOrderItem -> it.beverage.readyAsFrom
-                        is DessertOrderItem -> it.dessert.readyAsFrom
-                        is FoodOrderItem -> it.food.readyAsFrom
-                        else -> null
-                    }
-                }.maxOrNull() ?: openingTime
-
-                // if current time is greater than all readyAsFrom times, use currentTime + maxPreparationTime
-                return if (currentTime > maxReadyAsFrom) {
-                    val maxPreparationTime = order.items.maxOfOrNull {
-                        when (it) {
-                            is BeverageOrderItem -> it.beverage.preparationTime ?: 0
-                            is FoodOrderItem -> it.food.preparationTime ?: 0
-                            is DessertOrderItem -> it.dessert.preparationTime ?: 0
-                            else -> 0
-                        }
-
-                    }?.toLong() ?: 0
-                    currentTime.plusMinutes(maxPreparationTime)
-
-                } else {
-                    maxItemReadyTime
-                }
-            }
-
-            // for standard delivery orders
-            val maxPreparationTime = order.items.maxOfOrNull {
-                when (it) {
-                    is BeverageOrderItem -> it.beverage.preparationTime ?: 0
-                    is FoodOrderItem -> it.food.preparationTime ?: 0
-                    is DessertOrderItem -> it.dessert.preparationTime ?: 0
-                    else -> 0
-                }
-
-            }?.toLong() ?: 0
-
-            return if (isWithinWorkingHours) {
-                currentTime.plusMinutes(maxPreparationTime)
-            } else {
-                openingTime.plusMinutes(maxPreparationTime)
-            }
-
-            // for Confirmed orders, recalculate with current time for
-            // more accurate estimates.
-        } else if (order.orderStatus == OrderStatus.CONFIRMED) {
-
-            // check if it is a standard delivery
-            // 1. Marked as delivery
-            // 2. Marked as a not being quick delivery
-            // 3. Have at least one food item
-            val isStandardDelivery = isDelivery && hasFoodItems && !order.quickDelivery
-
-            if (isStandardDelivery) {
-                val foodDeliveryTimes = order.items.mapNotNull {
-                    if (it is FoodOrderItem) it.food.deliveryTime else null
-                }
-
-                val maxDeliveryTime = foodDeliveryTimes.maxOrNull()
-
-                return if (maxDeliveryTime != null && currentTime > maxDeliveryTime) {
-                    val maxPreparationTime = order.items.maxOfOrNull {
-                        when (it) {
-                            is BeverageOrderItem -> it.beverage.preparationTime ?: 0
-                            is FoodOrderItem -> it.food.preparationTime ?: 0
-                            is DessertOrderItem -> it.dessert.preparationTime ?: 0
-                            else -> 0
-                        }
-
-                    }?.toLong() ?: 0
-
-                    currentTime.plusMinutes(maxPreparationTime)
-                } else {
-                    maxDeliveryTime ?: currentTime
-                }
-            }
-
-            // For pickup, dine-in, and quick delivery, use max preparation time, quick delivery is assigned to deliveryTime
-            val maxPreparationTime = order.items.maxOfOrNull {
-                when (it) {
-                    is BeverageOrderItem -> it.beverage.preparationTime ?: 0
-                    is FoodOrderItem -> it.food.preparationTime ?: 0
-                    is DessertOrderItem -> it.dessert.preparationTime ?: 0
-                    else -> 0
-                }
-
-            }?.toLong() ?: 0
-
-            return currentTime.plusMinutes(maxPreparationTime)
+        if (itemSize.availability != Availability.AVAILABLE) {
+            throw EntityNotAvailableException("Unable to place order. Size option is ${itemSize.availability!!.type}.")
         }
-
-        // Fallback
-        return currentTime
-
-        *//*val readyTime = if (order.orderStatus == OrderStatus.PENDING) {
-
-            // Determine if the order is a delivery or not
-            if (order.orderType != OrderType.DELIVERY) {
-
-                // Tentative ready time
-                if (LocalTime.now() < openingTime) { // if the order was placed outside of working hours
-                    openingTime.plusMinutes(maxPreparationTime)
-                }
-
-                // if the order was placed within working hours
-                LocalDateTime.now().plusMinutes(maxPreparationTime)
-
-            } else {
-                if (order.quickDelivery) { // if the order is marked as a quick delivery
-                    itemWithMaxReadyAsFrom.plusMinutes(maxPreparationTime)
-
-                } else {
-
-                }
-            }
-
-        } else {
-
-            // Confirmed order ready time
-            order.responseTime?.plusMinutes(maxPreparationTime)
-                ?: throw IllegalStateException("responseTime should not be null for non-pending orders")
-        }
-        return readyTime!!.toLocalTime()*//*
-    }*/
+    }
 }
 

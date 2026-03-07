@@ -9,5 +9,6 @@ data class PhoneNumberDto(
     @field:ValidPhoneNumber
     var phoneNumber: String,
 
-    val default: Boolean? = false,
+    val default: Boolean? = false
 )
+

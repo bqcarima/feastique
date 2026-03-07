@@ -1,6 +1,7 @@
 package com.qinet.feastique.controller.consumables
 
 import com.qinet.feastique.common.mapper.toResponse
+import com.qinet.feastique.model.dto.FoodAvailabilityDto
 import com.qinet.feastique.model.dto.consumables.FoodDto
 import com.qinet.feastique.response.PageResponse
 import com.qinet.feastique.response.consumables.food.FoodResponse
@@ -67,8 +68,21 @@ class FoodController(
 
     ): ResponseEntity<PageResponse<FoodResponse>> {
         securityUtility.validatePath(vendorId, vendorDetails)
-        val foodsPage= foodService.getAllFoods(vendorDetails, page, size)
+        val foodsPage = foodService.getAllFoods(vendorDetails, page, size)
         return ResponseEntity(foodsPage.toResponse(), HttpStatus.OK)
+    }
+
+    @PatchMapping("/availability/{id}")
+    fun changeFoodAvailability(
+        @PathVariable id: UUID,
+        @PathVariable vendorId: UUID,
+        @RequestBody @Valid foodAvailabilityDto: FoodAvailabilityDto,
+        @AuthenticationPrincipal vendorDetails: UserSecurity
+
+    ) : ResponseEntity<FoodResponse> {
+        securityUtility.validatePath(vendorId, vendorDetails)
+        val food = foodService.changeFoodAvailability(foodAvailabilityDto, id, vendorDetails)
+        return ResponseEntity(food.toResponse(), HttpStatus.OK)
     }
 }
 

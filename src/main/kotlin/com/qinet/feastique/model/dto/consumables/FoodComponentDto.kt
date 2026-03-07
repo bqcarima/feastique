@@ -31,7 +31,6 @@ data class FoodDto(
     @field:NotNull(message = "Deliverability must be specified.")
     var deliverable: Boolean?,
 
-    @field:NotNull(message = "Ready As From cannot be empty.")
     var readyAsFrom: LocalTime?,
 
     var dailyDeliveryQuantity: Int?,

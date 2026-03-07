@@ -10,6 +10,7 @@ data class DessertResponse(
     val dessertName: String,
     val description: String?,
     val dessertType: String,
+    val availability: String,
     val deliverable: Boolean,
     val deliveryFee: Long,
     val dessertFlavours: List<DessertFlavourResponse>,
@@ -25,6 +26,7 @@ data class DessertFlavourResponse(
     val id: UUID,
     val flavourName: String,
     val description: String?,
+    val availability: String,
     val flavourSizes: List<DessertFlavourSizeResponse>
 )
 
@@ -32,6 +34,7 @@ data class DessertFlavourSizeResponse(
     val id: UUID,
     val size: String,
     val sizeName: String?,
-    val price: Long
+    val price: Long,
+    val availability: String,
 )
 

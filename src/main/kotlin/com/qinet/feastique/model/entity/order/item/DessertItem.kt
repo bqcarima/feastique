@@ -54,6 +54,7 @@ class DessertCartItem : DessertItem() {
     @Column(name = "added_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH-mm-ss-dd-MM-yyyy")
     override var addedAt: LocalDateTime? = null
+
     override fun calculateTotal() : Long {
         val price = (this.dessertFlavourSize.price ?: 0L)
         var total = price.toDouble()
@@ -82,7 +83,7 @@ class DessertOrderItem : DessertItem() {
 
     @JsonBackReference // prevent infinite recursion for extra protection
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cart_id")
+    @JoinColumn(name = "order_id")
     @JsonIgnore
     var order: Order? = null
 

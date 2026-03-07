@@ -6,6 +6,7 @@ import com.github.f4b6a3.uuid.UuidCreator
 import com.qinet.feastique.model.entity.consumables.beverage.Beverage
 import com.qinet.feastique.model.entity.consumables.dessert.Dessert
 import com.qinet.feastique.model.entity.consumables.food.Food
+import com.qinet.feastique.model.entity.consumables.handheld.Handheld
 import com.qinet.feastique.model.enums.OrderType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -66,3 +67,12 @@ class FoodOrderCategory : OrderCategory() {
     lateinit var food: Food
 }
 
+@Entity
+@Table(name = "handheld_order_category")
+class HandheldOrderCategory : OrderCategory() {
+    @JsonBackReference // prevent infinite recursion for extra protection
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "handheld_id", nullable = false)
+    @JsonIgnore
+    lateinit var handheld: Handheld
+}

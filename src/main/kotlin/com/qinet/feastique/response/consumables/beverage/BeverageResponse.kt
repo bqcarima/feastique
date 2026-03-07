@@ -10,6 +10,7 @@ data class BeverageResponse(
     val percentage: Int,
     val beverageGroup: String,
     val deliverable: Boolean,
+    val availability: String,
     val readyAsFrom: LocalTime?,
     val orderTypes: Set<String>,
     val beverageFlavours: Set<BeverageFlavourResponse>,
@@ -21,6 +22,7 @@ data class BeverageFlavourResponse(
     val id: UUID,
     val name: String,
     val description: String?,
+    val availability: String,
     val flavourSizes: Set<BeverageFlavourSizeResponse>
 )
 

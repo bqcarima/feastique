@@ -31,15 +31,22 @@ import com.qinet.feastique.model.entity.FoodAvailability
 import com.qinet.feastique.model.entity.discount.DessertDiscount
 import com.qinet.feastique.model.entity.consumables.food.Food
 import com.qinet.feastique.model.entity.consumables.dessert.Dessert
+import com.qinet.feastique.model.entity.consumables.filling.HandheldFilling
 import com.qinet.feastique.model.entity.consumables.flavour.BeverageFlavour
 import com.qinet.feastique.model.entity.consumables.flavour.DessertFlavour
+import com.qinet.feastique.model.entity.consumables.filling.Filling
+import com.qinet.feastique.model.entity.consumables.handheld.Handheld
+import com.qinet.feastique.model.entity.discount.HandheldDiscount
 import com.qinet.feastique.model.entity.image.DessertImage
 import com.qinet.feastique.model.entity.image.FoodImage
+import com.qinet.feastique.model.entity.image.HandheldImage
 import com.qinet.feastique.model.entity.size.BeverageFlavourSize
 import com.qinet.feastique.model.entity.size.DessertFlavourSize
 import com.qinet.feastique.model.entity.size.FoodSize
+import com.qinet.feastique.model.entity.size.HandheldSize
 import com.qinet.feastique.model.enums.Availability
 import com.qinet.feastique.model.enums.DessertType
+import com.qinet.feastique.model.enums.HandHeldType
 import com.qinet.feastique.model.enums.Region
 import com.qinet.feastique.response.order.UnknownEntityResponse
 import com.qinet.feastique.response.consumables.dessert.*
@@ -47,11 +54,17 @@ import com.qinet.feastique.response.AvailabilityResponse
 import com.qinet.feastique.response.consumables.beverage.BeverageFlavourResponse
 import com.qinet.feastique.response.consumables.beverage.BeverageFlavourSizeResponse
 import com.qinet.feastique.response.consumables.food.*
+import com.qinet.feastique.response.consumables.handheld.FillingResponse
+import com.qinet.feastique.response.consumables.handheld.HandheldMinimalResponse
+import com.qinet.feastique.response.consumables.handheld.HandheldResponse
+import com.qinet.feastique.response.consumables.handheld.HandheldSizeResponse
 import com.qinet.feastique.response.user.*
 import org.springframework.data.domain.Page
 import java.text.SimpleDateFormat
 import java.util.*
 
+
+val dateFormatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
 /**
  * Maps an [AddOn] entity to its API DTO [AddOnResponse].
  *
@@ -61,7 +74,8 @@ import java.util.*
 fun AddOn.toResponse() = AddOnResponse(
     id = this.id,
     addOnName = this.name.orEmpty(),
-    price = this.price ?: 0
+    price = this.price ?: 0,
+    availability = availability?.type ?: Availability.UNAVAILABLE.type
 )
 
 /**
@@ -111,6 +125,7 @@ fun Beverage.toResponse() = BeverageResponse(
     alcoholic = alcoholic ?: false,
     beverageGroup = beverageGroup?.type ?: "Unknown",
     percentage = percentage ?: 0,
+    availability = availability?.type ?: Availability.UNAVAILABLE.type,
     deliverable = deliverable ?: false,
     orderTypes = orderTypes.map { it.type }.toSet(),
     preparationTime = preparationTime ?: 0,
@@ -153,12 +168,13 @@ fun BeverageFlavour.toResponse() = BeverageFlavourResponse(
     id = id,
     name = name!!,
     description = description.orEmpty(),
+    availability = availability?.type ?: Availability.UNAVAILABLE.type,
     flavourSizes = beverageFlavourSizes.map { it.toResponse() }.toSet()
 )
 
 fun BeverageFlavourSize.toResponse() = BeverageFlavourSizeResponse(
     id = id,
-    size = size!!.type,
+    size = this@toResponse.size!!.type,
     sizeName = name,
     price = price ?: 0,
     availability = availability?.type ?: Availability.UNAVAILABLE.type
@@ -177,6 +193,7 @@ fun Cart.toResponse() = CartResponse(
             is FoodCartItem -> it.toResponse()
             is BeverageCartItem -> it.toResponse()
             is DessertCartItem -> it.toResponse()
+            is HandheldCartItem -> it.toResponse()
             else -> UnknownEntityResponse(
                 id = id,
                 quantity = 0,
@@ -197,7 +214,8 @@ fun Cart.toResponse() = CartResponse(
 fun Complement.toResponse() = ComplementResponse(
     id = id,
     name = name.orEmpty(),
-    price = price ?: 0
+    price = price ?: 0,
+    availability = availability?.type ?: Availability.UNAVAILABLE.type
 )
 
 /**
@@ -246,6 +264,7 @@ fun Dessert.toResponse(): DessertResponse = DessertResponse(
     dessertName = name.orEmpty(),
     dessertType = dessertType?.type ?: DessertType.OTHER.type,
     description = description.orEmpty(),
+    availability = availability?.type ?: Availability.UNAVAILABLE.type,
     deliverable = deliverable ?: false,
     deliveryFee = deliveryFee ?: 0,
     dessertFlavours = dessertFlavours.map { it.toResponse() },
@@ -255,6 +274,11 @@ fun Dessert.toResponse(): DessertResponse = DessertResponse(
     availableDays = availableDays.map { it.type },
     discounts = dessertDiscounts.map { it.discount.toResponse() }.toSet(),
     dessertImages = dessertImages.map { it.toResponse() }
+)
+
+fun DessertAvailability.toResponse() = AvailabilityResponse(
+    id = this.id,
+    availability = this.availableDay?.type ?: "Unknown"
 )
 
 /**
@@ -304,6 +328,7 @@ fun DessertFlavour.toResponse(): DessertFlavourResponse = DessertFlavourResponse
     id = id,
     flavourName = name.orEmpty(),
     description = description.orEmpty(),
+    availability = availability?.type ?: Availability.UNAVAILABLE.type,
     flavourSizes = dessertFlavourSizes.map { it.toResponse() }
 )
 
@@ -315,9 +340,10 @@ fun DessertFlavour.toResponse(): DessertFlavourResponse = DessertFlavourResponse
  */
 fun DessertFlavourSize.toResponse(): DessertFlavourSizeResponse = DessertFlavourSizeResponse(
     id = id,
-    size = size?.type ?: Size.MEDIUM.type,
+    size = this@toResponse.size?.type ?: Size.MEDIUM.type,
     sizeName = name,
-    price = price ?: 0
+    price = price ?: 0,
+    availability = availability?.type ?: Availability.UNAVAILABLE.type,
 )
 
 fun DessertImage.toResponse(): ImageResponse = ImageResponse(
@@ -325,7 +351,7 @@ fun DessertImage.toResponse(): ImageResponse = ImageResponse(
     imageUrl = imageUrl!!
 )
 
-val dateFormatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+
 
 /**
  * Converts a [Discount] entity to its response DTO.
@@ -339,6 +365,13 @@ fun Discount.toResponse(): DiscountResponse = DiscountResponse(
     percentage = percentage ?: 0,
     startDate = startDate ?: dateFormatter.parse("00-00-000"),
     endDate = endDate ?: dateFormatter.parse("00-00-0000")
+)
+
+
+fun Filling.toResponse() = FillingResponse(
+    id = id,
+    fillingName = name.orEmpty(),
+    description = description
 )
 
 /**
@@ -382,7 +415,8 @@ fun Food.toResponse() = FoodResponse(
     addOn = foodAddOns.map { it.toResponse() },
     orderType = orderTypes.map { it.type },
     availableDays = availableDays.map { it.type },
-    discount = foodDiscounts.map { it.toResponse() }
+    discount = foodDiscounts.map { it.toResponse() },
+    availability = availability?.type ?: Availability.UNAVAILABLE.type
 )
 
 /**
@@ -410,7 +444,8 @@ fun Food.toMinimalResponse(): FoodMinimalResponse = FoodMinimalResponse(
 fun FoodAddOn.toResponse() = AddOnResponse(
     id = addOn.id,
     addOnName = addOn.name.orEmpty(),
-    price = addOn.price ?: 0
+    price = addOn.price ?: 0,
+    availability = addOn.availability?.type ?: Availability.UNAVAILABLE.type
 )
 
 /**
@@ -452,7 +487,7 @@ fun FoodComplement.toResponse() = ComplementResponse(
     id = complement.id,
     name = complement.name.orEmpty(),
     price = complement.price ?: 0,
-
+    availability = complement.availability?.type ?: Availability.UNAVAILABLE.type
     )
 
 /**
@@ -506,9 +541,89 @@ fun FoodOrderItem.toResponse(): FoodItemResponse = FoodItemResponse(
  */
 fun FoodSize.toResponse(): FoodSizeResponse = FoodSizeResponse(
     id = id,
-    size = size?.type ?: Size.MEDIUM.type,
+    size = this@toResponse.size?.type ?: Size.MEDIUM.type,
     name = name,
-    priceIncrease = priceIncrease ?: 0
+    priceIncrease = priceIncrease ?: 0,
+    availability = availability?.type ?: Availability.UNAVAILABLE.type
+)
+
+
+fun Handheld.toResponse() = HandheldResponse(
+    id = id,
+    handheldNumber = handheldNumber.orEmpty(),
+    handheldName = name.orEmpty(),
+    vendorId = vendor.id,
+    vendorName = vendor.chefName.orEmpty(),
+    description = description,
+    images = handheldImages.map { it.toResponse() },
+    sizes = handheldSizes.map { it.toResponse() },
+    fillings = handheldFillings.map { it.toResponse() },
+    availability = availability?.type ?: Availability.UNAVAILABLE.type,
+    preparationTime = preparationTime ?: 0,
+    readyAsFrom = readyAsFrom,
+    orderType = orderTypes.map { it.type },
+    handheldType = handHeldType?.type ?: HandHeldType.OTHER.type,
+    availableDays = availableDays.map { it.type },
+    deliverable = deliverable ?: false,
+    deliveryFee = deliveryFee ?: 0,
+    discounts = handheldDiscounts.map { it.toResponse() }.toSet()
+)
+
+fun Handheld.toMinimalResponse() = HandheldMinimalResponse(
+    id = id,
+    handheldNumber = handheldNumber.orEmpty(),
+    handheldName = name.orEmpty(),
+    description = description,
+)
+
+fun HandheldCartItem.toResponse() = HandheldItemResponse(
+    id = id,
+    handheld = handheld.toMinimalResponse(),
+    fillings = fillings.map { it.toResponse() },
+    size = this@toResponse.size.toResponse(),
+    quantity = quantity,
+    discounts = appliedDiscounts.map { it.discount.toResponse() },
+    orderType = orderType?.type ?: OrderType.PICKUP.type,
+    totalAmount = totalAmount ?: 0
+)
+
+fun HandheldDiscount.toResponse() = DiscountResponse(
+    id = discount.id,
+    discountName = discount.discountName.orEmpty(),
+    percentage = discount.percentage ?: 0,
+    startDate = discount.startDate ?: dateFormatter.parse("00-00-000"),
+    endDate = discount.endDate ?: dateFormatter.parse("00-00-0000"),
+)
+
+fun HandheldFilling.toResponse() = FillingResponse(
+    id = filling.id,
+    fillingName = filling.name.orEmpty(),
+    description = filling.description,
+)
+
+private fun HandheldImage.toResponse() = ImageResponse(
+    id = id,
+    imageUrl = imageUrl.orEmpty()
+)
+
+fun HandheldOrderItem.toHandheldItemResponse() = HandheldItemResponse(
+    id = id,
+    handheld = handheld.toMinimalResponse(),
+    fillings = fillings.map { it.toResponse() },
+    size = size.toResponse(),
+    quantity = quantity,
+    orderType = orderType?.type ?: OrderType.DINE_IN.type,
+    discounts = appliedDiscounts.map { it.discount.toResponse() },
+    totalAmount = totalAmount ?: 0
+)
+
+private fun HandheldSize.toResponse() = HandheldSizeResponse(
+    id = id,
+    numberOfFillings = numberOfFillings ?: 0,
+    size = this@toResponse.size?.type ?: Size.MEDIUM.type,
+    sizeName = name,
+    price = price ?: 0,
+    availability = availability?.type
 )
 
 /**
@@ -527,6 +642,7 @@ fun Order.toResponse(): OrderResponse = OrderResponse(
             is FoodOrderItem -> it.toResponse()
             is BeverageOrderItem -> it.toBeverageItemResponse()
             is DessertOrderItem -> it.toDessertItemResponse()
+            is HandheldOrderItem -> it.toHandheldItemResponse()
             else -> UnknownEntityResponse(
                 id = id,
                 quantity = 0,
@@ -544,11 +660,6 @@ fun Order.toResponse(): OrderResponse = OrderResponse(
     deliveryTime = deliveryTime,
     completedTime = completedTime,
     customerAddress = customerAddress?.toResponse()
-)
-
-fun DessertAvailability.toResponse() = AvailabilityResponse(
-    id = this.id,
-    availability = this.availableDay?.type ?: "Unknown"
 )
 
 
@@ -644,6 +755,7 @@ fun Vendor.toResponse(): VendorResponse = VendorResponse(
  * @return [VendorMinimalResponse] DTO with id, username, chef name. and reduced information.
  */
 fun Vendor.toMinimalResponse(): VendorMinimalResponse = VendorMinimalResponse(
+    id = id,
     username = username,
     vendorCode = vendorCode.orEmpty(),
     firstName = firstName.orEmpty(),
@@ -655,6 +767,8 @@ fun Vendor.toMinimalResponse(): VendorMinimalResponse = VendorMinimalResponse(
     phoneNumber = vendorPhoneNumber.map { it.toResponse() },
     address = address!!.toResponse(),
     registrationDate = registrationDate ?: dateFormatter.parse("00-00-0000"),
+    openingTime = openingTime,
+    closingTime = closingTime
 )
 
 /**

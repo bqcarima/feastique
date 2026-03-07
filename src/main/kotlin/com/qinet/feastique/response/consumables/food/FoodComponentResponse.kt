@@ -9,12 +9,14 @@ data class AddOnResponse(
     val id: UUID,
     val addOnName: String,
     val price: Long,
+    val availability: String
 )
 
 data class ComplementResponse(
     val id: UUID,
     val name: String,
-    val price: Long
+    val price: Long,
+    val availability: String
 )
 
 data class FoodResponse(
@@ -26,6 +28,7 @@ data class FoodResponse(
     val mainCourse: String,
     val description: String,
     val images: List<ImageResponse>,
+    val availability: String,
     val size: List<FoodSizeResponse>,
     val basePrice: Long,
     val complements: List<ComplementResponse>,

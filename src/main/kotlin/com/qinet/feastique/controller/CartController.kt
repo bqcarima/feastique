@@ -2,6 +2,7 @@ package com.qinet.feastique.controller
 
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.order.CartItemDto
+import com.qinet.feastique.model.dto.order.ChangeQuantityDto
 import com.qinet.feastique.model.dto.order.ItemDto
 import com.qinet.feastique.response.order.CartResponse
 import com.qinet.feastique.security.UserSecurity
@@ -68,28 +69,22 @@ class CartController(
         return ResponseEntity("Cart cleared.", HttpStatus.OK)
     }
 
-    @PutMapping("/increase/{id}")
-    fun increaseQuantity(
+    @PatchMapping("/quantity/{id}")
+    fun changeQuantity(
         @PathVariable id: UUID,
         @PathVariable customerId: UUID,
+        @RequestBody @Valid changeQuantityDto: ChangeQuantityDto,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<String> {
         securityUtility.validatePath(customerId, customerDetails)
-        cartService.increaseItemQuantity(id, customerDetails)
-        return ResponseEntity("Item quantity increased,", HttpStatus.OK)
-    }
+        cartService.changeQuantity(id, customerDetails, changeQuantityDto)
 
-    @PutMapping("/reduce/{id}")
-    fun reduceQuantity(
-        @PathVariable id: UUID,
-        @PathVariable customerId: UUID,
-        @AuthenticationPrincipal customerDetails: UserSecurity
-
-    ) : ResponseEntity<String> {
-        securityUtility.validatePath(customerId, customerDetails)
-        cartService.reduceItemQuantity(id, customerDetails)
-        return ResponseEntity("Item quantity reduced,", HttpStatus.OK)
+        return if (changeQuantityDto.quantity != 0) {
+            ResponseEntity("Item quantity changed to ${changeQuantityDto.quantity}.", HttpStatus.OK)
+        } else {
+            ResponseEntity("Item has been removed from the cart.", HttpStatus.OK)
+        }
     }
 }
 

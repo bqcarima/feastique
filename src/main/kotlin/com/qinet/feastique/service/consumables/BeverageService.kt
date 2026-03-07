@@ -5,6 +5,8 @@ import com.qinet.feastique.exception.DuplicateFoundException
 import com.qinet.feastique.exception.PermissionDeniedException
 import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
+import com.qinet.feastique.model.dto.BeverageAvailabilityDto
+import com.qinet.feastique.model.dto.FlavourAvailabilityDto
 import com.qinet.feastique.model.dto.consumables.BeverageDto
 import com.qinet.feastique.model.dto.consumables.BeverageFlavourSizeDto
 import com.qinet.feastique.model.entity.Menu
@@ -43,6 +45,14 @@ class BeverageService(
     private val discountRepository: DiscountRepository
 ) {
 
+    /**
+     * Retrieves a beverage by its ID and checks if the requesting vendor has permission to access it.
+     * @param id The UUID of the beverage to retrieve.
+     * @param vendorDetails The security details of the vendor making the request.
+     * @return The Beverage entity if found and accessible by the vendor.
+     * @throws RequestedEntityNotFoundException If no beverage is found for the given ID.
+     * @throws PermissionDeniedException If the vendor does not have permission to access the beverage.
+     */
     @Transactional(readOnly = true)
     fun getBeverage(id: UUID, vendorDetails: UserSecurity): Beverage {
         val beverage = beverageRepository.findById(id)
@@ -55,6 +65,13 @@ class BeverageService(
         return beverage
     }
 
+    /**
+     * Retrieves a paginated list of beverages for a specific vendor, ordered by name in ascending order.
+     * @param vendorDetails The security details of the vendor whose beverages are to be retrieved.
+     * @param page The page number to retrieve (0-based index).
+     * @param size The number of items per page.
+     * @return A Page of BeverageResponse objects containing the beverage details.
+     */
     @Transactional(readOnly = true)
     fun getAllBeverages(vendorDetails: UserSecurity, page: Int, size: Int): Page<BeverageResponse> {
         val pageable = PageRequest.of(page, size, Sort.by("name").ascending())
@@ -62,6 +79,13 @@ class BeverageService(
         return page
     }
 
+    /**
+     * Deletes a beverage by its ID after verifying that the requesting vendor has permission to delete it.
+     * @param id The UUID of the beverage to delete.
+     * @param vendorDetails The security details of the vendor making the request.
+     * @throws RequestedEntityNotFoundException If no beverage is found for the given ID.
+     * @throws PermissionDeniedException If the vendor does not have permission to delete the beverage.
+     */
     @Transactional
     fun deleteBeverage(id: UUID, vendorDetails: UserSecurity) {
         val beverage = getBeverage(id, vendorDetails)
@@ -76,6 +100,31 @@ class BeverageService(
     @Transactional
     fun saveBeverage(beverage: Beverage): Beverage {
         return beverageRepository.saveAndFlush(beverage)
+    }
+
+    /**
+     * Changes the availability of a beverage and its related flavours and sizes based on the provided BeverageAvailabilityDto.
+     * It checks for the existence of the beverage and updates its availability status accordingly.
+     * If the beverage has related flavours, it also toggles their availability and the availability of their sizes.
+     * @param beverageAvailabilityDto The data transfer object containing beverage availability details, including flavours and sizes to toggle.
+     * @param id The UUID of the beverage whose availability is to be toggled.
+     * @param vendorDetails The security details of the vendor making the request.
+     * @return The updated Beverage entity with the new availability status.
+     * @throws IllegalArgumentException If no beverage flavours are provided or if any flavour ID is null.
+     * @throws RequestedEntityNotFoundException If any specified beverage flavour or flavour size is not found.
+     */
+    @Transactional
+    fun changeBeverageAvailability(beverageAvailabilityDto: BeverageAvailabilityDto, id: UUID, vendorDetails: UserSecurity): Beverage {
+        val beverage = getBeverage(id, vendorDetails)
+
+        if (beverage.availability != Availability.fromString(beverageAvailabilityDto.availability)) {
+            beverage.availability = Availability.fromString(beverageAvailabilityDto.availability)
+        }
+
+        beverageAvailabilityDto.beverageFlavours?.let {
+            changeBeverageFlavourAvailability(beverageAvailabilityDto, beverage)
+        }
+        return saveBeverage(beverage)
     }
 
     /**
@@ -111,7 +160,7 @@ class BeverageService(
         val deliveryFee = beverageDto.deliveryFee
         val dailyDeliveryQuantity = beverageDto.dailyDeliveryQuantity
         val availability = Availability.fromString(beverageDto.availability)
-        val readyAsFrom = requireNotNull(beverageDto.readyAsFrom) { "Please specify the time a beverage becomes available during the day."}
+        val readyAsFrom = beverageDto.readyAsFrom ?: vendor.openingTime
         val preparationTime = beverageDto.preparationTime ?: 0
         val quickDelivery = beverageDto.quickDelivery
 
@@ -212,11 +261,7 @@ class BeverageService(
         return beverage.beverageFlavours
     }
 
-    private fun prepareBeverageDiscounts(
-        beverageDto: BeverageDto,
-        beverage: Beverage,
-        vendor: Vendor
-    ) {
+    private fun prepareBeverageDiscounts(beverageDto: BeverageDto, beverage: Beverage, vendor: Vendor) {
         val existingDiscounts = beverage.beverageDiscounts.associateBy { it.discount.id }
         val incomingDiscounts = beverageDto.discounts!!
 
@@ -257,10 +302,7 @@ class BeverageService(
        // return beverage.beverageDiscounts
     }
 
-    private fun prepareBeverageFlavourSizes(
-        flavourSizeDtos: Set<BeverageFlavourSizeDto>,
-        beverageFlavour: BeverageFlavour
-    ): MutableSet<BeverageFlavourSize> {
+    private fun prepareBeverageFlavourSizes(flavourSizeDtos: Set<BeverageFlavourSizeDto>, beverageFlavour: BeverageFlavour): MutableSet<BeverageFlavourSize> {
 
         val existingFlavourSizes = beverageFlavour.beverageFlavourSizes.associateBy { it.id }
         if (flavourSizeDtos.isEmpty()) {
@@ -273,7 +315,7 @@ class BeverageService(
             }
 
             flavourSize.apply {
-                size = Size.fromString(optionSizeDto.size)
+                this.size = Size.fromString(optionSizeDto.size)
                 name = (optionSizeDto.sizeName) ?: this.size!!.type
                 price = requireNotNull(optionSizeDto.price) { "Please provide a price." }
                 availability =
@@ -341,6 +383,62 @@ class BeverageService(
         }
 
         return existingOrderTypes
+    }
+
+    /**
+     * Changes the availability of a beverage and its related flavours and sizes based on the provided BeverageAvailabilityDto.
+     * It checks for the existence of the beverage and updates its availability status accordingly.
+     * If the beverage has related flavours, it also toggles their availability and the availability of their sizes.
+     * @param beverageAvailabilityDto The data transfer object containing beverage availability details, including flavours and sizes to toggle.
+     * @param beverage The Beverage entity whose availability is to be toggled.
+     * @throws IllegalArgumentException If no beverage flavours are provided or if any flavour ID is null.
+     * @throws RequestedEntityNotFoundException If any specified beverage flavour or flavour size is not found.
+     */
+    private fun changeBeverageFlavourAvailability(beverageAvailabilityDto: BeverageAvailabilityDto, beverage: Beverage) {
+        val flavours = beverage.beverageFlavours.associateBy { it.id }
+        val incomingFlavourIds = beverageAvailabilityDto.beverageFlavours
+
+        if (incomingFlavourIds.isNullOrEmpty()) {
+            throw IllegalArgumentException("Please provide at least one beverage flavour to toggle availability.")
+        }
+
+        incomingFlavourIds.forEach { dto ->
+            val flavourId = dto.flavourId ?: throw IllegalArgumentException("Beverage flavour ID cannot be null.")
+            val flavour = flavours[dto.flavourId]
+                ?: throw RequestedEntityNotFoundException("Beverage flavour with id $flavourId not found.")
+
+            if (flavour.availability != Availability.fromString(dto.availability)) {
+                flavour.availability = Availability.fromString(dto.availability)
+            }
+            dto.flavourSizes?.let { changeBeverageFlavourSizeAvailability(dto, flavour) }
+        }
+    }
+
+    /**
+     * Changes the availability of beverage flavour sizes based on the provided FlavourAvailabilityDto and BeverageFlavour.
+     * It checks for the existence of each flavour size and updates its availability status accordingly.
+     * @param flavourAvailabilityDto The data transfer object containing flavour availability details, including flavour sizes to toggle.
+     * @param beverageFlavour The BeverageFlavour entity whose flavour sizes' availability is to be toggled.
+     * @throws IllegalArgumentException If no beverage flavour sizes are provided or if any size ID is null.
+     * @throws RequestedEntityNotFoundException If any specified beverage flavour size is not found.
+     */
+    private fun changeBeverageFlavourSizeAvailability(flavourAvailabilityDto: FlavourAvailabilityDto, beverageFlavour: BeverageFlavour) {
+        val flavourSizes = beverageFlavour.beverageFlavourSizes.associateBy { it.id }
+        val incomingFlavourSizes = flavourAvailabilityDto.flavourSizes
+
+        if (incomingFlavourSizes.isNullOrEmpty()) {
+            throw IllegalArgumentException("Please provide at least one beverage flavour size to toggle availability.")
+        }
+
+        incomingFlavourSizes.forEach { dto ->
+            val sizeId = dto.sizeId ?: throw IllegalArgumentException("Beverage flavour size ID cannot be null.")
+            val flavourSize = flavourSizes[sizeId]
+                ?: throw RequestedEntityNotFoundException("Beverage flavour size with id $sizeId not found.")
+
+            if (flavourSize.availability != Availability.fromString(dto.availability)) {
+                flavourSize.availability = Availability.fromString(dto.availability)
+            }
+        }
     }
 }
 

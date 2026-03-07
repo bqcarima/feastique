@@ -7,10 +7,10 @@ enum class Availability(val type: String) {
 
     companion object {
         private val lookup = Availability.entries.associateBy { it.name.uppercase() }
-        fun fromString(availabilityName: String?): Availability {
-            val key = availabilityName ?: throw IllegalArgumentException(" null is not a valid entry.")
+        fun fromString(availability: String?): Availability {
+            val key = availability ?: throw IllegalArgumentException(" null is not a valid entry.")
             return lookup[key.uppercase()]
-                ?: throw IllegalArgumentException("$availabilityName is not a valid entry.")
+                ?: throw IllegalArgumentException("$availability is not a valid entry.")
         }
     }
 }

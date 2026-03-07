@@ -7,6 +7,7 @@ import com.qinet.feastique.model.entity.address.CustomerAddress
 import com.qinet.feastique.model.entity.order.item.BeverageOrderItem
 import com.qinet.feastique.model.entity.order.item.DessertOrderItem
 import com.qinet.feastique.model.entity.order.item.FoodOrderItem
+import com.qinet.feastique.model.entity.order.item.HandheldOrderItem
 import com.qinet.feastique.model.entity.user.Customer
 import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.enums.OrderStatus
@@ -17,115 +18,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.*
 
-//@Suppress("JpaEntityGraphsInspection")
-/*@NamedEntityGraphs(
-    value = [
-        NamedEntityGraph(
-            name = "Order.withAllRelations",
-            attributeNodes = [
-                NamedAttributeNode("userOrderCode"),
-                NamedAttributeNode("customerAddress"),
-                NamedAttributeNode("orderStatus"),
-                NamedAttributeNode("placementTime"),
-                NamedAttributeNode("deliveryTime"),
-                NamedAttributeNode("completedTime"),
-                NamedAttributeNode("deliveryFee"),
-                NamedAttributeNode(
-                    value = "vendor",
-                    subgraph = "Vendor.basic"
-                ),
-                NamedAttributeNode(
-                    value = "items",
-                    subgraph = "OrderItems.full"
-                )
-            ],
-            subgraphs = [
-
-                // level 2 relationships
-                // Vendor info
-                NamedSubgraph(
-                    name = "Vendor.basic",
-                    attributeNodes = [
-                        NamedAttributeNode("id"),
-                        NamedAttributeNode("chefName"),
-                        NamedAttributeNode("restaurantName")
-                    ]
-                ),
-
-                // Food order info
-                NamedSubgraph(
-                    name = "FoodOrderItem.full",
-                    attributeNodes = [
-                        NamedAttributeNode("id"),
-                        NamedAttributeNode(
-                            value = "food",
-                            subgraph = "Food.basic"
-                        ),
-                        NamedAttributeNode(
-                            value = "complement",
-                            subgraph = "Complement.basic"
-                        ),
-                        NamedAttributeNode(
-                            value = "addOns",
-                            subgraph = "AddOn.basic"
-                        ),
-                        NamedAttributeNode(
-                            value = "appliedDiscounts",
-                            subgraph = "AppliedDiscount.withDiscount"
-                        ),
-                        NamedAttributeNode("quantity"),
-                        NamedAttributeNode("totalAmount"),
-                    ]
-                ),
-
-                // level 3 relationships
-                // Complement info
-                NamedSubgraph(
-                  name = "Complement.basic",
-                    attributeNodes = [
-                        NamedAttributeNode("id"),
-                        NamedAttributeNode("complementName"),
-                        NamedAttributeNode("price")
-                    ]
-                ),
-
-
-                // Add on info
-                NamedSubgraph(
-                    name = "AddOn.basic",
-                    attributeNodes = [
-                        NamedAttributeNode("id"),
-                        NamedAttributeNode("addOnName"),
-                        NamedAttributeNode("price")
-                    ]
-                ),
-
-                // Level 2
-                // Applied discount info
-                NamedSubgraph(
-                    name = "AppliedDiscount.withDiscount",
-                    attributeNodes = [
-                        NamedAttributeNode(
-                            value = "discount",
-                            subgraph = "Discount.basic"
-                        )
-                    ]
-                ),
-
-                // level 3
-                // Discount info
-                NamedSubgraph(
-                    name = "Discount.basic",
-                    attributeNodes = [
-                        NamedAttributeNode("id"),
-                        NamedAttributeNode("discountName"),
-                        NamedAttributeNode("percentage")
-                    ]
-                ),
-            ]
-        )
-    ]
-)*/
 @Entity
 @Table(name = "orders")
 class Order {
@@ -156,7 +48,7 @@ class Order {
     var quickDelivery: Boolean = false
 
     @get:Transient
-    val items: List<OrderEntity> get() = (foodOrderItems + beverageOrderItems + dessertOrderItems).sortedBy { it.addedAt }
+    val items: List<OrderEntity> get() = (foodOrderItems + beverageOrderItems + dessertOrderItems + handheldOrderItems).sortedBy { it.addedAt }
 
     @JsonBackReference
     @OneToMany(
@@ -181,6 +73,14 @@ class Order {
         orphanRemoval = true
     )
     var dessertOrderItems: MutableList<DessertOrderItem> = mutableListOf()
+
+    @JsonBackReference
+    @OneToMany(
+        mappedBy = "order",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    var handheldOrderItems: MutableList<HandheldOrderItem> = mutableListOf()
 
     @Column(name = "placement_time", nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
@@ -227,34 +127,20 @@ class Order {
 
     fun addItem(item: OrderEntity) {
         when (item) {
-            is FoodOrderItem -> {
-                foodOrderItems.add(item.apply { order = this@Order })
-            }
-
-            is BeverageOrderItem -> {
-                beverageOrderItems.add(item.apply { order = this@Order })
-            }
-
-            is DessertOrderItem -> {
-                dessertOrderItems.add(item.apply { order = this@Order })
-            }
+            is FoodOrderItem     -> foodOrderItems.add(item.apply { order = this@Order })
+            is BeverageOrderItem -> beverageOrderItems.add(item.apply { order = this@Order })
+            is DessertOrderItem  -> dessertOrderItems.add(item.apply { order = this@Order })
+            is HandheldOrderItem -> handheldOrderItems.add((item.apply { order = this@Order }))
         }
     }
 
     fun addAllItems(itemsList: List<OrderEntity>) {
         for (item in itemsList) {
             when (item) {
-                is FoodOrderItem -> {
-                    foodOrderItems.add(item.apply { order = this@Order })
-                }
-
-                is BeverageOrderItem -> {
-                    beverageOrderItems.add(item.apply { order = this@Order })
-                }
-
-                is DessertOrderItem -> {
-                    dessertOrderItems.add(item.apply { order = this@Order })
-                }
+                is FoodOrderItem     -> foodOrderItems.add(item.apply { order = this@Order })
+                is BeverageOrderItem -> beverageOrderItems.add(item.apply { order = this@Order })
+                is DessertOrderItem  -> dessertOrderItems.add(item.apply { order = this@Order })
+                is HandheldOrderItem -> handheldOrderItems.add(item.apply { order = this@Order })
             }
         }
     }
@@ -268,7 +154,7 @@ class Order {
         val allFees = mutableListOf<Long>()
 
         // Include food & dessert fees based on quantity
-        if (foodOrderItems.isNotEmpty() || dessertOrderItems.isNotEmpty()) {
+        if (foodOrderItems.isNotEmpty() || dessertOrderItems.isNotEmpty() || handheldOrderItems.isNotEmpty()) {
             allFees += foodOrderItems.flatMap { item ->
                 val fee = item.food.deliveryFee
                 if (fee != null) List(item.quantity) { fee } else emptyList()
@@ -278,6 +164,12 @@ class Order {
                 val fee = item.dessert.deliveryFee
                 if (fee != null) List(item.quantity) { fee } else emptyList()
             }
+
+            allFees += handheldOrderItems.flatMap { item ->
+                val fee = item.handheld.deliveryFee
+                if (fee != null) List(item.quantity) { fee } else emptyList()
+            }
+
         } else {
             allFees += beverageOrderItems.flatMap { item ->
                 val fee = item.beverage.deliveryFee

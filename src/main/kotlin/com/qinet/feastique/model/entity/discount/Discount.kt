@@ -7,6 +7,7 @@ import com.qinet.feastique.model.entity.order.item.FoodOrderItem
 import com.qinet.feastique.model.entity.consumables.beverage.Beverage
 import com.qinet.feastique.model.entity.consumables.dessert.Dessert
 import com.qinet.feastique.model.entity.consumables.food.Food
+import com.qinet.feastique.model.entity.consumables.handheld.Handheld
 import com.qinet.feastique.model.entity.order.item.*
 import com.qinet.feastique.model.entity.user.Vendor
 import jakarta.persistence.*
@@ -83,6 +84,18 @@ class AppliedDiscount {
     @JoinColumn(name = "food_cart_item_id")
     @JsonIgnore
     var foodCartItem: FoodCartItem? = null
+
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [])
+    @JoinColumn(name = "handheld_cart_item_id")
+    @JsonIgnore
+    var handheldCartItem: HandheldCartItem? = null
+
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [])
+    @JoinColumn(name = "handheld_order_item_id")
+    @JsonIgnore
+    var handheldOrderItem: HandheldOrderItem? = null
 }
 
 @Entity
@@ -147,5 +160,26 @@ class FoodDiscount {
     @JsonIgnore
     lateinit var food: Food
 
+}
+
+@Entity
+@Table(name = "handheld_discounts")
+class HandheldDiscount {
+
+    @Id
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
+    var id: UUID = UuidCreator.getTimeOrdered()
+
+    @JsonBackReference // prevent infinite recursion for extra protection
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "discount_id", nullable = false)
+    @JsonIgnore
+    lateinit var discount: Discount
+
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "handheld_id", nullable = false)
+    @JsonIgnore
+    lateinit var handheld: Handheld
 }
 

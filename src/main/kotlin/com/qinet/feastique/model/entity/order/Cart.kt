@@ -7,6 +7,7 @@ import com.github.f4b6a3.uuid.UuidCreator
 import com.qinet.feastique.model.entity.order.item.BeverageCartItem
 import com.qinet.feastique.model.entity.order.item.DessertCartItem
 import com.qinet.feastique.model.entity.order.item.FoodCartItem
+import com.qinet.feastique.model.entity.order.item.HandheldCartItem
 import com.qinet.feastique.model.entity.user.Customer
 import jakarta.persistence.*
 import java.util.*
@@ -49,20 +50,30 @@ class Cart {
     )
     var dessertCartItems: MutableList<DessertCartItem> = Collections.synchronizedList(mutableListOf())
 
+    @JsonBackReference
+    @OneToMany(
+        mappedBy = "cart",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    var handheldCartItems: MutableList<HandheldCartItem> = Collections.synchronizedList(mutableListOf())
+
+
+
     // Lazy cached combined list
     @Transient
     @JsonIgnore
-    internal var _itemsCache: MutableList<OrderEntity>? = null
+    internal var itemsCache: MutableList<OrderEntity>? = null
 
     @get:JsonProperty("items") //Transient
     val items: List<OrderEntity>
         get() {
-            if (_itemsCache == null) {
+            if (itemsCache == null) {
                 //Build cache lazily on first access
-                _itemsCache =
-                    (foodCartItems + beverageCartItems + dessertCartItems).sortedBy { it.addedAt }.toMutableList()
+                itemsCache =
+                    (foodCartItems + beverageCartItems + dessertCartItems + handheldCartItems).sortedBy { it.addedAt }.toMutableList()
             }
-            return _itemsCache!!
+            return itemsCache!!
         }
 
     @Column(name = "total_amount")
@@ -70,21 +81,14 @@ class Cart {
 
     fun addItem(item: OrderEntity) = synchronized(this) {
         when (item) {
-            is FoodCartItem -> {
-                foodCartItems.add(item.apply { cart = this@Cart })
-            }
-
-            is BeverageCartItem -> {
-                beverageCartItems.add(item.apply { cart = this@Cart })
-            }
-
-            is DessertCartItem -> {
-                dessertCartItems.add(item.apply { cart = this@Cart })
-            }
+            is FoodCartItem -> foodCartItems.add(item.apply { cart = this@Cart })
+            is BeverageCartItem -> beverageCartItems.add(item.apply { cart = this@Cart })
+            is DessertCartItem -> dessertCartItems.add(item.apply { cart = this@Cart })
+            is HandheldCartItem -> handheldCartItems.add((item.apply { cart = this@Cart }))
         }
 
         // Insert while maintaining order
-        _itemsCache?.let { cache ->
+        itemsCache?.let { cache ->
             val index = cache.indexOfFirst { it.addedAt!! > item.addedAt }
             if (index >= 0) cache.add(index, item) else cache.add(item)
         }
@@ -106,8 +110,13 @@ class Cart {
                 item.cart = null
                 dessertCartItems.remove(item)
             }
+
+            is HandheldCartItem -> {
+                item.cart = null
+                handheldCartItems.remove(item)
+            }
         }
-        _itemsCache?.remove(item)
+        itemsCache?.remove(item)
     }
 
     fun removeItems(itemsList: List<UUID>): Unit = synchronized(this) {
@@ -136,12 +145,20 @@ class Cart {
                 true
             } else false
         }
-        _itemsCache?.removeIf { it.id in items }
+
+        handheldCartItems.removeIf { item ->
+            if (item.id in items) {
+                item.cart = null
+                true
+            } else false
+        }
+        itemsCache?.removeIf { it.id in items }
     }
 
     fun calculateTotal(): Long =
         foodCartItems.sumOf { it.totalAmount ?: 0 } +
                 beverageCartItems.sumOf { it.totalAmount ?: 0 } +
-                        dessertCartItems.sumOf { it.totalAmount ?: 0 }
+                        dessertCartItems.sumOf { it.totalAmount  ?: 0 } +
+                                handheldCartItems.sumOf { it.totalAmount ?: 0 }
 }
 

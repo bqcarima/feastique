@@ -11,7 +11,6 @@ import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import org.hibernate.annotations.CreationTimestamp
 import java.time.Instant
-import java.time.LocalTime
 import java.util.*
 
 @MappedSuperclass

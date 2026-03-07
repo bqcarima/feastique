@@ -2,6 +2,8 @@ package com.qinet.feastique.service.consumables
 
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.exception.*
+import com.qinet.feastique.model.dto.DessertAvailabilityDto
+import com.qinet.feastique.model.dto.FlavourAvailabilityDto
 import com.qinet.feastique.model.dto.consumables.DessertDto
 import com.qinet.feastique.model.dto.consumables.DessertFlavourSizeDto
 import com.qinet.feastique.model.entity.Menu
@@ -28,6 +30,12 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.*
 import kotlin.jvm.optionals.getOrElse
 
+/**
+ * Service class for managing desserts, including CRUD operations and related business logic.
+ * Handles creation and updating of desserts with validation, uniqueness checks, and management
+ * of nested collections (order types, flavours, sizes, images, discounts) while ensuring proper
+ * ownership and permissions for vendors.
+ */
 @Service
 class DessertService(
     private val dessertRepository: DessertRepository,
@@ -89,9 +97,44 @@ class DessertService(
         dessertRepository.delete(dessert)
     }
 
+    /**
+     * Saves a dessert entity to the database. This is a helper method used to persist the dessert
+     * before managing its nested collections, ensuring it becomes a managed entity in the current
+     * transaction context.
+     * @param [Dessert] dessert
+     *
+     * @return [Dessert] the persisted dessert entity
+     */
     @Transactional
     fun saveDessert(dessert: Dessert): Dessert {
         return dessertRepository.saveAndFlush(dessert)
+    }
+
+    /**
+     * Changes the availability of a dessert and its flavours based on the incoming DTO.
+     * Validates the provided availability status, updates the dessert's availability, and
+     * delegates to changeDessertFlavourAvailability to update the availability of nested flavours.
+     * @param [DessertAvailabilityDto] containing the new availability status and flavour availabilities
+     * @param [UUID] dessertId
+     * @param [UserSecurity] vendorDetails for ownership verification
+     *
+     * @return [Dessert] the updated dessert entity with new availability statuses
+     *
+     * @throws IllegalArgumentException when the provided availability status is invalid
+     * @throws RequestedEntityNotFoundException when the dessert or any specified flavour is not found
+     * @throws PermissionDeniedException when the vendor does not own the dessert
+     */
+    @Transactional
+    fun changeDessertAvailability(dessertAvailabilityDto: DessertAvailabilityDto, id: UUID, vendorDetails: UserSecurity): Dessert {
+        val dessert = getDessert(id, vendorDetails)
+        if (dessert.availability != Availability.fromString(dessertAvailabilityDto.availability)) {
+            dessert.availability = Availability.fromString(dessertAvailabilityDto.availability)
+        }
+
+        dessertAvailabilityDto.dessertFlavours?.let {
+            changeDessertFlavourAvailability(dessertAvailabilityDto, dessert)
+        }
+        return saveDessert(dessert)
     }
 
     /**
@@ -145,7 +188,7 @@ class DessertService(
         val deliverable = requireNotNull(dessertDto.deliverable) { "Please specify if dessert is deliverable." }
         val dailyDeliveryQuantity = dessertDto.dailyDeliveryQuantity
         val availability = requireNotNull(dessertDto.availability) { "Please select availability status."}
-        val readyAsFrom = requireNotNull(dessertDto.readyAsFrom) { "Please specify a time the dessert becomes available during the day." }
+        val readyAsFrom = dessertDto.readyAsFrom ?: vendor.openingTime
         val preparationTime = dessertDto.preparationTime
 
         // Prevent duplicate dessert names for the same vendor
@@ -228,11 +271,7 @@ class DessertService(
 
         return existingAvailableDays
     }
-    private fun prepareDessertDiscounts(
-        dessertDto: DessertDto,
-        dessert: Dessert,
-        vendor: Vendor
-    ) {
+    private fun prepareDessertDiscounts(dessertDto: DessertDto, dessert: Dessert, vendor: Vendor) {
 
         val existingDiscounts = dessert.dessertDiscounts.associateBy { it.discount.id }
         val incomingDiscounts = dessertDto.discounts!!
@@ -378,7 +417,7 @@ class DessertService(
             }
 
             flavourSize.apply {
-                size = Size.fromString(requireNotNull(optionSizeDto.size))
+                this.size = Size.fromString(requireNotNull(optionSizeDto.size))
                 name = (optionSizeDto.sizeName) ?: flavourSize.size!!.name
                 price = requireNotNull(optionSizeDto.price) { "Please provide a price." }
                 availability = requireNotNull(Availability.fromString(optionSizeDto.availability!!))
@@ -426,5 +465,62 @@ class DessertService(
         return dessert.dessertImages
     }
 
+    /**
+     * Changes the availability of dessert flavours based on the incoming DTO.
+     * Validates that at least one flavour is provided, that each flavour has a valid ID and availability status,
+     * and that the corresponding flavour entities exist. Updates the availability of each flavour accordingly,
+     * and delegates to toggleDessertFlavourSizeAvailability to update the availability of nested sizes.
+     * @param [DessertAvailabilityDto] containing the list of flavours with their new availability statuses
+     * @param [Dessert] the parent dessert entity whose flavours are being updated
+     *
+     * @throws IllegalArgumentException when no flavours are provided, when a flavour ID is null, or when an availability status is invalid
+     * @throws RequestedEntityNotFoundException when a dessert flavour with a provided ID does not exist
+     */
+    private fun changeDessertFlavourAvailability(dessertAvailabilityDto: DessertAvailabilityDto, dessert: Dessert) {
+        val flavours = dessert.dessertFlavours.associateBy { it.id }
+        val incomingFlavours = dessertAvailabilityDto.dessertFlavours
+
+        if (incomingFlavours.isNullOrEmpty()) {
+            throw IllegalArgumentException("At least one flavour must be selected.")
+        }
+        incomingFlavours.forEach { dto ->
+            val flavourId = dto.flavourId ?: throw IllegalArgumentException("Flavour ID cannot be null.")
+            val flavour = flavours[dto.flavourId] ?: throw RequestedEntityNotFoundException("Dessert flavour with id $flavourId not found.")
+
+            if (flavour.availability != Availability.fromString(dto.availability)) {
+                flavour.availability = Availability.fromString(dto.availability)
+            }
+
+            dto.flavourSizes?.let { changeDessertFlavourSizeAvailability(dto, flavour) }
+        }
+    }
+
+    /**
+     * Changes the availability of dessert flavour sizes based on the incoming DTO.
+     * Validates that at least one size is provided, that each size has a valid ID and availability status,
+     * and that the corresponding flavour size entities exist. Updates the availability of each flavour size accordingly.
+     * @param [DessertAvailabilityDto] containing the list of flavour sizes with their new availability statuses
+     * @param [DessertFlavour] the parent flavour entity whose sizes are being updated
+     *
+     * @throws IllegalArgumentException when no sizes are provided, when a size ID is null, or when an availability status is invalid
+     * @throws RequestedEntityNotFoundException when a flavour size with a provided ID does not exist
+     */
+    private fun changeDessertFlavourSizeAvailability(flavourAvailabilityDto: FlavourAvailabilityDto, dessertFlavour: DessertFlavour) {
+        val flavourSizes = dessertFlavour.dessertFlavourSizes.associateBy { it.id }
+        val incomingSizes = flavourAvailabilityDto.flavourSizes
+
+        if (incomingSizes.isNullOrEmpty()) {
+            throw IllegalArgumentException("At least one flavour size must be selected.")
+        }
+        incomingSizes.forEach { dto ->
+            val sizeId = dto.sizeId ?: throw IllegalArgumentException("Dessert flavour size ID cannot be null.")
+            val flavourSize = flavourSizes[dto.sizeId]
+                ?: throw RequestedEntityNotFoundException("Dessert flavour size with id $sizeId not found.")
+
+            if (flavourSize.availability != Availability.fromString(dto.availability)) {
+                flavourSize.availability = Availability.fromString(dto.availability)
+            }
+        }
+    }
 }
 

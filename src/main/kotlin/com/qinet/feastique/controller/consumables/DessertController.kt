@@ -1,6 +1,7 @@
 package com.qinet.feastique.controller.consumables
 
 import com.qinet.feastique.common.mapper.toResponse
+import com.qinet.feastique.model.dto.DessertAvailabilityDto
 import com.qinet.feastique.model.dto.consumables.DessertDto
 import com.qinet.feastique.response.PageResponse
 import com.qinet.feastique.response.consumables.dessert.DessertResponse
@@ -56,6 +57,18 @@ class DessertController(
         dessertService.deleteDessert(id, vendorDetails)
         return ResponseEntity("Dessert deleted successfully. All relationships will be deleted as well.", HttpStatus.OK)
     }
-}
 
+    @PatchMapping("/availability/{id}")
+    fun changeDessertAvailability(
+        @PathVariable id: UUID,
+        @PathVariable vendorId: UUID,
+        @RequestBody @Valid dessertAvailabilityDto: DessertAvailabilityDto,
+        @AuthenticationPrincipal vendorDetails: UserSecurity
+
+    ) : ResponseEntity<DessertResponse> {
+        securityUtility.validatePath(vendorId, vendorDetails)
+        val dessert = dessertService.changeDessertAvailability(dessertAvailabilityDto, id, vendorDetails)
+        return ResponseEntity(dessert.toResponse(), HttpStatus.OK)
+    }
+}
 

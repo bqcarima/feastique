@@ -5,6 +5,7 @@ import com.qinet.feastique.model.entity.sales.BeverageSale
 import com.qinet.feastique.model.entity.sales.ComplementSale
 import com.qinet.feastique.model.entity.sales.FoodSale
 import com.qinet.feastique.model.entity.sales.DessertSale
+import com.qinet.feastique.model.entity.sales.HandheldSale
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.UUID
@@ -23,3 +24,7 @@ interface FoodSaleRepository : JpaRepository<FoodSale, UUID>
 
 @Repository
 interface DessertSaleRepository : JpaRepository<DessertSale, UUID>
+
+@Repository
+interface HandheldSaleRepository : JpaRepository<HandheldSale, UUID>
+

@@ -36,7 +36,6 @@ data class BeverageDto(
     @field:NotNull(message = "Availability status cannot be empty")
     var availability: String,
 
-    @field:NotNull(message = "Ready-as-from cannot be empty.")
     var readyAsFrom: LocalTime? = null,
 
     @field:NotNull(message = "Preparation time cannot be empty.")

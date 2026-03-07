@@ -8,16 +8,19 @@ import com.qinet.feastique.model.entity.consumables.EdibleEntity
 import com.qinet.feastique.model.entity.consumables.beverage.Beverage
 import com.qinet.feastique.model.entity.consumables.dessert.Dessert
 import com.qinet.feastique.model.entity.consumables.food.Food
+import com.qinet.feastique.model.entity.consumables.handheld.Handheld
 import com.qinet.feastique.model.entity.discount.AppliedDiscount
 import com.qinet.feastique.model.entity.order.Cart
 import com.qinet.feastique.model.entity.order.OrderEntity
 import com.qinet.feastique.model.entity.order.item.BeverageCartItem
 import com.qinet.feastique.model.entity.order.item.DessertCartItem
 import com.qinet.feastique.model.entity.order.item.FoodCartItem
+import com.qinet.feastique.model.entity.order.item.HandheldCartItem
 import com.qinet.feastique.model.enums.OrderType
 import com.qinet.feastique.repository.consumables.beverage.BeverageRepository
 import com.qinet.feastique.repository.consumables.dessert.DessertRepository
 import com.qinet.feastique.repository.consumables.food.FoodRepository
+import com.qinet.feastique.repository.consumables.handheld.HandheldRepository
 import com.qinet.feastique.repository.order.CartRepository
 import com.qinet.feastique.repository.user.CustomerRepository
 import com.qinet.feastique.security.UserSecurity
@@ -36,11 +39,18 @@ class CartService(
     private val customerRepository: CustomerRepository,
     private val foodRepository: FoodRepository,
     private val beverageRepository: BeverageRepository,
-    private val dessertRepository: DessertRepository
+    private val dessertRepository: DessertRepository,
+    private val handheldRepository: HandheldRepository
 ) {
 
     private val logger = LoggerFactory.getLogger(CartService::class.java)
 
+    /**
+     * This method retrieves the cart for the authenticated customer.
+     * @param UserSecurity
+     * @return [Cart]
+     * @throws UserNotFoundException
+     */
     @Transactional(readOnly = true)
     fun getCart(customerDetails: UserSecurity): Cart? {
         val customer = customerRepository.findById(customerDetails.id).get()
@@ -87,11 +97,21 @@ class CartService(
         // Add a dessert to the cart
         itemDto.dessertItemDto?.let { _ -> handleDessert(itemDto, cart) }
 
+        // Add a handheld to the cart
+        itemDto.handheldItemDto?.let { _ -> handleHandheld(itemDto, cart) }
+
         // Recalculate total and persist cart
         cart.totalAmount = cart.calculateTotal()
-        return cart
+        return cartRepository.saveAndFlush(cart)
     }
 
+    /**
+     * This method removes items from the cart based on the provided item ids.
+     * If all lists are empty after removing the items, the cart will be deleted.
+     * @param CartItemDto
+     * @param UserSecurity
+     * @throws UserNotFoundException
+     */
     @Transactional
     fun removeItems(cartItemDto: CartItemDto, customerDetails: UserSecurity) {
         val customer = customerRepository.findById(customerDetails.id)
@@ -102,8 +122,8 @@ class CartService(
         val cart = customer.cart ?: return
         cart.removeItems(cartItemDto.ids)
 
-        // if both lists are empty delete cart
-        if (cart.foodCartItems.isEmpty() && cart.beverageCartItems.isEmpty() && cart.dessertCartItems.isEmpty()) {
+        // if all lists are empty delete cart
+        if (cart.foodCartItems.isEmpty() && cart.beverageCartItems.isEmpty() && cart.dessertCartItems.isEmpty() && cart.handheldCartItems.isEmpty()) {
             cart.customer = null
             customer.cart = null
             cartRepository.delete(cart)
@@ -113,8 +133,17 @@ class CartService(
         }
     }
 
+
+    /**
+     * This method changes the quantity of an item in the cart based on the provided item id and new quantity.
+     * If the new quantity is less than or equal to 0, the item will be removed from the cart.
+     * @param id
+     * @param UserSecurity
+     * @param ChangeQuantityDto
+     * @throws UserNotFoundException
+     */
     @Transactional
-    fun increaseItemQuantity(id: UUID, customerDetails: UserSecurity) {
+    fun changeQuantity(id: UUID, customerDetails: UserSecurity, changeQuantityDto: ChangeQuantityDto) {
         val customer = customerRepository.findById(customerDetails.id)
             .orElseThrow {
                 throw UserNotFoundException("An unexpected error occurred. Customer account not found.")
@@ -122,66 +151,30 @@ class CartService(
 
         val cart = customer.cart ?: return
         val item = cart.items.find { it.id == id } ?: return
-        when (item) {
-            is FoodCartItem -> {
-                item.quantity += 1
-                item.totalAmount = item.calculateTotal()
-            }
 
-            is BeverageCartItem -> {
-                item.quantity += 1
-                item.totalAmount = item.calculateTotal()
-            }
+        if (item.quantity == changeQuantityDto.quantity) return
 
-            is DessertCartItem -> {
-                item.quantity += 1
-                item.totalAmount = item.calculateTotal()
-            }
-        }
+        item.quantity = changeQuantityDto.quantity ?: 1
 
-        cart.totalAmount = cart.calculateTotal()
-    }
-
-    @Transactional
-    fun reduceItemQuantity(id: UUID, customerDetails: UserSecurity) {
-        val customer = customerRepository.findById(customerDetails.id)
-            .orElseThrow {
-                throw UserNotFoundException("An unexpected error occurred. Customer account not found.")
-            }
-
-        val cart = customer.cart ?: return
-        val item = cart.items.find { it.id == id } ?: return
-        when (item) {
-            is FoodCartItem -> {
-                item.quantity -= 1
-                if (item.quantity <= 0) {
-                    cart.removeItem(item)
-                } else {
-                    item.totalAmount = item.calculateTotal()
-                }
-            }
-
-            is BeverageCartItem -> {
-                item.quantity -= 1
-                if (item.quantity <= 0) {
-                    cart.removeItem(item)
-                } else {
-                    item.totalAmount = item.calculateTotal()
-                }
-            }
-
-            is DessertCartItem -> {
-                item.quantity -= 1
-                if (item.quantity <= 0) {
-                    cart.removeItem(item)
-                } else {
-                    item.totalAmount = item.calculateTotal()
-                }
+        if (changeQuantityDto.quantity!! <= 0) {
+            cart.removeItem(item)
+        } else {
+            when (item) {
+                is FoodCartItem     -> item.calculateTotal()
+                is BeverageCartItem -> item.calculateTotal()
+                is DessertCartItem  -> item.calculateTotal()
+                is HandheldCartItem -> item.calculateTotal()
             }
         }
         cart.totalAmount = cart.calculateTotal()
     }
 
+
+    /**
+     * This method deletes the cart for the authenticated customer.
+     * @param UserSecurity
+     * @throws UserNotFoundException
+     */
     @Transactional
     fun deleteCart(customerDetails: UserSecurity) {
         val customer = customerRepository.findById(customerDetails.id)
@@ -197,7 +190,18 @@ class CartService(
         customer.cart = null
     }
 
+    /**
+     * This method handles adding a beverage item to the cart. It retrieves the beverage and its related entities based on the provided ids,
+     * creates a new BeverageCartItem, checks if an item with the same configuration already exists in the cart and either merges with the existing item or adds a new item to the cart.
+     * It also prepares and applies any active discounts for the beverage item.
+     * @param ItemDto
+     * @param Cart
+     * @throws RequestedEntityNotFoundException
+     */
     private fun handleBeverage(itemDto: ItemDto, cart: Cart) {
+
+        logger.info("1 - Start of function (adding beverage to cart).")
+
         val beverageItemDto = itemDto.beverageItemDto!!
         val beverage = beverageRepository.findById(beverageItemDto.beverageId)
             .getOrElse { throw RequestedEntityNotFoundException("Beverage(s) not found.") }
@@ -219,6 +223,8 @@ class CartService(
 
             logger.info("Incoming order type: ${itemDto.orderType}")
             this.orderType = OrderType.fromString(itemDto.orderType)
+
+            logger.info("2 - Creating beverage cart time.")
         }
 
         cart.beverageCartItems.find { it.isSameAs(newBeverageCartItem) }?.let { existingBeverageItem ->
@@ -232,8 +238,18 @@ class CartService(
             prepareDiscounts(beverage, newBeverageCartItem)
             newBeverageCartItem.totalAmount = newBeverageCartItem.calculateTotal()
         }
+
+        logger.info("3 - Inserting beverage into beverage cart items table.")
     }
 
+    /**
+     * This method handles adding a dessert item to the cart. It retrieves the dessert and its related entities based on the provided ids,
+     * creates a new DessertCartItem, checks if an item with the same configuration already exists in the cart and either merges with the existing item or adds a new item to the cart.
+     * It also prepares and applies any active discounts for the dessert item.
+     * @param ItemDto
+     * @param Cart
+     * @throws RequestedEntityNotFoundException
+     */
     private fun handleDessert(itemDto: ItemDto, cart: Cart) {
         val dessertItemDto = itemDto.dessertItemDto!!
         val dessert = dessertRepository.findById(dessertItemDto.dessertId)
@@ -271,18 +287,27 @@ class CartService(
         }
     }
 
+
+    /**
+     * This method handles adding a food item to the cart. It retrieves the food and its related entities based on the provided ids,
+     * creates a new FoodCartItem, checks if an item with the same configuration already exists in the cart and either merges with the existing item or adds a new item to the cart.
+     * It also prepares and applies any active discounts for the food item.
+     * @param ItemDto
+     * @param Cart
+     * @throws RequestedEntityNotFoundException
+     * @throws IllegalArgumentException
+     */
     private fun handleFood(itemDto: ItemDto, cart: Cart) {
         val foodItemDto = itemDto.foodItemDto!!
         val food = foodRepository.findByIdWithAllRelations(foodItemDto.foodId)
-            .orElseThrow { RequestedEntityNotFoundException("Cannot place order, food not found.") }
+            .orElseThrow { RequestedEntityNotFoundException("Cannot add item to cart, food not found.") }
 
         val newFoodCartItem = FoodCartItem().apply {
             this.food = food
             this.vendor = food.vendor
             this.quantity = foodItemDto.foodQuantity ?: 1
             this.size = food.foodSizes.find { it.id == foodItemDto.foodSizeId } ?: food.foodSizes.first()
-            this.complement =
-                food.foodComplements.firstOrNull { it.complement.id == foodItemDto.complementId }?.complement
+            this.complement = food.foodComplements.firstOrNull { it.complement.id == foodItemDto.complementId }?.complement
                     ?: throw IllegalArgumentException("An error occurred, complement not found.")
             this.addOns.addAll(
                 food.foodAddOns.map { it.addOn }
@@ -305,6 +330,60 @@ class CartService(
         }
     }
 
+    /**
+     * This method handles adding a handheld item to the cart. It retrieves the handheld and its related entities based on the provided ids,
+     * creates a new HandheldCartItem, checks if an item with the same configuration already exists in the cart and either merges with the existing item or adds a new item to the cart.
+     * It also prepares and applies any active discounts for the handheld item.
+     * @param ItemDto
+     * @param Cart
+     * @throws RequestedEntityNotFoundException
+     */
+    private fun handleHandheld(itemDto: ItemDto, cart: Cart) {
+
+        logger.info("1 - Start of function (adding handhelds to cart).")
+
+        val handheldItemDto = itemDto.handheldItemDto!!
+        val handheld = handheldRepository.findById(handheldItemDto.handheldId)
+            .getOrElse { throw RequestedEntityNotFoundException("Invalid ID. Cannot add item to cart, handheld not found.") }
+
+        val handheldSize = handheld.handheldSizes.find { it.id == handheldItemDto.handheldSizeId } ?: handheld.handheldSizes.first()
+        val fillings = handheld.handheldFillings.map { it.filling }
+
+        val newHandheldCartItem = HandheldCartItem().apply {
+            this.handheld = handheld
+            this.vendor = handheld.vendor
+            this.quantity = handheldItemDto.quantity ?: 1
+            this.size = handheldSize
+            this.fillings.addAll(fillings)
+            this.orderType = OrderType.fromString(itemDto.orderType)
+
+            logger.info("2 - Creating the handheld cart item.")
+        }
+
+        // Merge with existing item if same configuration exists and increase quantity
+        cart.handheldCartItems.find { it.isSameAs(newHandheldCartItem) }?.let { existingHandheldItem ->
+            existingHandheldItem.quantity += newHandheldCartItem.quantity
+            existingHandheldItem.totalAmount = existingHandheldItem.calculateTotal()
+
+        } ?: run {
+            cart.addItem(newHandheldCartItem)
+
+            // apply active discounts to the items
+            prepareDiscounts(handheld, newHandheldCartItem)
+            newHandheldCartItem.totalAmount = newHandheldCartItem.calculateTotal()
+        }
+
+        logger.info("3 - inserting into handheld cart items table with value:" +
+                "name= ${handheld.name},vendor= ${handheld.vendor.chefName},")
+    }
+
+    /**
+     * This method prepares and applies any active discounts for the given edible entity and cart item.
+     * It checks the type of the edible entity (beverage, dessert, food, handheld) and retrieves the corresponding discounts.
+     * It then filters the discounts to get only the active ones based on the current date and maps them to AppliedDiscount objects which are added to the cart item.
+     * @param EdibleEntity
+     * @param OrderEntity
+     */
     private fun prepareDiscounts(edibleEntity: EdibleEntity, orderEntity: OrderEntity) {
         when (edibleEntity) {
 
@@ -368,6 +447,26 @@ class CartService(
                         }
                     }
                     newFoodCartItem.appliedDiscounts.addAll(appliedDiscounts)
+                }
+            }
+
+            is Handheld -> {
+                val newHandheldCartItem = orderEntity as HandheldCartItem
+                val discounts = edibleEntity.handheldDiscounts.map { it.discount }
+                if (discounts.isNotEmpty()) {
+                    val applicableDiscounts = discounts.filter {
+                        val today = LocalDate.now()
+                        it.startDate!!.toLocalDate() <= today &&
+                                it.endDate!!.toLocalDate() >= today
+                    }
+
+                    val appliedDiscounts = applicableDiscounts.map {
+                        AppliedDiscount().apply {
+                            this.handheldCartItem = newHandheldCartItem
+                            this.discount = it
+                        }
+                    }
+                    newHandheldCartItem.appliedDiscounts.addAll(appliedDiscounts)
                 }
             }
         }

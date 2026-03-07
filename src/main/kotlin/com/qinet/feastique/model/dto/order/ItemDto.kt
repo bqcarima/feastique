@@ -1,6 +1,7 @@
 package com.qinet.feastique.model.dto.order
 
 import com.qinet.feastique.model.enums.OrderStatus
+import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotNull
 import java.util.*
 
@@ -10,6 +11,7 @@ data class ItemDto (
     var beverageItemDto: BeverageItemDto?,
     var dessertItemDto: DessertItemDto?,
     var foodItemDto: FoodItemDto?,
+    var handheldItemDto: HandheldItemDto?,
     var orderType: String?
 )
 data class BeverageItemDto (
@@ -32,6 +34,11 @@ data class CartItemDto(
     val ids: List<UUID>,
     val deliveryAddress: UUID?,
     val quickDelivery: Boolean
+)
+
+data class ChangeQuantityDto(
+    @field:Min(value = 0, message = "Value cannot be less that 0.")
+    var quantity: Int? = 1
 )
 
 data class DessertItemDto(
@@ -64,6 +71,18 @@ data class FoodItemDto(
 
     @field:NotNull(message = "Food size Id cannot be empty.")
     var foodSizeId: UUID?,
+)
+
+data class HandheldItemDto(
+    var id: UUID? = null,
+
+    @field:NotNull(message = "Handheld Id cannot be empty.")
+    var handheldId: UUID,
+
+    @field:NotNull(message = "Handheld size Id cannot be empty.")
+    var handheldSizeId: UUID?,
+
+    var quantity: Int? = 1,
 )
 
 data class OrderUpdateDto(

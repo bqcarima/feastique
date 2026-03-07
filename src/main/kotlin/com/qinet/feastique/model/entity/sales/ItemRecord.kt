@@ -9,7 +9,9 @@ import com.qinet.feastique.model.entity.consumables.beverage.Beverage
 import com.qinet.feastique.model.entity.consumables.complement.Complement
 import com.qinet.feastique.model.entity.consumables.dessert.Dessert
 import com.qinet.feastique.model.entity.consumables.food.Food
+import com.qinet.feastique.model.entity.consumables.handheld.Handheld
 import com.qinet.feastique.model.entity.order.item.DessertOrderItem
+import com.qinet.feastique.model.entity.order.item.HandheldOrderItem
 import com.qinet.feastique.model.entity.user.Vendor
 import jakarta.persistence.*
 import java.time.LocalDateTime
@@ -89,7 +91,7 @@ class DessertSale : ItemRecord() {
 
 @Entity
 @Table(name = "food_sales")
-class FoodSale : ItemRecord (){
+class FoodSale : ItemRecord() {
 
     @ManyToOne
     @JoinColumn(name = "food_id", nullable = false)
@@ -98,5 +100,18 @@ class FoodSale : ItemRecord (){
     @ManyToOne
     @JoinColumn(name = "food_order_item_id", nullable = false)
     lateinit var foodOrderItem: FoodOrderItem
+}
+
+@Entity
+@Table(name = "handheld_sales")
+class HandheldSale : ItemRecord() {
+
+    @ManyToOne
+    @JoinColumn(name = "handheld_id", nullable = false)
+    lateinit var handheld: Handheld
+
+    @ManyToOne
+    @JoinColumn(name = "handheld_order_item_id", nullable = false)
+    lateinit var handheldOrderItem: HandheldOrderItem
 }
 
