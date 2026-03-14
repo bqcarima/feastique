@@ -87,6 +87,8 @@ class FoodController(
         @AuthenticationPrincipal userDetails: UserSecurity
 
     ) : ResponseEntity<WindowResponse<FoodResponse>> {
+        require(size in 1..50) { "Page size must be between 1 and 20." }
+
         val pathId = customerId ?: vendorId
         securityUtility.validatePath(pathId, userDetails)
         val window = foodService.scrollFoods(vendorId, cursor, size)

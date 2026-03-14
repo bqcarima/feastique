@@ -27,7 +27,6 @@ import com.qinet.feastique.response.pagination.WindowResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.utility.CursorEncoder
 import com.qinet.feastique.utility.DuplicateUtility
-import com.qinet.feastique.utility.SecurityUtility
 import org.springframework.data.domain.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -41,7 +40,6 @@ class BeverageService(
     private val duplicateUtility: DuplicateUtility,
     private val menuRepository: MenuRepository,
     private val discountRepository: DiscountRepository,
-    private val securityUtility: SecurityUtility,
     private val cursorEncoder: CursorEncoder
 ) {
 
@@ -64,20 +62,15 @@ class BeverageService(
 
     @Transactional(readOnly = true)
     fun scrollBeverages(
-        userDetails: UserSecurity,
+        vendorId: UUID,
         cursor: String?,
         size: Int = Constants.DEFAULT_PAGE_SIZE.type
     ): WindowResponse<BeverageResponse> {
-        val role = securityUtility.getSingleRole(userDetails)
         val currentOffset: Long = cursor?.toLongOrNull() ?: 0L
         val scrollPosition = if (currentOffset == 0L) ScrollPosition.offset() else ScrollPosition.offset(currentOffset)
         val sort = Sort.by("name").ascending()
 
-        val window = when (role) {
-            "CUSTOMER" -> beverageRepository.findAllBy(scrollPosition, sort, Limit.of(size))
-            "VENDOR" -> beverageRepository.findAllByVendorId(userDetails.id, scrollPosition, sort, Limit.of(size))
-            else -> throw PermissionDeniedException("Unrecognized role: $role")
-        }.map { it.toResponse() }
+        val window =beverageRepository.findAllByVendorId(vendorId, scrollPosition, sort, Limit.of(size)).map { it.toResponse() }
 
         return window.toResponse(currentOffset) { cursorEncoder.encodeOffset(it) }
     }

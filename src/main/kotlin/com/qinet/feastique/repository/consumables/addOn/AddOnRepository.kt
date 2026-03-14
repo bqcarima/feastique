@@ -15,7 +15,6 @@ import java.util.*
 interface AddOnRepository : JpaRepository<AddOn, UUID> {
     fun findAllByVendorId(vendorId: UUID, pageable: Pageable): Page<AddOn>
     fun findAllByVendorId(vendorId: UUID, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<AddOn>
-    fun findAllByIdInAndVendorId(addOnIds: List<UUID>, vendorId: UUID, pageable: Pageable): Page<AddOn>
     fun existsByNameIgnoreCaseAndVendorId(addOnName: String, vendorId: UUID): Boolean
 }
 

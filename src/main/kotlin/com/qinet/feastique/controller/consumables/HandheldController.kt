@@ -92,6 +92,8 @@ class HandheldController(
         @AuthenticationPrincipal userDetails: UserSecurity
 
     ) : ResponseEntity<WindowResponse<HandheldResponse>> {
+        require(size in 1..50) { "Page size must be between 1 and 20." }
+
         val pathId = customerId ?: vendorId
         securityUtility.validatePath(pathId, userDetails)
         val window = handheldService.scrollHandhelds(vendorId, cursor, size)

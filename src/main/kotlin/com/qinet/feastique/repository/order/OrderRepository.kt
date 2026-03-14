@@ -18,7 +18,6 @@ import java.util.*
 
 @Repository
 interface OrderRepository : JpaRepository<Order, UUID> {
-    fun findAllByCustomerDeletedAtAndCustomerId(customerDeletedAt: LocalDateTime?, customerId: UUID, pageable: Pageable): Page<Order>
 
     fun findAllByCustomerDeletedAtAndCustomerIdAndOrderStatus(
         customerDeletedAt: LocalDateTime?,

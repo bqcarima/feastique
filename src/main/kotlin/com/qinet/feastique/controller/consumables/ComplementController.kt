@@ -79,6 +79,8 @@ class ComplementController(
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<WindowResponse<ComplementResponse>> {
+        require(size in 1..50) { "Page size must be between 1 and 20." }
+
         securityUtility.validatePath(vendorId, vendorDetails)
         val window = complementService.scrollComplements(vendorDetails, cursor, size)
         return ResponseEntity(window, HttpStatus.OK)

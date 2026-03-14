@@ -71,21 +71,23 @@ class BeverageController(private val beverageService: BeverageService, private v
 
     @GetMapping(
         path = [
-            "/customers/{customerId}/beverages/scroll",
+            "/customers/{customerId}/vendors/{vendorId}/beverages/scroll",
             "/vendors/{vendorId}/beverages/scroll"
         ]
     )
     fun scrollBeverages(
         @PathVariable(required = false) customerId: UUID?,
-        @PathVariable(required = false) vendorId: UUID?,
+        @PathVariable vendorId: UUID,
         @RequestParam(required = false) cursor: String?,
         @RequestParam(defaultValue = "10") size: Int,
         @AuthenticationPrincipal userDetails: UserSecurity
 
     ): ResponseEntity<WindowResponse<BeverageResponse>> {
+        require(size in 1..50) { "Page size must be between 1 and 20." }
+
         val pathId = customerId ?: vendorId
-        securityUtility.validatePath(pathId!!, userDetails)
-        val window = beverageService.scrollBeverages(userDetails, cursor, size)
+        securityUtility.validatePath(pathId, userDetails)
+        val window = beverageService.scrollBeverages(vendorId, cursor, size)
         return ResponseEntity(window, HttpStatus.OK)
     }
 

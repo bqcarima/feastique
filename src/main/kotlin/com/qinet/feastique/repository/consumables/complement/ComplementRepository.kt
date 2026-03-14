@@ -16,7 +16,6 @@ interface ComplementRepository : JpaRepository<Complement, UUID> {
 
     fun findAllByVendorId(vendorId: UUID, pageable: Pageable): Page<Complement>
     fun findAllByVendorId(vendorId: UUID, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Complement>
-    fun findAllByIdInAndVendorId(complementIds: List<UUID>, vendorId: UUID): List<Complement>
 
     fun existsByNameIgnoreCaseAndVendorId(complementName: String, vendorId: UUID): Boolean
 }

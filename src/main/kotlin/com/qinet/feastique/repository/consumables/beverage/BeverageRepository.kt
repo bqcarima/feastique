@@ -16,14 +16,6 @@ interface BeverageRepository : JpaRepository<Beverage, UUID> {
 
     fun findAllByVendorId(vendorId: UUID, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Beverage>
 
-    // Fetch all beverages regardless of vendor - rename to avoid JpaRepository conflict
-    fun findAllBy(scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Beverage>
-
-    // Filter by alcoholic flag with scrolling
-    fun findAllByAlcoholic(alcoholic: Boolean, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Beverage>
-
-    // Fetch specific beverages by ID list for a vendor
-    fun findAllByIdInAndVendorId(beverageIds: List<UUID>, vendorId: UUID, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Beverage>
     fun existsByNameIgnoreCaseAndVendorId(name: String, vendorId: UUID): Boolean
 }
 

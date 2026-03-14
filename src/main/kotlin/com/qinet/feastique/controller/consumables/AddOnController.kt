@@ -68,6 +68,8 @@ class AddOnController(
         @AuthenticationPrincipal vendorDetails: UserSecurity
 
     ) : ResponseEntity<WindowResponse<AddOnResponse>> {
+        require(size in 1..50) { "Page size must be between 1 and 20." }
+
         securityUtility.validatePath(vendorId, vendorDetails)
         val window = addOnService.scrollHandhelds(vendorDetails, cursor, size)
         return ResponseEntity(window, HttpStatus.OK)

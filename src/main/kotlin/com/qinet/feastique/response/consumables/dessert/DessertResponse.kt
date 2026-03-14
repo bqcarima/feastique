@@ -44,9 +44,3 @@ data class DessertOrderResponse(
     val dessertFlavourSize: String
 )
 
-data class DessertScrollResponse(
-    val content: List<DessertResponse>,
-    val nextCursor: String?,        // null means no more pages
-    val hasNext: Boolean
-)
-

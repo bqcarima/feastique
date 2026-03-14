@@ -8,7 +8,6 @@ import com.qinet.feastique.model.entity.user.Customer
 import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.response.token.AccessTokenResponse
 import com.qinet.feastique.response.token.TokenPairResponse
-import com.qinet.feastique.service.authentication.RefreshTokenService
 import com.qinet.feastique.service.customer.CustomerService
 import com.qinet.feastique.service.user.UserSessionService
 import com.qinet.feastique.service.vendor.VendorService
