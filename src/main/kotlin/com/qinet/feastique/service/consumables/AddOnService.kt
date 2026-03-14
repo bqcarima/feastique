@@ -7,14 +7,15 @@ import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.model.dto.consumables.AddOnDto
 import com.qinet.feastique.model.entity.consumables.addOn.AddOn
+import com.qinet.feastique.model.enums.Constants
 import com.qinet.feastique.repository.consumables.addOn.AddOnRepository
 import com.qinet.feastique.repository.user.VendorRepository
 import com.qinet.feastique.response.consumables.food.AddOnResponse
+import com.qinet.feastique.response.pagination.WindowResponse
 import com.qinet.feastique.security.UserSecurity
+import com.qinet.feastique.utility.CursorEncoder
 import com.qinet.feastique.utility.DuplicateUtility
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Sort
+import org.springframework.data.domain.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
@@ -23,7 +24,8 @@ import java.util.*
 class AddOnService(
     private val addOnRepository: AddOnRepository,
     private val vendorRepository: VendorRepository,
-    private val duplicateUtility: DuplicateUtility
+    private val duplicateUtility: DuplicateUtility,
+    private val cursorEncoder: CursorEncoder
 ) {
     @Transactional(readOnly = true)
     fun getAddOn(id: UUID, vendorDetails: UserSecurity): AddOn {
@@ -42,6 +44,26 @@ class AddOnService(
         val pageable = PageRequest.of(page, size, Sort.by("name").descending())
         val addOnResponses = addOnRepository.findAllByVendorId(vendorDetails.id, pageable).map { it.toResponse() }
         return addOnResponses
+    }
+
+    @Transactional(readOnly = true)
+    fun scrollHandhelds(
+        vendorDetails: UserSecurity,
+        cursor: String?,
+        size: Int = Constants.DEFAULT_PAGE_SIZE.type
+
+    ) : WindowResponse<AddOnResponse> {
+        val currentOffset = cursor?.toLongOrNull() ?: 0L
+        val scrollPosition = if (currentOffset == 0L) {
+            ScrollPosition.offset()
+        } else {
+            ScrollPosition.offset(currentOffset)
+        }
+
+        val sort = Sort.by("name").ascending()
+        val window = addOnRepository.findAllByVendorId(vendorDetails.id, scrollPosition,sort, Limit.of(size)).map { it.toResponse() }
+
+        return window.toResponse(currentOffset) { cursorEncoder.encodeOffset(it) }
     }
 
     @Transactional

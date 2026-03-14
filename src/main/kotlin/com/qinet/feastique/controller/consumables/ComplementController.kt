@@ -2,8 +2,9 @@ package com.qinet.feastique.controller.consumables
 
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.consumables.ComplementDto
-import com.qinet.feastique.response.PageResponse
 import com.qinet.feastique.response.consumables.food.ComplementResponse
+import com.qinet.feastique.response.pagination.PageResponse
+import com.qinet.feastique.response.pagination.WindowResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.consumables.ComplementService
 import com.qinet.feastique.utility.SecurityUtility
@@ -69,4 +70,20 @@ class ComplementController(
         val complementsPage = complementService.getAllComplements(vendorDetails, page, size)
         return ResponseEntity(complementsPage.toResponse() , HttpStatus.OK)
     }
+
+    @GetMapping("/scroll")
+    fun scrollComplements(
+        @PathVariable(required = false) vendorId: UUID,
+        @RequestParam(required = false) cursor: String?,
+        @RequestParam(defaultValue = "10") size: Int,
+        @AuthenticationPrincipal vendorDetails: UserSecurity
+
+    ) : ResponseEntity<WindowResponse<ComplementResponse>> {
+        require(size in 1..50) { "Page size must be between 1 and 20." }
+
+        securityUtility.validatePath(vendorId, vendorDetails)
+        val window = complementService.scrollComplements(vendorDetails, cursor, size)
+        return ResponseEntity(window, HttpStatus.OK)
+    }
 }
+

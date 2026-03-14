@@ -18,7 +18,7 @@ import com.qinet.feastique.repository.user.VendorRepository
 import com.qinet.feastique.response.token.TokenPairResponse
 import com.qinet.feastique.security.PasswordEncoder
 import com.qinet.feastique.security.UserSecurity
-import com.qinet.feastique.service.RefreshTokenService
+import com.qinet.feastique.service.authentication.RefreshTokenService
 import com.qinet.feastique.service.user.UserSessionService
 import com.qinet.feastique.utility.JwtUtility
 import org.springframework.security.authentication.AuthenticationManager

@@ -1,6 +1,6 @@
 package com.qinet.feastique.response.consumables.food
 
-import com.qinet.feastique.response.ImageResponse
+import com.qinet.feastique.response.image.ImageResponse
 import java.time.LocalTime
 import java.util.*
 
@@ -49,5 +49,15 @@ data class FoodMinimalResponse(
     val foodName: String,
     val mainCourse: String,
     val basePrice: Long
+)
+
+data class FoodOrderResponse(
+    val name: String,
+    val complement: FoodOrderItemResponse,
+    val addOns: Set<FoodOrderItemResponse>,
+)
+data class FoodOrderItemResponse(
+    val name: String,
+    val price: Long,
 )
 

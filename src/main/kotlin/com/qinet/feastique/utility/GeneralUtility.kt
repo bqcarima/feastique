@@ -31,8 +31,7 @@ class GeneralUtility {
      * to create a unique internal order ID and a user-friendly order code.
      */
     object OrderIdGenerator {
-        private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmSS")
-
+        private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
         fun generate(): OrderId {
             val dateTime = LocalDateTime.now().format(dateTimeFormatter)
             val randomComponent = Random.nextInt(1000000, 9999999).toString()

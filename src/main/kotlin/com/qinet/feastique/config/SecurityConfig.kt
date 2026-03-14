@@ -10,6 +10,10 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+
 
 /**
  * Spring Security configuration class.
@@ -25,14 +29,6 @@ class SecurityConfig(
     private val jwtAuthFilter: JwtAuthenticationFilter
 
 ) {
-    /**
-     * Exposes the AuthenticationManager bean.
-     *
-     * Used to authenticate users programmatically (e.g., in login endpoints).
-     *
-     * @param authConfig The AuthenticationConfiguration provided by Spring Security.
-     * @return The configured AuthenticationManager.
-     */
 
     @Bean
     fun authenticationManager(authConfig: AuthenticationConfiguration): AuthenticationManager {
@@ -40,28 +36,40 @@ class SecurityConfig(
     }
 
     /**
-     * Configures the HTTP security for the application.
+     * Configures HTTP security for the application.
      *
-     * - Disables CSRF since it is a stateless REST API.
+     * - Disables CSRF (stateless REST API).
      * - Sets session management to stateless.
-     * - Defines authorization rules.
-     *   - Public access to "/api/auth/.."
-     *   - Customers can access "/api/customer/.."
-     *   - Vendors can access "/api/vendor/.."
-     *   - All other endpoints require authentication
-     *
-     * - Adds the JWT authentication filter before the username/password filter.
-     *
-     * @param httpSecurity The HttpSecurity object to configure.
-     * @return The SecurityFilterChain after configuration.
+     * - Defines authorization rules:
+     *   - Public access to explicit auth endpoints only.
+     *     - Customers can access "/api/v1/customer/.."
+     *     - Vendors can access "/api/v1/vendor/.."
+     *     - All other requests require authentication.
+     *   - Adds JWT filter before the username/password filter.
+     *   - Configures security response headers.
      */
     @Bean
     fun filterChain(httpSecurity: HttpSecurity): SecurityFilterChain {
         httpSecurity
             .csrf { it.disable() }
+            .cors { it.configurationSource(corsConfigurationSource()) }
+            .headers { headers ->
+                headers.frameOptions { it.deny() }
+                headers.contentTypeOptions { }
+                headers.httpStrictTransportSecurity {
+                    it.includeSubDomains(true).maxAgeInSeconds(31536000)
+                }
+            }
+
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/api/v1/auth/**").permitAll()
+                    .requestMatchers(
+                        "/api/v1/auth/login",
+                        "/api/v1/auth/vendors/login",
+                        "/api/v1/auth/signup",
+                        "/api/v1/auth/vendors/signup",
+                        "/api/v1/auth/refresh"
+                    ).permitAll()
                     .requestMatchers("/api/v1/customer/**").hasRole("CUSTOMER")
                     .requestMatchers("/api/v1/vendor/**").hasRole("VENDOR")
                     .anyRequest().authenticated()
@@ -72,13 +80,20 @@ class SecurityConfig(
         return httpSecurity.build()
     }
 
-    /**
-     * Password encoder bean that uses BCrypt hashing algorithm.
-     *
-     * Used to encode and verify user passwords securely.
-     *
-     * @return BCryptPasswordEncoder instance.
-     */
+    @Bean
+    fun corsConfigurationSource(): CorsConfigurationSource {
+        val configuration = CorsConfiguration().apply {
+
+            allowedOrigins = listOf("http://localhost:8080")
+            allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
+            allowedHeaders = listOf("Authorization", "Content-Type")
+            allowCredentials = true
+        }
+        return UrlBasedCorsConfigurationSource().apply {
+            registerCorsConfiguration("/**", configuration)
+        }
+    }
+
     @Bean
     fun bCryptPasswordEncoder(): BCryptPasswordEncoder {
         return BCryptPasswordEncoder()

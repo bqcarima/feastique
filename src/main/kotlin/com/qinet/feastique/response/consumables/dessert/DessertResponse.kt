@@ -1,7 +1,7 @@
 package com.qinet.feastique.response.consumables.dessert
 
-import com.qinet.feastique.response.DiscountResponse
-import com.qinet.feastique.response.ImageResponse
+import com.qinet.feastique.response.discount.DiscountResponse
+import com.qinet.feastique.response.image.ImageResponse
 import java.time.LocalTime
 import java.util.*
 
@@ -36,5 +36,11 @@ data class DessertFlavourSizeResponse(
     val sizeName: String?,
     val price: Long,
     val availability: String,
+)
+
+data class DessertOrderResponse(
+    val dessert: String,
+    val dessertFlavour: String,
+    val dessertFlavourSize: String
 )
 

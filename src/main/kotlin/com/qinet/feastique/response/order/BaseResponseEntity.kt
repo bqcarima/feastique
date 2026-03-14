@@ -1,7 +1,7 @@
 package com.qinet.feastique.response.order
 
 import com.github.f4b6a3.uuid.UuidCreator
-import com.qinet.feastique.response.DiscountResponse
+import com.qinet.feastique.response.discount.DiscountResponse
 import com.qinet.feastique.response.consumables.beverage.BeverageResponse
 import com.qinet.feastique.response.consumables.dessert.DessertResponse
 import com.qinet.feastique.response.consumables.food.AddOnResponse

@@ -5,7 +5,7 @@ import com.qinet.feastique.model.enums.AccountType
 import com.qinet.feastique.response.token.AccessTokenResponse
 import com.qinet.feastique.response.token.TokenPairResponse
 import com.qinet.feastique.security.HashEncoder
-import com.qinet.feastique.service.RefreshTokenService
+import com.qinet.feastique.service.authentication.RefreshTokenService
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
@@ -15,7 +15,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
-import java.time.Instant
+    import java.time.Instant
 import java.util.*
 
 /**
@@ -31,7 +31,7 @@ import java.util.*
  */
 @Component
 class JwtUtility(
-    @Value("\${JWT_SECRET}") // injecting the jwt.secret into the variable jwtSecret
+    @Value($$"${JWT_SECRET}") // injecting the jwt.secret into the variable jwtSecret
     private val jwtSecret: String,
     private val hashEncoder: HashEncoder,
     private val refreshTokenService: RefreshTokenService
@@ -197,33 +197,18 @@ class JwtUtility(
      * @return String
      */
 
-    fun getTokenIdentifier(token: String): String {
-        val claims = Jwts.parser()
-            .verifyWith(SECRET)
-            .build()
-            .parseSignedClaims(token)
-            .payload
-        return claims.get("tokenIdentifier", String::class.java)
-    }
+    fun getTokenIdentifier(token: String): String =
+        getClaims(token)?.get("tokenIdentifier", String::class.java)
+            ?: throw JwtException("Could not parse claims.")
 
     /**
      * This function gets the token expiration from a valid token as epoch millis
      * @param token
      * @return String
      */
-    fun getExpirationEpochMillis(token: String): Long {
-        return try {
-            val claims = Jwts.parser()
-                .verifyWith(SECRET)
-                .build()
-                .parseSignedClaims(token)
-                .payload
-            claims.expiration?.time
-                ?: throw Exception("Token expiration claim is missing.")
-        } catch (ex: Exception) {
-            throw Exception("Token expiration cannot be verified.", ex)
-        }
-    }
+    fun getExpirationEpochMillis(token: String): Long =
+        getClaims(token)?.expiration?.time
+            ?: throw Exception("Token expiration claim is missing.")
     /**
      * This function generates a refresh token object from a raw token
      * @param id
@@ -255,9 +240,11 @@ class JwtUtility(
 
         val accessToken = generateAccessToken(id, username, userType)
         val refreshToken = generateRefreshToken(id, username, userType)
-        // val parsedToken = parseToken(id, userType, refreshToken)
 
-        // refreshTokenService.storeRefreshToken(parsedToken)
+        /*val parsedToken = parseToken(id, userType, refreshToken)
+
+        refreshTokenService.storeRefreshToken(parsedToken)*/
+
         return TokenPairResponse(accessToken, refreshToken)
     }
 
@@ -278,7 +265,6 @@ class JwtUtility(
         val id = getUserId(rawRefreshToken)
         val username = getUsername(rawRefreshToken)
         val userType = getUserType(rawRefreshToken).uppercase()
-        getTokenIdentifier(rawRefreshToken)
 
         // get stored record (customer or vendor)
         val storedRefreshToken = when (userType) {
