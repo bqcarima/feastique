@@ -21,7 +21,6 @@ import java.util.*
 interface FoodRepository : JpaRepository<Food, UUID> {
     fun findAllByVendorId(vendorId: UUID, pageable: Pageable): Page<Food>
     fun findAllByVendorId(vendorId: UUID, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Food>
-    fun findAllBy(scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Food>
 
     @EntityGraph("Vendor.withAllRelations")
     @Query("SELECT f FROM Food f WHERE f.id = :id")

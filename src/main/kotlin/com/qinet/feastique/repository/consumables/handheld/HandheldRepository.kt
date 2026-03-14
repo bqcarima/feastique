@@ -23,9 +23,6 @@ interface HandheldRepository : JpaRepository<Handheld, UUID> {
 
     // Windows-based scroll
     fun findAllByVendorId(vendorId: UUID, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Handheld>
-    fun findAllBy(scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Handheld>
-
-    fun findAllByIdInAndVendorId(handheldIds: List<UUID>, vendorId: UUID): List<Handheld>
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT h FROM Handheld h ORDER BY h.handheldNumber desc ")
