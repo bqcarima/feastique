@@ -1,29 +1,31 @@
 package com.qinet.feastique.service.consumables
 
 import com.qinet.feastique.common.mapper.toResponse
+import com.qinet.feastique.exception.DuplicateFoundException
+import com.qinet.feastique.exception.PermissionDeniedException
+import com.qinet.feastique.exception.RequestedEntityNotFoundException
+import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.model.dto.consumables.ComplementDto
 import com.qinet.feastique.model.entity.consumables.complement.Complement
-import com.qinet.feastique.exception.DuplicateFoundException
-import com.qinet.feastique.exception.RequestedEntityNotFoundException
-import com.qinet.feastique.exception.PermissionDeniedException
-import com.qinet.feastique.exception.UserNotFoundException
+import com.qinet.feastique.model.enums.Constants
 import com.qinet.feastique.repository.consumables.complement.ComplementRepository
 import com.qinet.feastique.repository.user.VendorRepository
 import com.qinet.feastique.response.consumables.food.ComplementResponse
+import com.qinet.feastique.response.pagination.WindowResponse
 import com.qinet.feastique.security.UserSecurity
+import com.qinet.feastique.utility.CursorEncoder
 import com.qinet.feastique.utility.DuplicateUtility
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Sort
+import org.springframework.data.domain.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.util.UUID
+import java.util.*
 
 @Service
 class ComplementService(
     private val complementRepository: ComplementRepository,
     private val vendorRepository: VendorRepository,
-    private val duplicateUtility: DuplicateUtility
+    private val duplicateUtility: DuplicateUtility,
+    private val cursorEncoder: CursorEncoder
 ) {
 
     @Transactional(readOnly = true)
@@ -45,6 +47,32 @@ class ComplementService(
             complementRepository.findAllByVendorId(vendorDetails.id, pageable).map { it.toResponse() }
 
         return complementResponses
+    }
+
+    @Transactional(readOnly = true)
+    fun scrollComplements(
+        vendorDetails: UserSecurity,
+        cursor: String?,
+        size: Int = Constants.DEFAULT_PAGE_SIZE.type
+
+    ): WindowResponse<ComplementResponse> {
+        val currentOffset: Long = cursor?.toLongOrNull() ?: 0L
+        val sort = Sort.by("name").ascending()
+
+        val scrollPosition = if (currentOffset == 0L) {
+            ScrollPosition.offset()
+        } else {
+            ScrollPosition.offset(currentOffset)
+        }
+
+        val window = complementRepository.findAllByVendorId(
+            vendorDetails.id,
+            scrollPosition,
+            sort,
+            Limit.of(size)
+        ).map { it.toResponse() }
+
+        return window.toResponse(currentOffset) { cursorEncoder.encodeOffset(it) }
     }
 
     @Transactional

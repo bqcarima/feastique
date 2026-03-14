@@ -3,8 +3,9 @@ package com.qinet.feastique.controller.consumables
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.FoodAvailabilityDto
 import com.qinet.feastique.model.dto.consumables.FoodDto
-import com.qinet.feastique.response.PageResponse
 import com.qinet.feastique.response.consumables.food.FoodResponse
+import com.qinet.feastique.response.pagination.PageResponse
+import com.qinet.feastique.response.pagination.WindowResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.consumables.FoodService
 import com.qinet.feastique.utility.SecurityUtility
@@ -13,16 +14,16 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
-import java.util.UUID
+import java.util.*
 
 @RestController
-@RequestMapping("/api/v1/vendors/{vendorId}/foods")
+@RequestMapping("/api/v1")
 class FoodController(
     private val foodService: FoodService,
     private val securityUtility: SecurityUtility
 ) {
 
-    @PutMapping
+    @PutMapping("/vendors/{vendorId}/foods")
     fun addOrUpdateFood(
         @PathVariable vendorId: UUID,
         @RequestBody
@@ -35,7 +36,7 @@ class FoodController(
         return ResponseEntity(food.toResponse(), HttpStatus.CREATED)
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/vendors/{vendorId}/foods/{id}")
     fun deleteFood(
         @PathVariable id: UUID,
         @PathVariable vendorId: UUID,
@@ -47,7 +48,7 @@ class FoodController(
         return ResponseEntity("Food deleted successfully. All relationships will be deleted as well.", HttpStatus.OK)
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/vendors/{vendorId}/foods/{id}")
     fun getFood(
         @PathVariable id: UUID,
         @PathVariable vendorId: UUID,
@@ -59,7 +60,7 @@ class FoodController(
         return ResponseEntity(food.toResponse(), HttpStatus.OK)
     }
 
-    @GetMapping
+    @GetMapping("/vendors/{vendorId}/foods")
     fun getAllFood(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "10") size: Int,
@@ -72,7 +73,27 @@ class FoodController(
         return ResponseEntity(foodsPage.toResponse(), HttpStatus.OK)
     }
 
-    @PatchMapping("/availability/{id}")
+    @GetMapping(
+        path = [
+            "/customers/{customerId}/vendor/{vendorId}/foods/scroll",
+            "/vendors/{vendorId}/foods/scroll"
+        ]
+    )
+    fun scrollFoods(
+        @PathVariable(required = false) customerId: UUID?,
+        @PathVariable vendorId: UUID,
+        @RequestParam(required = false) cursor: String?,
+        @RequestParam(defaultValue = "10") size: Int,
+        @AuthenticationPrincipal userDetails: UserSecurity
+
+    ) : ResponseEntity<WindowResponse<FoodResponse>> {
+        val pathId = customerId ?: vendorId
+        securityUtility.validatePath(pathId, userDetails)
+        val window = foodService.scrollFoods(vendorId, cursor, size)
+        return ResponseEntity(window, HttpStatus.OK)
+    }
+
+    @PatchMapping("/vendors/{vendorId}/foods/availability/{id}")
     fun changeFoodAvailability(
         @PathVariable id: UUID,
         @PathVariable vendorId: UUID,

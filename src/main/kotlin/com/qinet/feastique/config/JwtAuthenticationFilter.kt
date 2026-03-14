@@ -1,17 +1,18 @@
 package com.qinet.feastique.config
 
 import com.qinet.feastique.security.UserSecurity
-import com.qinet.feastique.service.user.UserDetailService
 import com.qinet.feastique.service.user.UserSessionService
 import com.qinet.feastique.utility.JwtUtility
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
+import java.util.Collections
 
 /**
  * Filter that intercepts every HTTP request once per request cycle and
@@ -36,15 +37,17 @@ import org.springframework.web.filter.OncePerRequestFilter
  * ensuring authentication is done before any protected endpoint is accessed.
  *
  * @param jwtUtility Utility class for creating, parsing, and validating JWT tokens.
- * @param userDetailService Service for loading user details from a data source.
  * @param userSessionService Service for verifying user session existence.
  */
 @Component
 class JwtAuthenticationFilter(
     private val jwtUtility: JwtUtility,
-    private val userDetailService: UserDetailService,
     private val userSessionService: UserSessionService
 ) : OncePerRequestFilter() {
+
+    companion object {
+        private val log = LoggerFactory.getLogger(JwtAuthenticationFilter::class.java)
+    }
 
     override fun doFilterInternal(
         request: HttpServletRequest,
@@ -52,7 +55,7 @@ class JwtAuthenticationFilter(
         filterChain: FilterChain
     ) {
 
-        val path = request.requestURI
+        val path = request.servletPath
 
         // Skip heavy token/session work for logout endpoint(s)
         if (path == "/api/auth/logout" || path.startsWith("/api/auth/logout/")) {
@@ -71,43 +74,40 @@ class JwtAuthenticationFilter(
                     userSessionService.getSession(tokenIdentifier)
                         ?.takeIf { it.expiresAtEpochMillis > System.currentTimeMillis() }
                         ?.also { session ->
+
+                            // userType is expected in canonical form (e.g. "ADMIN" or "ROLE_ADMIN").
+                            // removePrefix ensures we never produce "ROLE_ROLE_ADMIN".
                             val username = jwtUtility.getUsername(rawAccessToken)
+                            val role = "ROLE_${session.userType.uppercase().removePrefix("ROLE_")}"
 
-                            /**
-                             * Get user details as a [UserSecurity] object from the
-                             * security authentication object to get access to the id.
-                             * `as UserDetails` also works, but you will not be able
-                             * to access the id.
-                             */
-                            val loadedUserDetails = userDetailService.loadUserByUsername(username) as UserSecurity
-
-                            // Prepare the authorities exposed by the UserDetails
-                            val authorities = if (loadedUserDetails.authorities.isEmpty()) {
-
-                                // fallback: build from stored userType (ensure prefix)
-                                val normalizedUserType = session.userType.uppercase().removePrefix("ROLE_")
-                                listOf(SimpleGrantedAuthority("ROLE_$normalizedUserType"))
-                            } else {
-                                loadedUserDetails.authorities.toList()
-                            }
+                            val loadedUserDetails = UserSecurity(
+                                id = session.userId,
+                                username = username,
+                                password = "",
+                                Collections.singleton(SimpleGrantedAuthority(role))
+                            )
 
                             val authentication = UsernamePasswordAuthenticationToken(
                                 loadedUserDetails,
                                 null,
-                                authorities
+                                loadedUserDetails.authorities
                             )
 
                             SecurityContextHolder.getContext().authentication = authentication
+                            request.setAttribute("jwt_authenticated", true)
 
                         } ?: run {
+
                         // session missing or expired -> unauthenticated
                         filterChain.doFilter(request, response)
                         return
                     }
                 }
             } catch (e: Exception) {
-                filterChain.doFilter(request, response)
-                throw Exception("An error occurred while logging in. ${e.message}")
+
+                // Log internally
+                log.error("JWT authentication failed for path: $path", e)
+                response.status = HttpServletResponse.SC_UNAUTHORIZED
             }
         }
         filterChain.doFilter(request, response)

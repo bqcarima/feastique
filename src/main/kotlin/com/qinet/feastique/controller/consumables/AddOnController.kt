@@ -2,13 +2,13 @@ package com.qinet.feastique.controller.consumables
 
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.model.dto.consumables.AddOnDto
-import com.qinet.feastique.response.PageResponse
 import com.qinet.feastique.response.consumables.food.AddOnResponse
+import com.qinet.feastique.response.pagination.PageResponse
+import com.qinet.feastique.response.pagination.WindowResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.consumables.AddOnService
 import com.qinet.feastique.utility.SecurityUtility
 import jakarta.validation.Valid
-import org.springframework.data.domain.Page
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*
 import java.util.*
 
 @RestController
-@RequestMapping("/api/v1/vendors/{vendorId}/add_on")
+@RequestMapping("/api/v1/vendors/{vendorId}/add_ons")
 class AddOnController(
     private val addOnService: AddOnService,
     private val securityUtility: SecurityUtility
@@ -59,4 +59,18 @@ class AddOnController(
         val addOnsPage = addOnService.getAllAddOns(vendorDetails, page, size)
         return ResponseEntity(addOnsPage.toResponse(), HttpStatus.OK)
     }
+
+    @GetMapping("/scroll")
+    fun scrollAddOns(
+        @PathVariable vendorId: UUID,
+        @RequestParam(required = false) cursor: String?,
+        @RequestParam(defaultValue = "10") size: Int,
+        @AuthenticationPrincipal vendorDetails: UserSecurity
+
+    ) : ResponseEntity<WindowResponse<AddOnResponse>> {
+        securityUtility.validatePath(vendorId, vendorDetails)
+        val window = addOnService.scrollHandhelds(vendorDetails, cursor, size)
+        return ResponseEntity(window, HttpStatus.OK)
+    }
 }
+

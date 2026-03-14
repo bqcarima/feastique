@@ -16,6 +16,7 @@ class UserDetailService(
     private val vendorRepository: VendorRepository
 ) : UserDetailsService {
     override fun loadUserByUsername(username: String): UserDetails {
+        // val session =
 
         val customer = customerRepository.findFirstByUsername(username)
         if (customer != null) {

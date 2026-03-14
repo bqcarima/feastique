@@ -1,9 +1,9 @@
 package com.qinet.feastique.response.consumables.handheld
 
-import com.qinet.feastique.response.DiscountResponse
-import com.qinet.feastique.response.ImageResponse
+import com.qinet.feastique.response.discount.DiscountResponse
+import com.qinet.feastique.response.image.ImageResponse
 import java.time.LocalTime
-import java.util.UUID
+import java.util.*
 
 data class HandheldResponse(
     val id: UUID,
@@ -39,6 +39,10 @@ data class FillingResponse(
     val description: String?,
 )
 
+data class FillingOrderResponse(
+    val name: String
+)
+
 data class HandheldSizeResponse(
     val id: UUID,
     val numberOfFillings: Long,
@@ -47,3 +51,10 @@ data class HandheldSizeResponse(
     val price: Long,
     val availability: String?
 )
+
+data class HandheldOrderResponse(
+    val handheld: String,
+    val fillings: Set<FillingOrderResponse>,
+    val handheldSize: String
+)
+

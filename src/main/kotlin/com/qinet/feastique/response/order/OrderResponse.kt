@@ -22,3 +22,8 @@ data class OrderResponse(
     val completedTime: LocalDateTime?
 )
 
+data class OrderReviewResponse(
+    val orderId: UUID,
+    val orderType: String?
+)
+

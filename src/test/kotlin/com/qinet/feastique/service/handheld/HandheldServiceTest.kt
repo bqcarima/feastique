@@ -21,7 +21,7 @@ import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.enums.Availability
 import com.qinet.feastique.model.enums.HandHeldType
 import com.qinet.feastique.model.enums.Size
-import com.qinet.feastique.repository.MenuRepository
+import com.qinet.feastique.repository.menu.MenuRepository
 import com.qinet.feastique.repository.consumables.filling.FillingRepository
 import com.qinet.feastique.repository.consumables.handheld.HandheldRepository
 import com.qinet.feastique.repository.discount.DiscountRepository
@@ -36,8 +36,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
 import org.springframework.data.domain.PageImpl
 import java.text.SimpleDateFormat
@@ -78,6 +76,7 @@ class HandheldServiceTest {
             menuRepository,
             fillingRepository,
             discountRepository,
+            cursorEncoder,
         )
 
         vendorDetails = mock {
@@ -185,7 +184,7 @@ class HandheldServiceTest {
             whenever(handheldRepository.findAllByVendorId(eq(vendorId), any()))
                 .thenReturn(PageImpl(listOf(handheld)))
 
-            service.getAllHandhelds(vendorDetails, 0, 10)
+            service.scrollHandhelds(vendorDetails, 0, 10)
 
             verify(handheldRepository).findAllByVendorId(eq(vendorId), any())
         }
@@ -195,7 +194,7 @@ class HandheldServiceTest {
             whenever(handheldRepository.findAllByVendorId(eq(vendorId), any()))
                 .thenReturn(PageImpl(emptyList()))
 
-            val result = service.getAllHandhelds(vendorDetails, 0, 10)
+            val result = service.scrollHandhelds(vendorDetails, 0, 10)
 
             assertTrue(result.isEmpty)
         }

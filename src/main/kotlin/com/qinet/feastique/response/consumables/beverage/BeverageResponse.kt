@@ -34,3 +34,9 @@ data class BeverageFlavourSizeResponse(
     val availability: String
 )
 
+data class BeverageOrderResponse(
+    val beverage: String,
+    val beverageFlavour: String,
+    val beverageFlavourSize: String
+)
+

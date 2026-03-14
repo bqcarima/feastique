@@ -1,8 +1,8 @@
 package com.qinet.feastique.service.user
 
 import com.qinet.feastique.model.entity.UserSession
-import com.qinet.feastique.repository.UserSessionRepository
-import com.qinet.feastique.service.RefreshTokenService
+import com.qinet.feastique.repository.authentication.UserSessionRepository
+import com.qinet.feastique.service.authentication.RefreshTokenService
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -90,7 +90,7 @@ class UserSessionService(
      *
      * If you don't want scheduled cleanup, just remove this method.
      */
-    @Scheduled(fixedDelayString = "\${feastique.session.cleanup.fixedDelayMillis:21600000}")
+    @Scheduled(fixedDelayString = $$"${feastique.session.cleanup.fixedDelayMillis:21600000}")
     fun scheduledCleanupExpiredSessions() {
         cleanupExpiredSessions(System.currentTimeMillis())
     }

@@ -18,3 +18,4 @@ class HashEncoder {
         return encode(raw) == hashed
     }
 }
+

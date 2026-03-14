@@ -1,6 +1,6 @@
 package com.qinet.feastique.response.user
 
-import com.qinet.feastique.response.DiscountResponse
+import com.qinet.feastique.response.discount.DiscountResponse
 import com.qinet.feastique.response.consumables.food.AddOnResponse
 import com.qinet.feastique.response.consumables.food.ComplementResponse
 import com.qinet.feastique.response.consumables.food.FoodResponse
@@ -62,5 +62,11 @@ data class VendorMinimalResponse(
     val registrationDate: Date,
     val openingTime: LocalTime?,
     val closingTime: LocalTime?
+)
+
+data class VendorReviewResponse(
+    val id: UUID,
+    val chefName: String,
+    val restaurantName: String
 )
 
