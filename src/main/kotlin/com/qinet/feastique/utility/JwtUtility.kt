@@ -1,6 +1,6 @@
 package com.qinet.feastique.utility
 
-import com.qinet.feastique.model.entity.RefreshToken
+import com.qinet.feastique.model.entity.authentication.RefreshToken
 import com.qinet.feastique.model.enums.AccountType
 import com.qinet.feastique.response.token.AccessTokenResponse
 import com.qinet.feastique.response.token.TokenPairResponse

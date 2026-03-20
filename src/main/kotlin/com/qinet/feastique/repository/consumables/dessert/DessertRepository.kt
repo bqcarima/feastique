@@ -13,10 +13,13 @@ import java.util.UUID
 
 @Repository
 interface DessertRepository : JpaRepository<Dessert, UUID> {
-    fun findAllByVendorId(vendorId: UUID, pageable: Pageable): Page<Dessert>
 
-    fun findAllByVendorId(vendorId: UUID, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Dessert>
+    fun findByIdAndIsActiveTrue(id: UUID): Dessert?
+    fun findByIdAndVendorIdAndIsActiveTrue(id: UUID, vendorId: UUID): Dessert?
+    fun findAllByVendorIdAndIsActiveTrue(vendorId: UUID, pageable: Pageable): Page<Dessert>
 
-    fun existsByNameIgnoreCaseAndVendorId(name: String, vendorId: UUID): Boolean
+    fun findAllByVendorIdAndIsActiveTrue(vendorId: UUID, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Dessert>
+
+    fun existsByNameIgnoreCaseAndVendorIdAndIsActiveTrue(name: String, vendorId: UUID): Boolean
 }
 

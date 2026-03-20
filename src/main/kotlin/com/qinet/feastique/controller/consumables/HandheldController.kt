@@ -54,17 +54,25 @@ class HandheldController(
         return ResponseEntity("Handheld deleted successfully. All relationships will be deleted as well.", HttpStatus.OK)
     }
 
-    @GetMapping("/vendors/{vendorId}/handhelds/{id}")
+    @GetMapping(
+        path = [
+            "/customers/{customerId}/vendors/{vendorId}/handhelds/{handheldId}",
+            "/vendors/{vendorId}/handhelds/{handheldId}"
+        ]
+    )
     fun getHandheld(
-        @PathVariable id: UUID,
+        @PathVariable handheldId: UUID,
+        @PathVariable customerId: UUID?,
         @PathVariable vendorId: UUID,
-        @AuthenticationPrincipal vendorDetails: UserSecurity
+        @AuthenticationPrincipal userDetails: UserSecurity
 
     ) : ResponseEntity<HandheldResponse> {
-        securityUtility.validatePath(vendorId, vendorDetails)
-        val handheld = handheldService.getHandheldById(id, vendorDetails)
-        return ResponseEntity(handheld.toResponse(), HttpStatus.OK)
+        val pathId = customerId ?: vendorId
+        securityUtility.validatePath(pathId, userDetails)
+        val handheld = handheldService.getHandheld(handheldId, userDetails)
+        return ResponseEntity(handheld, HttpStatus.OK)
     }
+
     @GetMapping("/vendors/{vendorId}/handhelds")
     fun getAllHandhelds(
         @RequestParam(defaultValue = "0") page: Int,
@@ -96,7 +104,7 @@ class HandheldController(
 
         val pathId = customerId ?: vendorId
         securityUtility.validatePath(pathId, userDetails)
-        val window = handheldService.scrollHandhelds(vendorId, cursor, size)
+        val window = handheldService.scrollHandhelds(vendorId, cursor, size, userDetails)
         return ResponseEntity(window, HttpStatus.OK)
     }
 
@@ -109,7 +117,7 @@ class HandheldController(
 
     ) : ResponseEntity<HandheldResponse> {
         securityUtility.validatePath(vendorId, vendorDetails)
-        val handheld = handheldService.toggleAvailability(handheldAvailabilityDto, id, vendorDetails)
+        val handheld = handheldService.changeHandheldAvailability(handheldAvailabilityDto, id, vendorDetails)
         return ResponseEntity(handheld.toResponse(), HttpStatus.OK)
     }
 }

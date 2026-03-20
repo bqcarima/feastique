@@ -28,6 +28,9 @@ abstract class Flavour {
     @Column(name = "availability")
     @Enumerated(EnumType.STRING)
     var availability: Availability? = null
+
+    @Column
+    var isActive: Boolean = true
 }
 
 @Entity
@@ -44,7 +47,7 @@ class BeverageFlavour : Flavour() {
     @OneToMany(
         mappedBy = "beverageFlavour",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var beverageFlavourSizes: MutableSet<BeverageFlavourSize> = mutableSetOf()
 }
@@ -64,7 +67,7 @@ class DessertFlavour : Flavour() {
     @OneToMany(
         mappedBy = "dessertFlavour",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var dessertFlavourSizes: MutableSet<DessertFlavourSize> = mutableSetOf()
 }

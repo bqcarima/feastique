@@ -41,6 +41,9 @@ abstract class ConsumableSize {
     @Column(name = "availability")
     @Enumerated(EnumType.STRING)
     var availability: Availability? = null
+
+    @Column
+    var isActive: Boolean = true
 }
 
 @Entity

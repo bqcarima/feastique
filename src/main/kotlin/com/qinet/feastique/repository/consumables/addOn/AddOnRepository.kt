@@ -13,8 +13,8 @@ import java.util.*
 
 @Repository
 interface AddOnRepository : JpaRepository<AddOn, UUID> {
-    fun findAllByVendorId(vendorId: UUID, pageable: Pageable): Page<AddOn>
-    fun findAllByVendorId(vendorId: UUID, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<AddOn>
-    fun existsByNameIgnoreCaseAndVendorId(addOnName: String, vendorId: UUID): Boolean
+    fun findAllByVendorIdAndIsActiveTrue(vendorId: UUID, pageable: Pageable): Page<AddOn>
+    fun findAllByVendorIdAndIsActiveTrue(vendorId: UUID, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<AddOn>
+    fun existsByNameIgnoreCaseAndVendorIdAndIsActiveTrue(addOnName: String, vendorId: UUID): Boolean
 }
 

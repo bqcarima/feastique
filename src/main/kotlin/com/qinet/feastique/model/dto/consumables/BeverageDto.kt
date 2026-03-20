@@ -25,6 +25,9 @@ data class BeverageDto(
 
     var orderTypes: Set<String>,
 
+    @field:NotNull(message = "Beverage availability cannot be empty.")
+    var availableDays: Set<String>,
+
     @field:Min(value = 0, message = "Price cannot be less than 0.")
     val deliveryFee: Long?,
 

@@ -49,22 +49,22 @@ class DuplicateUtility(
     }
 
     fun isDuplicateFoodFound(foodName: String, vendorId: UUID): Boolean =
-        foodRepository.existsByNameIgnoreCaseAndVendorId(foodName, vendorId)
+        foodRepository.existsByNameIgnoreCaseAndVendorIdAndIsActiveTrue(foodName, vendorId)
 
     fun isDuplicationComplementFound(complementName: String, vendorId: UUID): Boolean =
-        complementRepository.existsByNameIgnoreCaseAndVendorId(complementName, vendorId)
+        complementRepository.existsByNameIgnoreCaseAndVendorIdAndIsActiveTrue(complementName, vendorId)
 
     fun isDuplicateAddOnFound(addOnName: String, vendorId: UUID): Boolean =
-        addOnRepository.existsByNameIgnoreCaseAndVendorId(addOnName, vendorId)
+        addOnRepository.existsByNameIgnoreCaseAndVendorIdAndIsActiveTrue(addOnName, vendorId)
 
     fun isDuplicateBeverageFound(beverageName: String, vendorId: UUID): Boolean =
-        beverageRepository.existsByNameIgnoreCaseAndVendorId(beverageName, vendorId)
+        beverageRepository.existsByNameIgnoreCaseAndVendorIdAndIsActiveTrue(beverageName, vendorId)
 
     fun isDuplicateDessertFound(dessertName: String, vendorId: UUID): Boolean =
-        dessertRepository.existsByNameIgnoreCaseAndVendorId(dessertName, vendorId)
+        dessertRepository.existsByNameIgnoreCaseAndVendorIdAndIsActiveTrue(dessertName, vendorId)
 
     fun isDuplicateHandheldFound(handheldName: String, vendorId: UUID): Boolean =
-        handheldRepository.existsByNameIgnoreCaseAndVendorId(handheldName, vendorId)
+        handheldRepository.existsByNameIgnoreCaseAndVendorIdAndIsActiveTrue(handheldName, vendorId)
 
     // For reviews
     fun isExistingReviewFound(entityId: UUID, customerId: UUID, orderId: UUID, reviewType: ReviewType): Boolean =

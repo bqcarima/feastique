@@ -6,6 +6,4 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface FoodSizeRepository : JpaRepository<FoodSize, UUID> {
-    fun findAllByFoodId(foodId: UUID): List<FoodSize>
-}
+interface FoodSizeRepository : JpaRepository<FoodSize, UUID>

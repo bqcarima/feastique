@@ -1,4 +1,4 @@
-package com.qinet.feastique.model.entity
+package com.qinet.feastique.model.entity.authentication
 
 import com.github.f4b6a3.uuid.UuidCreator
 import jakarta.persistence.Column

@@ -1,5 +1,6 @@
 package com.qinet.feastique.response.consumables.food
 
+import com.qinet.feastique.response.consumables.BaseEntityResponse
 import com.qinet.feastique.response.image.ImageResponse
 import java.time.LocalTime
 import java.util.*
@@ -20,35 +21,42 @@ data class ComplementResponse(
 )
 
 data class FoodResponse(
-    val id: UUID,
+    override val id: UUID,
     val foodNumber: String,
-    val foodName: String,
+    val name: String,
     val vendorId: UUID,
     val vendorName: String,
     val mainCourse: String,
     val description: String,
-    val images: List<ImageResponse>,
+    val images: Set<ImageResponse>,
+    override val likeCount: Long,
+    override val likedByCurrentUser: Boolean,
+    override val bookmarkCount: Long,
+    override val bookmarkedByCurrentUser: Boolean,
     val availability: String,
-    val size: List<FoodSizeResponse>,
+    val size: Set<FoodSizeResponse>,
     val basePrice: Long,
-    val complements: List<ComplementResponse>,
+    val complements: Set<ComplementResponse>,
     val addOn: List<AddOnResponse>,
     val preparationTime: Int,
     val readyAsFrom: LocalTime?,
-    val orderType: List<String>,
-    val availableDays: List<String>,
+    val orderTypes: Set<String>,
+    val availableDays: Set<String>,
     val deliverable : Boolean,
     val dailyDeliveryQuantity: Int? = null,
     val deliveryTime: LocalTime?,
-    val deliveryFee: Long?,
-    val discount: List<FoodDiscountResponse>
-)
+    val deliveryFee: Long,
+    val discount: Set<FoodDiscountResponse>
+
+) : BaseEntityResponse
 
 data class FoodMinimalResponse(
     val id: UUID,
     val foodName: String,
     val mainCourse: String,
-    val basePrice: Long
+    val basePrice: Long,
+    val likeCount: Long,
+    val likedByCurrentUser: Boolean,
 )
 
 data class FoodOrderResponse(

@@ -3,7 +3,7 @@ package com.qinet.feastique.model.entity.consumables.dessert
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonManagedReference
-import com.qinet.feastique.model.entity.Menu
+import com.qinet.feastique.model.entity.menu.Menu
 import com.qinet.feastique.model.entity.consumables.EdibleEntity
 import com.qinet.feastique.model.entity.consumables.flavour.DessertFlavour
 import com.qinet.feastique.model.entity.discount.DessertDiscount
@@ -13,6 +13,7 @@ import com.qinet.feastique.model.enums.DessertType
 import com.qinet.feastique.model.enums.OrderType
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
+import org.hibernate.annotations.Formula
 import java.time.LocalTime
 
 @Entity
@@ -53,7 +54,7 @@ class Dessert : EdibleEntity() {
     @OneToMany(
         mappedBy = "dessert",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var dessertFlavours: MutableList<DessertFlavour> = mutableListOf()
 
@@ -81,5 +82,11 @@ class Dessert : EdibleEntity() {
         orphanRemoval = true
     )
     var menu: Menu? = null
+
+    @Formula("(SELECT COUNT(dl.id) FROM dessert_likes dl WHERE dl.dessert_id = id)")
+    var likeCount: Long = 0
+
+    @Formula("(SELECT COUNT(db.id) FROM dessert_bookmarks db WHERE db.dessert_id = id)")
+    var bookmarkCount: Long = 0
 }
 

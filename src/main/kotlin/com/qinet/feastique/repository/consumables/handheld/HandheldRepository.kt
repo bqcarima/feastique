@@ -18,15 +18,14 @@ import java.util.UUID
 @Repository
 interface HandheldRepository : JpaRepository<Handheld, UUID> {
 
-    // Pageable with Page<Handheld>
-    fun findAllByVendorId(vendorId: UUID, pageable: Pageable): Page<Handheld>
-
-    // Windows-based scroll
-    fun findAllByVendorId(vendorId: UUID, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Handheld>
+    fun findByIdAndIsActiveTrue(id: UUID): Handheld?
+    fun findByIdAndVendorIdAndIsActiveTrue(id: UUID, vendorId: UUID): Handheld?
+    fun findAllByVendorIdAndIsActiveTrue(vendorId: UUID, pageable: Pageable): Page<Handheld>
+    fun findAllByVendorIdAndIsActiveTrue(vendorId: UUID, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Handheld>
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT h FROM Handheld h ORDER BY h.handheldNumber desc ")
     fun findTopOrderByFoodNumberDescWithLock(pageable: Pageable = PageRequest.of(0, 1)): List<Handheld>
-    fun existsByNameIgnoreCaseAndVendorId(name: String, vendorId: UUID): Boolean
+    fun existsByNameIgnoreCaseAndVendorIdAndIsActiveTrue(name: String, vendorId: UUID): Boolean
 }
 

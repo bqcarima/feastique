@@ -1,5 +1,6 @@
 package com.qinet.feastique.model.dto
 
+import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import java.util.UUID
@@ -13,9 +14,6 @@ data class PostDto(
     val title: String? = "",
 
     var body: String? = null,
-
-    @field:NotBlank(message = "Image cannot be blank")
-    @field:NotEmpty(message = "Image cannot be blank")
-    var image: String? = null
+    var postImages: Set<@Valid ImageDto>,
 )
 

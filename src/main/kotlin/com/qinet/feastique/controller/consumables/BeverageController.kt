@@ -44,16 +44,23 @@ class BeverageController(private val beverageService: BeverageService, private v
         return ResponseEntity("Beverage deleted successfully.", HttpStatus.NO_CONTENT)
     }
 
-    @GetMapping("/vendors/{vendorId}/beverages/{id}")
-    fun getBeverage(
-        @PathVariable id: UUID,
+    @GetMapping(
+        path = [
+            "/customers/{customerId}/vendors/{vendorId}/beverages/{beverageId}",
+            "/vendors/{vendorId}/beverages/{beverageId}"
+        ]
+    )
+    fun getFood(
+        @PathVariable beverageId: UUID,
+        @PathVariable customerId: UUID?,
         @PathVariable vendorId: UUID,
-        @AuthenticationPrincipal vendorDetails: UserSecurity
+        @AuthenticationPrincipal userDetails: UserSecurity
 
-    ): ResponseEntity<BeverageResponse> {
-        securityUtility.validatePath(vendorId, vendorDetails)
-        val beverage = beverageService.getBeverage(id, vendorDetails)
-        return ResponseEntity(beverage.toResponse(), HttpStatus.OK)
+    ) : ResponseEntity<BeverageResponse> {
+        val pathId = customerId ?: vendorId
+        securityUtility.validatePath(pathId, userDetails)
+        val beverage = beverageService.getBeverage(beverageId, userDetails)
+        return ResponseEntity(beverage, HttpStatus.OK)
     }
 
     @GetMapping("/vendors/{vendorId}/beverages")
@@ -87,7 +94,7 @@ class BeverageController(private val beverageService: BeverageService, private v
 
         val pathId = customerId ?: vendorId
         securityUtility.validatePath(pathId, userDetails)
-        val window = beverageService.scrollBeverages(vendorId, cursor, size)
+        val window = beverageService.scrollBeverages(vendorId, cursor, size, userDetails)
         return ResponseEntity(window, HttpStatus.OK)
     }
 

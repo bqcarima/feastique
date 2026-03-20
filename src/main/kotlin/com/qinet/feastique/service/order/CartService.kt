@@ -299,7 +299,7 @@ class CartService(
      */
     private fun handleFood(itemDto: ItemDto, cart: Cart) {
         val foodItemDto = itemDto.foodItemDto!!
-        val food = foodRepository.findByIdWithAllRelations(foodItemDto.foodId)
+        val food = foodRepository.findByIdWithAllRelationsAndIsActiveTrue(foodItemDto.foodId)
             .orElseThrow { RequestedEntityNotFoundException("Cannot add item to cart, food not found.") }
 
         val newFoodCartItem = FoodCartItem().apply {

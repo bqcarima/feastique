@@ -3,7 +3,7 @@ package com.qinet.feastique.model.entity.consumables.food
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonManagedReference
-import com.qinet.feastique.model.entity.Menu
+import com.qinet.feastique.model.entity.menu.Menu
 import com.qinet.feastique.model.entity.consumables.EdibleEntity
 import com.qinet.feastique.model.entity.consumables.addOn.FoodAddOn
 import com.qinet.feastique.model.entity.consumables.complement.FoodComplement
@@ -15,41 +15,11 @@ import com.qinet.feastique.model.enums.OrderType
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
+import org.hibernate.annotations.Formula
 import java.time.LocalTime
 
-@Suppress("JpaEntityGraphsInspection")
 @Entity
 @Table(name = "foods")
-@NamedEntityGraphs(
-    value = [
-        NamedEntityGraph(
-            name = "Food.withAllRelations",
-            attributeNodes = [
-                NamedAttributeNode("foodImages"),
-                NamedAttributeNode(value = "foodAddOns", subgraph = "addOn-subgraph"),
-                NamedAttributeNode("foodSizes"),
-                NamedAttributeNode(value = "foodComplements", subgraph = "foodComplement-subgraph"),
-                NamedAttributeNode(value = "foodDiscounts", subgraph = "discount-subgraph"),
-                NamedAttributeNode("orderTypes"),
-                NamedAttributeNode("availableDays")
-            ],
-            subgraphs = [
-                NamedSubgraph(
-                    name = "addOn-subgraph",
-                    attributeNodes = [NamedAttributeNode("addOn")]
-                ),
-                NamedSubgraph(
-                    name = "foodComplement-subgraph",
-                    attributeNodes = [NamedAttributeNode("complement")]
-                ),
-                NamedSubgraph(
-                    name = "discount-subgraph",
-                    attributeNodes = [NamedAttributeNode("discount")]
-                )
-            ]
-        )
-    ]
-)
 class Food : EdibleEntity() {
 
     @Column(name = "food_number", unique = true)
@@ -108,7 +78,7 @@ class Food : EdibleEntity() {
     @OneToMany(
         mappedBy = "food",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var foodAddOns: MutableSet<FoodAddOn> = mutableSetOf()
 
@@ -116,7 +86,7 @@ class Food : EdibleEntity() {
     @OneToMany(
         mappedBy = "food",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var foodComplements: MutableSet<FoodComplement> = mutableSetOf()
 
@@ -143,5 +113,11 @@ class Food : EdibleEntity() {
         orphanRemoval = true
     )
     lateinit var menu: Menu
+
+    @Formula("(SELECT COUNT(fl.id) FROM food_likes fl WHERE fl.food_id = id)")
+    var likeCount: Long = 0
+
+    @Formula("(SELECT COUNT(fb.id) FROM food_bookmarks fb WHERE fb.food_id = id)")
+    var bookmarkCount: Long = 0
 }
 

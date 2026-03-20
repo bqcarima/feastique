@@ -1,5 +1,6 @@
 package com.qinet.feastique.response.user
 
+import com.qinet.feastique.response.consumables.BaseEntityResponse
 import com.qinet.feastique.response.discount.DiscountResponse
 import com.qinet.feastique.response.consumables.food.AddOnResponse
 import com.qinet.feastique.response.consumables.food.ComplementResponse
@@ -36,6 +37,8 @@ data class VendorResponse(
     val openingTime: LocalTime?,
     val closingTime: LocalTime?,
     val verified: Boolean,
+    val likeCount: Long,
+    val likedByCurrentUser: Boolean,
     val accountType: String?,
     val imageUrl: String,
     val registrationDate: Date,
@@ -57,12 +60,38 @@ data class VendorMinimalResponse(
     val restaurantName: String,
     val balance: Long,
     val verified: Boolean,
+    val likeCount: Long,
+    val likedByCurrentUser: Boolean,
+    val bookmarkCount: Long,
+    val bookmarkedByCurrentUser: Boolean,
     val phoneNumber: List<PhoneNumberResponse>,
     val address: AddressResponse,
     val registrationDate: Date,
     val openingTime: LocalTime?,
     val closingTime: LocalTime?
+
 )
+
+data class VendorBookmarkResponse(
+    override val id: UUID,
+    val username: String,
+    val vendorCode: String,
+    val firstName: String,
+    val lastName: String,
+    val chefName: String,
+    val restaurantName: String,
+    val verified: Boolean,
+    override val likeCount: Long,
+    override val likedByCurrentUser: Boolean,
+    override val bookmarkCount: Long,
+    override val bookmarkedByCurrentUser: Boolean,
+    val phoneNumber: Set<PhoneNumberResponse>,
+    val address: AddressResponse,
+    val registrationDate: Date,
+    val openingTime: LocalTime?,
+    val closingTime: LocalTime?
+
+) : BaseEntityResponse
 
 data class VendorReviewResponse(
     val id: UUID,

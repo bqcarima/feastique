@@ -27,7 +27,7 @@ class AddOn : EdibleEntity(){
     @OneToMany(
         mappedBy = "addOn",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var foodAddOn: MutableList<FoodAddOn> = mutableListOf()
 }

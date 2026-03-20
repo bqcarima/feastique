@@ -42,7 +42,7 @@ class AddOnService(
     @Transactional(readOnly = true)
     fun getAllAddOns(vendorDetails: UserSecurity, page: Int, size: Int): Page<AddOnResponse> {
         val pageable = PageRequest.of(page, size, Sort.by("name").descending())
-        val addOnResponses = addOnRepository.findAllByVendorId(vendorDetails.id, pageable).map { it.toResponse() }
+        val addOnResponses = addOnRepository.findAllByVendorIdAndIsActiveTrue(vendorDetails.id, pageable).map { it.toResponse() }
         return addOnResponses
     }
 
@@ -61,7 +61,7 @@ class AddOnService(
         }
 
         val sort = Sort.by("name").ascending()
-        val window = addOnRepository.findAllByVendorId(vendorDetails.id, scrollPosition,sort, Limit.of(size)).map { it.toResponse() }
+        val window = addOnRepository.findAllByVendorIdAndIsActiveTrue(vendorDetails.id, scrollPosition,sort, Limit.of(size)).map { it.toResponse() }
 
         return window.toResponse(currentOffset) { cursorEncoder.encodeOffset(it) }
     }
@@ -69,7 +69,8 @@ class AddOnService(
     @Transactional
     fun deleteAddOn(id: UUID, vendorDetails: UserSecurity) {
         val addOn = getAddOn(id, vendorDetails)
-        addOnRepository.delete(addOn)
+        addOn.isActive = false
+        saveAddOn(addOn)
     }
 
     @Transactional

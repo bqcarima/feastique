@@ -6,3 +6,4 @@ data class ImageResponse(
     val id: UUID,
     val imageUrl: String,
 )
+

@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-@RequestMapping("/api/customers/v1/{customerId}/address")
+@RequestMapping("/api/v1/customers/{customerId}/address")
 class CustomerAddressController(
     private val customerAddressService: CustomerAddressService,
     private val securityUtility: SecurityUtility
@@ -28,7 +28,7 @@ class CustomerAddressController(
 
     @PutMapping
     fun addOrUpdateAddress(
-        @PathVariable("customerId") customerId: UUID,
+        @PathVariable customerId: UUID,
         @RequestBody @Valid addressDto: AddressDto,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
@@ -40,8 +40,8 @@ class CustomerAddressController(
 
     @DeleteMapping("/{id}")
     fun deleteAddress(
-        @PathVariable("id") id: UUID,
-        @PathVariable("customerId") customerId: UUID,
+        @PathVariable id: UUID,
+        @PathVariable customerId: UUID,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<String> {
@@ -52,8 +52,8 @@ class CustomerAddressController(
 
     @GetMapping("/{id}")
     fun getAddress(
-        @PathVariable("id") id: UUID,
-        @PathVariable("customerId") customerId: UUID,
+        @PathVariable id: UUID,
+        @PathVariable customerId: UUID,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<CustomerAddressResponse> {
@@ -64,7 +64,7 @@ class CustomerAddressController(
 
     @GetMapping
     fun getAddresses(
-        @PathVariable("customerId") customerId: UUID,
+        @PathVariable customerId: UUID,
         @AuthenticationPrincipal customerDetails: UserSecurity
 
     ) : ResponseEntity<List<CustomerAddressResponse>> {
@@ -73,3 +73,4 @@ class CustomerAddressController(
         return ResponseEntity(addresses.map { it.toResponse() }, HttpStatus.OK)
     }
 }
+

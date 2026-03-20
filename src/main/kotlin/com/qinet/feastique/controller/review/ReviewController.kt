@@ -40,49 +40,49 @@ class ReviewController(
     // Scroll reviews
     @GetMapping(
         path = [
-            "/customers/{customerId}/beverages/{beverageId}/reviews/scroll",
+            "/customers/{customerId}/vendors/{vendorId}/beverages/{beverageId}/reviews/scroll",
             "/vendors/{vendorId}/beverages/{beverageId}/reviews/scroll"
         ]
     )
     fun scrollBeverageReviews(
         @PathVariable beverageId: UUID,
         @PathVariable(required = false) customerId: UUID?,
-        @PathVariable(required = false) vendorId: UUID?,
+        @PathVariable(required = false) vendorId: UUID,
         @RequestParam(required = false) cursor: String?,
         @RequestParam(defaultValue = "10") size: Int,
         @AuthenticationPrincipal userDetails: UserSecurity
 
     ): ResponseEntity<WindowResponse<BaseReviewResponse>> {
         val pathId = customerId ?: vendorId
-        securityUtility.validatePath(pathId!!, userDetails)
+        securityUtility.validatePath(pathId, userDetails)
         val window = reviewService.scrollBeverageReviews(beverageId, cursor, size)
         return ResponseEntity(window, HttpStatus.OK)
     }
 
     @GetMapping(
         path = [
-            "/customers/{customerId}/desserts/{dessertId}/reviews/scroll",
+            "/customers/{customerId}/vendors/{vendorId}/desserts/{dessertId}/reviews/scroll",
             "/vendors/{vendorId}/desserts/{dessertId}/reviews/scroll"
         ]
     )
     fun scrollDessertReviews(
         @PathVariable dessertId: UUID,
         @PathVariable(required = false) customerId: UUID?,
-        @PathVariable(required = false) vendorId: UUID?,
+        @PathVariable(required = false) vendorId: UUID,
         @RequestParam(required = false) cursor: String?,
         @RequestParam(defaultValue = "10") size: Int,
         @AuthenticationPrincipal userDetails: UserSecurity
 
     ): ResponseEntity<WindowResponse<BaseReviewResponse>> {
         val pathId = customerId ?: vendorId
-        securityUtility.validatePath(pathId!!, userDetails)
+        securityUtility.validatePath(pathId, userDetails)
         val window = reviewService.scrollDessertReviews(dessertId, cursor, size)
         return ResponseEntity(window, HttpStatus.OK)
     }
 
     @GetMapping(
         path = [
-            "/customers/{customerId}/foods/{foodId}/reviews/scroll",
+            "/customers/{customerId}/vendors/{vendorId}/foods/{foodId}/reviews/scroll",
             "/vendors/{vendorId}/foods/{foodId}/reviews/scroll"
         ]
     )
@@ -103,21 +103,21 @@ class ReviewController(
 
     @GetMapping(
         path = [
-            "/customers/{customerId}/handhelds/{handheldId}/reviews/scroll",
+            "/customers/{customerId}/vendors/{vendorId}/handhelds/{handheldId}/reviews/scroll",
             "/vendors/{vendorId}/handhelds/{handheldId}/reviews/scroll"
         ]
     )
     fun scrollHandheldReviews(
         @PathVariable handheldId: UUID,
         @PathVariable(required = false) customerId: UUID?,
-        @PathVariable(required = false) vendorId: UUID?,
+        @PathVariable(required = false) vendorId: UUID,
         @RequestParam(required = false) cursor: String?,
         @RequestParam(defaultValue = "10") size: Int,
         @AuthenticationPrincipal userDetails: UserSecurity
 
     ): ResponseEntity<WindowResponse<BaseReviewResponse>> {
         val pathId = customerId ?: vendorId
-        securityUtility.validatePath(pathId!!, userDetails)
+        securityUtility.validatePath(pathId, userDetails)
         val window = reviewService.scrollHandheldReviews(handheldId, cursor, size)
         return ResponseEntity(window, HttpStatus.OK)
     }
