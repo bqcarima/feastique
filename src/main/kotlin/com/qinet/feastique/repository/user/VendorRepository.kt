@@ -3,18 +3,14 @@ package com.qinet.feastique.repository.user
 import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.enums.Region
 import jakarta.persistence.LockModeType
-import org.springframework.data.domain.Limit
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.ScrollPosition
-import org.springframework.data.domain.Sort
-import org.springframework.data.domain.Window
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
-import java.util.UUID
+import java.util.*
 
 @Repository
 interface VendorRepository : JpaRepository<Vendor, UUID> {

@@ -1,7 +1,5 @@
 package com.qinet.feastique.service.vendor
 
-import com.qinet.feastique.common.mapper.toBookmarkResponse
-import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.exception.*
 import com.qinet.feastique.model.dto.LoginDto
 import com.qinet.feastique.model.dto.user.PasswordChangeDto
@@ -11,7 +9,6 @@ import com.qinet.feastique.model.entity.address.VendorAddress
 import com.qinet.feastique.model.entity.contact.VendorPhoneNumber
 import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.enums.AccountType
-import com.qinet.feastique.model.enums.Constants
 import com.qinet.feastique.model.enums.Region
 import com.qinet.feastique.model.enums.RegionCode
 import com.qinet.feastique.repository.address.VendorAddressRepository
@@ -20,9 +17,7 @@ import com.qinet.feastique.repository.contact.CustomerPhoneNumberRepository
 import com.qinet.feastique.repository.contact.VendorPhoneNumberRepository
 import com.qinet.feastique.repository.like.VendorLikeRepository
 import com.qinet.feastique.repository.user.VendorRepository
-import com.qinet.feastique.response.pagination.WindowResponse
 import com.qinet.feastique.response.token.TokenPairResponse
-import com.qinet.feastique.response.user.VendorBookmarkResponse
 import com.qinet.feastique.security.PasswordEncoder
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.authentication.RefreshTokenService
@@ -30,9 +25,6 @@ import com.qinet.feastique.service.user.UserSessionService
 import com.qinet.feastique.utility.CursorEncoder
 import com.qinet.feastique.utility.JwtUtility
 import com.qinet.feastique.utility.SecurityUtility
-import org.springframework.data.domain.Limit
-import org.springframework.data.domain.ScrollPosition
-import org.springframework.data.domain.Sort
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.stereotype.Service

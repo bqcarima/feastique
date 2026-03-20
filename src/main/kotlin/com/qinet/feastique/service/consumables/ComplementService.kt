@@ -2,7 +2,6 @@ package com.qinet.feastique.service.consumables
 
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.exception.DuplicateFoundException
-import com.qinet.feastique.exception.PermissionDeniedException
 import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.model.dto.consumables.ComplementDto
