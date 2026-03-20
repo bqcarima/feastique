@@ -10,7 +10,7 @@ import java.util.UUID
 @Repository
 interface FillingRepository : JpaRepository<Filling, UUID> {
 
-    fun findAllByVendorId(vendorId: UUID, pageable: Pageable): Page<Filling>
-    fun findAllByIdInAndVendorId(fillingIds: List<UUID>, vendorId: UUID, pageable: Pageable): Page<Filling>
-    fun existsByNameIgnoreCaseAndVendorId(fillingName: String, vendorId: UUID): Boolean
+    fun findAllByVendorIdAndIsActiveTrue(vendorId: UUID, pageable: Pageable): Page<Filling>
+    fun findAllByIdInAndVendorIdAndIsActiveTrue(fillingIds: List<UUID>, vendorId: UUID, pageable: Pageable): Page<Filling>
+    fun existsByNameIgnoreCaseAndVendorIdAndIsActiveTrue(fillingName: String, vendorId: UUID): Boolean
 }

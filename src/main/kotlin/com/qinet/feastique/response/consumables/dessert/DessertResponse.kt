@@ -1,15 +1,20 @@
 package com.qinet.feastique.response.consumables.dessert
 
+import com.qinet.feastique.response.consumables.BaseEntityResponse
 import com.qinet.feastique.response.discount.DiscountResponse
 import com.qinet.feastique.response.image.ImageResponse
 import java.time.LocalTime
 import java.util.*
 
 data class DessertResponse(
-    val id: UUID,
-    val dessertName: String,
+    override val id: UUID,
+    val name: String,
     val description: String?,
     val dessertType: String,
+    override val likeCount: Long,
+    override val likedByCurrentUser: Boolean,
+    override val bookmarkCount: Long,
+    override val bookmarkedByCurrentUser: Boolean,
     val availability: String,
     val deliverable: Boolean,
     val deliveryFee: Long,
@@ -17,9 +22,19 @@ data class DessertResponse(
     val dessertImages: List<ImageResponse>,
     val preparationTime: Int,
     val readyAsFrom: LocalTime?,
-    val orderTypes: List<String>,
-    val availableDays: List<String>,
+    val orderTypes: Set<String>,
+    val availableDays: Set<String>,
     val discounts: Set<DiscountResponse>
+
+) : BaseEntityResponse
+
+data class DessertMinimalResponse(
+    val id: UUID,
+    val dessertName: String,
+    val description: String?,
+    val dessertType: String,
+    val likeCount: Long,
+    val likedByCurrentUser: Boolean,
 )
 
 data class DessertFlavourResponse(

@@ -9,7 +9,7 @@ import com.qinet.feastique.model.dto.DessertAvailabilityDto
 import com.qinet.feastique.model.dto.FlavourAvailabilityDto
 import com.qinet.feastique.model.dto.consumables.DessertDto
 import com.qinet.feastique.model.dto.consumables.DessertFlavourSizeDto
-import com.qinet.feastique.model.entity.Menu
+import com.qinet.feastique.model.entity.menu.Menu
 import com.qinet.feastique.model.entity.consumables.dessert.Dessert
 import com.qinet.feastique.model.entity.consumables.flavour.DessertFlavour
 import com.qinet.feastique.model.entity.discount.DessertDiscount
@@ -18,15 +18,18 @@ import com.qinet.feastique.model.entity.image.DessertImage
 import com.qinet.feastique.model.entity.size.DessertFlavourSize
 import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.enums.*
+import com.qinet.feastique.repository.bookmark.DessertBookmarkRepository
 import com.qinet.feastique.repository.menu.MenuRepository
 import com.qinet.feastique.repository.consumables.dessert.DessertRepository
 import com.qinet.feastique.repository.discount.DiscountRepository
+import com.qinet.feastique.repository.like.DessertLikeRepository
 import com.qinet.feastique.repository.user.VendorRepository
 import com.qinet.feastique.response.consumables.dessert.DessertResponse
 import com.qinet.feastique.response.pagination.WindowResponse
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.utility.CursorEncoder
 import com.qinet.feastique.utility.DuplicateUtility
+import com.qinet.feastique.utility.SecurityUtility
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.*
 import org.springframework.stereotype.Service
@@ -41,45 +44,86 @@ class DessertService(
     private val duplicateUtility: DuplicateUtility,
     private val menuRepository: MenuRepository,
     private val discountRepository: DiscountRepository,
-    private val cursorEncoder: CursorEncoder
+    private val dessertLikeRepository: DessertLikeRepository,
+    private val cursorEncoder: CursorEncoder,
+    private val securityUtility: SecurityUtility,
+    private val dessertBookmarkRepository: DessertBookmarkRepository
 ) {
 
+    @Suppress("unused")
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @Transactional(readOnly = true)
-    fun getDessert(dessertId: UUID, vendorDetails: UserSecurity): Dessert {
-        return dessertRepository.findById(dessertId)
-            .orElseThrow { RequestedEntityNotFoundException("No dessert found for id: $dessertId") }
-            .also {
-                if (it.vendor.id != vendorDetails.id) {
-                    throw PermissionDeniedException("You do not have permission to access this dessert.")
-                }
+    fun getDessert(dessertId: UUID, userDetails: UserSecurity): DessertResponse {
+        val role = securityUtility.getSingleRole(userDetails)
+        var liked = false
+        var bookmarked = false
+
+        val dessert = when (role) {
+            "CUSTOMER" -> {
+                liked = dessertLikeRepository.existsByDessertIdAndCustomerId(dessertId, userDetails.id)
+                bookmarked = dessertBookmarkRepository.existsByDessertIdAndCustomerId(dessertId, userDetails.id)
+                dessertRepository.findById(dessertId)
+                    .getOrElse { throw RequestedEntityNotFoundException() }
             }
+            "VENDOR" -> dessertRepository.findByIdAndVendorIdAndIsActiveTrue(dessertId, userDetails.id)
+                ?: throw RequestedEntityNotFoundException()
+
+            else -> throw IllegalArgumentException("Unsupported role: $role")
+        }
+
+        return dessert.toResponse(liked, bookmarked)
+    }
+
+    @Transactional(readOnly = true)
+    fun getDessertById(dessertId: UUID, vendorDetails: UserSecurity): Dessert {
+        return dessertRepository.findByIdAndVendorIdAndIsActiveTrue(dessertId, vendorDetails.id)
+            ?: throw RequestedEntityNotFoundException("No dessert found for id: $dessertId")
     }
 
     @Transactional(readOnly = true)
     fun getAllDesserts(vendorDetails: UserSecurity, page: Int, size: Int): Page<DessertResponse> {
         val pageable = PageRequest.of(page, size, Sort.by("name").ascending())
-        return dessertRepository.findAllByVendorId(vendorDetails.id, pageable).map { it.toResponse() }
+        return dessertRepository.findAllByVendorIdAndIsActiveTrue(vendorDetails.id, pageable).map { it.toResponse() }
     }
 
     @Transactional(readOnly = true)
     fun scrollDesserts(
         vendorId: UUID,
         cursor: String?,
-        size: Int = Constants.DEFAULT_PAGE_SIZE.type
+        size: Int = Constants.DEFAULT_PAGE_SIZE.type,
+        userDetails: UserSecurity
     ): WindowResponse<DessertResponse> {
+
         val currentOffset: Long = cursor?.toLongOrNull() ?: 0L
         val sort = Sort.by("name").ascending()
         val scrollPosition = if (currentOffset == 0L) ScrollPosition.offset() else ScrollPosition.offset(currentOffset)
-        val window = dessertRepository.findAllByVendorId(vendorId, scrollPosition, sort, Limit.of(size)).map { it.toResponse() }
+        val window = dessertRepository.findAllByVendorIdAndIsActiveTrue(vendorId, scrollPosition, sort, Limit.of(size))
 
-        return window.toResponse(currentOffset) { cursorEncoder.encodeOffset(it) }
+        val isCustomer = securityUtility.getSingleRole(userDetails) == "CUSTOMER"
+        val dessertIds = if (isCustomer) window.toList().map { it.id } else emptyList()
+
+        val likedDessertIds: Set<UUID> = if (isCustomer) {
+            dessertLikeRepository.findAllByCustomerIdAndDessertIdIn(userDetails.id, dessertIds)
+                .map { it.dessert.id }
+                .toHashSet()
+        } else emptySet()
+
+        val bookmarkedDessertIds: Set<UUID> = if (isCustomer) {
+            dessertBookmarkRepository.findAllByCustomerIdAndDessertIdIn(userDetails.id, dessertIds)
+                .map { it.dessert.id }
+                .toHashSet()
+        } else emptySet()
+
+        return window.map { it.toResponse(it.id in likedDessertIds, it.id in bookmarkedDessertIds) }
+            .toResponse(currentOffset) { cursorEncoder.encodeOffset(it) }
     }
 
     @Transactional
     fun deleteDessert(dessertId: UUID, vendorDetails: UserSecurity) {
-        dessertRepository.delete(getDessert(dessertId, vendorDetails))
+        val dessert = getDessertById(dessertId, vendorDetails)
+        dessert.isActive = false
+        saveDessert(dessert)
     }
 
     @Transactional
@@ -93,7 +137,7 @@ class DessertService(
         id: UUID,
         vendorDetails: UserSecurity
     ): Dessert {
-        val dessert = getDessert(id, vendorDetails)
+        val dessert = getDessertById(id, vendorDetails)
         if (dessert.availability != Availability.fromString(dessertAvailabilityDto.availability)) {
             dessert.availability = Availability.fromString(dessertAvailabilityDto.availability)
         }
@@ -123,7 +167,7 @@ class DessertService(
             .orElseThrow { UserNotFoundException("Vendor not found.") }
 
         val dessert: Dessert = if (dessertDto.id != null) {
-            getDessert(dessertDto.id!!, vendorDetails)
+            getDessertById(dessertDto.id!!, vendorDetails)
         } else {
             Dessert().apply { this.vendor = vendor }
         }
@@ -267,10 +311,17 @@ class DessertService(
                 name = requireNotNull(flavourDto.flavourName) { "Please enter a flavour name." }
                 description = flavourDto.description
                 dessertFlavourSizes = prepareDessertFlavourSizes(flavourDto.flavourSizes, flavour)
+                isActive = true
             }
         }
 
-        dessert.dessertFlavours.removeIf { existing -> updatedFlavours.none { it.id == existing.id } }
+        dessert.dessertFlavours.forEach { existing ->
+            if (updatedFlavours.none { it.id == existing.id }) {
+                existing.isActive = false
+                existing.dessertFlavourSizes.forEach { it.isActive = false }
+            }
+        }
+
         updatedFlavours.forEach { updated ->
             if (dessert.dessertFlavours.none { it.id == updated.id }) dessert.dessertFlavours.add(updated)
         }
@@ -293,12 +344,16 @@ class DessertService(
                 name = dto.sizeName ?: flavourSize.size!!.name
                 price = requireNotNull(dto.price) { "Please provide a price." }
                 availability = requireNotNull(Availability.fromString(dto.availability!!))
+                isActive = true
             }
         }
 
-        dessertFlavour.dessertFlavourSizes.removeIf { existing -> updatedFlavourSizes.none { it.id == existing.id } }
+        dessertFlavour.dessertFlavourSizes.forEach { existing ->
+            if (updatedFlavourSizes.none { it.id == existing.id } ) existing.isActive = false
+        }
         updatedFlavourSizes.forEach { updated ->
-            if (dessertFlavour.dessertFlavourSizes.none { it.id == updated.id }) dessertFlavour.dessertFlavourSizes.add(updated)
+            if (dessertFlavour.dessertFlavourSizes.none { it.id == updated.id })
+                dessertFlavour.dessertFlavourSizes.add(updated)
         }
 
         return dessertFlavour.dessertFlavourSizes

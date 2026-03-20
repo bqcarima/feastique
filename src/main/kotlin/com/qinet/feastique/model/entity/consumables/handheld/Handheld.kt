@@ -3,7 +3,7 @@ package com.qinet.feastique.model.entity.consumables.handheld
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonManagedReference
-import com.qinet.feastique.model.entity.Menu
+import com.qinet.feastique.model.entity.menu.Menu
 import com.qinet.feastique.model.entity.consumables.EdibleEntity
 import com.qinet.feastique.model.entity.consumables.filling.HandheldFilling
 import com.qinet.feastique.model.entity.discount.HandheldDiscount
@@ -15,6 +15,7 @@ import com.qinet.feastique.model.enums.OrderType
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
+import org.hibernate.annotations.Formula
 import java.time.LocalTime
 
 @Entity
@@ -69,7 +70,7 @@ class Handheld : EdibleEntity() {
     @OneToMany(
         mappedBy = "handheld",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var handheldFillings: MutableSet<HandheldFilling> = mutableSetOf()
 
@@ -85,7 +86,7 @@ class Handheld : EdibleEntity() {
     @OneToMany(
         mappedBy = "handheld",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var handheldSizes: MutableSet<HandheldSize> = mutableSetOf()
 
@@ -96,5 +97,11 @@ class Handheld : EdibleEntity() {
         orphanRemoval = true
     )
     var menu: Menu? = null
+
+    @Formula("(SELECT COUNT(hl.id) FROM handheld_likes hl WHERE hl.handheld_id = id)")
+    var likeCount: Long = 0
+
+    @Formula("(SELECT COUNT(hb.id) FROM handheld_bookmarks hb WHERE hb.handheld_id = id)")
+    var bookmarkCount: Long = 0
 }
 

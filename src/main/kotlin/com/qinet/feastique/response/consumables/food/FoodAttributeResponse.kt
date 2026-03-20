@@ -11,12 +11,6 @@ data class FoodDiscountResponse(
     val endDate: Date,
 )
 
-data class FoodOrderTypeResponse(
-    val id: UUID,
-    val foodId: UUID,
-    val orderType: String
-)
-
 data class FoodSizeResponse(
     val id: UUID,
     val size: String,

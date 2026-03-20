@@ -71,8 +71,8 @@ class OrderService(
     fun getOrder(id: UUID, userDetails: UserSecurity): Order? {
         val role = securityUtility.getRole(userDetails)
         return when (role) {
-            "CUSTOMER" -> orderRepository.findByIdAndCustomerIdAndCustomerDeletedAt(id, userDetails.id, null)
-            "VENDOR" -> orderRepository.findByIdAndVendorIdAndVendorDeletedAt(id, userDetails.id, null)
+            "CUSTOMER" -> orderRepository.findByIdAndCustomerIdAndCustomerDeletedFalse(id, userDetails.id)
+            "VENDOR" -> orderRepository.findByIdAndVendorIdAndVendorDeletedFalse(id, userDetails.id, null)
             else -> throw IllegalArgumentException("Invalid role. Contact customer support if issue persists.")
         }
     }
@@ -81,7 +81,7 @@ class OrderService(
     fun getAllOrders(userDetails: UserSecurity, page: Int, size: Int): Page<OrderResponse> {
         securityUtility.getRole(userDetails)
         val pageable = PageRequest.of(page, size, Sort.by("placementTime").descending())
-        return orderRepository.findAllByVendorDeletedAtAndVendorId(null, userDetails.id, pageable)
+        return orderRepository.findAllByVendorDeletedFalseAndVendorId(userDetails.id, pageable)
             .map { it.toResponse() }
     }
 
@@ -102,12 +102,12 @@ class OrderService(
         val sort = Sort.by("placementTime").descending()
 
         val window = when (role) {
-            "CUSTOMER" -> orderRepository.findAllByCustomerDeletedAtAndCustomerIdAndOrderStatus(
-                null, userDetails.id, status, scrollPosition, sort, Limit.of(size)
+            "CUSTOMER" -> orderRepository.findAllByCustomerDeletedFalseAndCustomerIdAndOrderStatus(
+                userDetails.id, status, scrollPosition, sort, Limit.of(size)
             )
 
-            "VENDOR" -> orderRepository.findAllByVendorDeletedAtAndVendorIdAndOrderStatus(
-                null, userDetails.id, status, scrollPosition, sort, Limit.of(size)
+            "VENDOR" -> orderRepository.findAllByVendorDeletedFalseAndVendorIdAndOrderStatus(
+                userDetails.id, status, scrollPosition, sort, Limit.of(size)
             )
 
             else -> throw IllegalArgumentException("Invalid role. Contact customer support if issue persists.")
@@ -173,7 +173,7 @@ class OrderService(
         val customer = customerRepository.findById(customerDetails.id)
             .orElseThrow { UserNotFoundException("Customer not found.") }
 
-        val customerAddresses = customerAddressRepository.findAllByCustomerId(customer.id)
+        val customerAddresses = customerAddressRepository.findAllByCustomerIdAndIsActiveTrue(customer.id)
         val deliveryAddress = customerAddresses.find { it.id == cartItemDto.deliveryAddress }
             ?: customerAddresses.find { it.default == true }
 
@@ -378,6 +378,7 @@ class OrderService(
     }
 
     /** Soft-deletes an order for the calling user. Hard-deletes once both sides have deleted. */
+    @Transactional
     fun deleteOrder(id: UUID, userDetails: UserSecurity, maxAttempts: Int = 3) {
         var attempt = 0
 
@@ -391,23 +392,17 @@ class OrderService(
                     "CUSTOMER" -> {
                         if (order.customer?.id != userDetails.id)
                             throw PermissionDeniedException("You do not have permission to delete this order.")
-                        order.customerDeletedAt = LocalDateTime.now()
+                        order.customerDeleted = true
                     }
 
                     "VENDOR" -> {
                         if (order.vendor?.id != userDetails.id)
                             throw PermissionDeniedException("You do not have permission to delete this order.")
-                        order.vendorDeletedAt = LocalDateTime.now()
+                        order.vendorDeleted = true
                     }
                 }
 
-                if (order.customerDeletedAt != null && order.vendorDeletedAt != null) {
-                    order.customer = null
-                    order.vendor = null
-                    orderRepository.delete(order)
-                } else {
-                    orderRepository.save(order)
-                }
+                saveFoodOrder(order)
                 return
 
             } catch (ex: OptimisticLockingFailureException) {
@@ -685,7 +680,7 @@ class OrderService(
 
     private fun prepareFoodOrderItem(itemDto: ItemDto, order: Order) {
         val foodItemDto = itemDto.foodItemDto!!
-        val food = foodRepository.findByIdWithAllRelations(foodItemDto.foodId)
+        val food = foodRepository.findByIdWithAllRelationsAndIsActiveTrue(foodItemDto.foodId)
             .orElseThrow { RequestedEntityNotFoundException("Unable to place order. Food not found.") }
 
         if (!food.deliverable!! && order.orderType == OrderType.DELIVERY)

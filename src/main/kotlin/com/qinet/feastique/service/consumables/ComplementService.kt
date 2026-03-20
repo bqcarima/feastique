@@ -2,7 +2,6 @@ package com.qinet.feastique.service.consumables
 
 import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.exception.DuplicateFoundException
-import com.qinet.feastique.exception.PermissionDeniedException
 import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.model.dto.consumables.ComplementDto
@@ -30,13 +29,8 @@ class ComplementService(
 
     @Transactional(readOnly = true)
     fun getComplement(id: UUID, vendorDetails: UserSecurity): Complement {
-        val complement = complementRepository.findById(id)
-            .orElseThrow { RequestedEntityNotFoundException("No discount found for id: $id") }
-            .also {
-                if (it.vendor.id != vendorDetails.id) {
-                    throw PermissionDeniedException("You do not have permission to access discount: $id")
-                }
-            }
+        val complement = complementRepository.findByIdAndVendorIdAndIsActiveTrue(id, vendorDetails.id)
+            ?: throw RequestedEntityNotFoundException("No discount found for id: $id")
         return complement
     }
 
@@ -44,7 +38,7 @@ class ComplementService(
     fun getAllComplements(vendorDetails: UserSecurity, page: Int, size: Int): Page<ComplementResponse> {
         val pageable = PageRequest.of(page, size, Sort.by("name").ascending())
         val complementResponses =
-            complementRepository.findAllByVendorId(vendorDetails.id, pageable).map { it.toResponse() }
+            complementRepository.findAllByVendorIdAndIsActiveTrue(vendorDetails.id, pageable).map { it.toResponse() }
 
         return complementResponses
     }
@@ -65,7 +59,7 @@ class ComplementService(
             ScrollPosition.offset(currentOffset)
         }
 
-        val window = complementRepository.findAllByVendorId(
+        val window = complementRepository.findAllByVendorIdAndIsActiveTrue(
             vendorDetails.id,
             scrollPosition,
             sort,
@@ -78,10 +72,8 @@ class ComplementService(
     @Transactional
     fun deleteComplement(id: UUID, vendorDetails: UserSecurity) {
         val complement = getComplement(id, vendorDetails)
-        if (complement.vendor.id != vendorDetails.id) {
-            throw PermissionDeniedException("You do not have the permission to delete this complement.")
-        }
-        complementRepository.delete(complement)
+        complement.isActive = false
+        saveComplement(complement)
     }
 
     @Transactional

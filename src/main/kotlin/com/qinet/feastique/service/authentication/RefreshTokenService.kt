@@ -1,6 +1,6 @@
 package com.qinet.feastique.service.authentication
 
-import com.qinet.feastique.model.entity.RefreshToken
+import com.qinet.feastique.model.entity.authentication.RefreshToken
 import com.qinet.feastique.repository.authentication.RefreshTokenRepository
 import com.qinet.feastique.security.HashEncoder
 import org.springframework.stereotype.Service

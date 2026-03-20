@@ -7,20 +7,22 @@ import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.model.dto.HandheldAvailabilityDto
 import com.qinet.feastique.model.dto.consumables.HandheldDto
-import com.qinet.feastique.model.entity.Menu
 import com.qinet.feastique.model.entity.consumables.filling.Filling
 import com.qinet.feastique.model.entity.consumables.filling.HandheldFilling
 import com.qinet.feastique.model.entity.consumables.handheld.Handheld
 import com.qinet.feastique.model.entity.discount.Discount
 import com.qinet.feastique.model.entity.discount.HandheldDiscount
 import com.qinet.feastique.model.entity.image.HandheldImage
+import com.qinet.feastique.model.entity.menu.Menu
 import com.qinet.feastique.model.entity.size.HandheldSize
 import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.enums.*
-import com.qinet.feastique.repository.menu.MenuRepository
+import com.qinet.feastique.repository.bookmark.HandheldBookmarkRepository
 import com.qinet.feastique.repository.consumables.filling.FillingRepository
 import com.qinet.feastique.repository.consumables.handheld.HandheldRepository
 import com.qinet.feastique.repository.discount.DiscountRepository
+import com.qinet.feastique.repository.like.HandheldLikeRepository
+import com.qinet.feastique.repository.menu.MenuRepository
 import com.qinet.feastique.repository.user.VendorRepository
 import com.qinet.feastique.response.consumables.handheld.HandheldResponse
 import com.qinet.feastique.response.pagination.WindowResponse
@@ -44,9 +46,11 @@ class HandheldService(
     private val menuRepository: MenuRepository,
     private val fillingRepository: FillingRepository,
     private val discountRepository: DiscountRepository,
+    private val handheldLikeRepository: HandheldLikeRepository,
     private val cursorEncoder: CursorEncoder,
+    private val handheldBookmarkRepository: HandheldBookmarkRepository,
 ) {
-
+    @Suppress("unused")
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @Transactional
@@ -55,46 +59,80 @@ class HandheldService(
     }
 
     @Transactional(readOnly = true)
-    fun getHandheldById(id: UUID, userDetails: UserSecurity): Handheld {
+    fun getHandheld(handheldId: UUID, userDetails: UserSecurity): HandheldResponse {
         val role = securityUtility.getRole(userDetails)
-        return handheldRepository.findById(id)
-            .orElseThrow { RequestedEntityNotFoundException("Handheld not found.") }
-            .also {
-                if (role == "VENDOR" && it.vendor.id != userDetails.id) {
-                    throw PermissionDeniedException("You do not have permission to view this handheld.")
-                }
+        var liked = false
+        var bookmarked = false
+        val handheld = when (role) {
+            "CUSTOMER" -> {
+                liked = handheldLikeRepository.existsByHandheldIdAndCustomerId(handheldId, userDetails.id)
+                bookmarked = handheldBookmarkRepository.existsByHandheldIdAndCustomerId(handheldId, userDetails.id)
+                handheldRepository.findById(handheldId)
+                    .getOrElse { throw RequestedEntityNotFoundException() }
             }
+            "VENDOR" -> handheldRepository.findByIdAndVendorIdAndIsActiveTrue(handheldId, userDetails.id)
+                ?: throw RequestedEntityNotFoundException()
+
+            else -> throw IllegalArgumentException("Unsupported role: $role")
+        }
+
+        return handheld.toResponse(liked, bookmarked)
     }
+
+    @Transactional(readOnly = true)
+    fun getHandheldById(handheldId: UUID, vendorDetails: UserSecurity): Handheld {
+        return handheldRepository.findByIdAndVendorIdAndIsActiveTrue(handheldId, vendorDetails.id)
+            ?: throw RequestedEntityNotFoundException("Handheld not found.")
+    }
+
 
     @Transactional(readOnly = true)
     fun getAllHandhelds(vendorDetails: UserSecurity, page: Int, size: Int): Page<HandheldResponse> {
         val pageable = PageRequest.of(page, size, Sort.by("name").ascending())
-        return handheldRepository.findAllByVendorId(vendorDetails.id, pageable).map { it.toResponse() }
+        return handheldRepository.findAllByVendorIdAndIsActiveTrue(vendorDetails.id, pageable).map { it.toResponse() }
     }
 
     @Transactional(readOnly = true)
     fun scrollHandhelds(
         vendorId: UUID,
         cursor: String?,
-        size: Int = Constants.DEFAULT_PAGE_SIZE.type
+        size: Int = Constants.DEFAULT_PAGE_SIZE.type,
+        userDetails: UserSecurity
     ): WindowResponse<HandheldResponse> {
         val currentOffset: Long = cursor?.toLongOrNull() ?: 0L
         val scrollPosition = if (currentOffset == 0L) ScrollPosition.offset() else ScrollPosition.offset(currentOffset)
         val sort = Sort.by("name").ascending()
 
-        val window = handheldRepository.findAllByVendorId(vendorId, scrollPosition, sort, Limit.of(size)).map { it.toResponse() }
+        val window = handheldRepository.findAllByVendorIdAndIsActiveTrue(vendorId, scrollPosition, sort, Limit.of(size))
 
-        return window.toResponse(currentOffset) { cursorEncoder.encodeOffset(it) }
+        val isCustomer = securityUtility.getSingleRole(userDetails) == "CUSTOMER"
+        val handheldIds = if (isCustomer) window.toList().map { it.id } else emptyList()
+
+        val likedHandheldIds: Set<UUID> = if (isCustomer) {
+            handheldLikeRepository.findAllByCustomerIdAndHandheldIdIn(userDetails.id, handheldIds)
+                .map { it.handheld.id }
+                .toHashSet()
+        } else emptySet()
+
+        val bookmarkedHandheldIds: Set<UUID> = if (isCustomer) {
+            handheldBookmarkRepository.findAllByCustomerIdAndHandheldIdIn(userDetails.id, handheldIds)
+                .map { it.handheld.id }
+                .toHashSet()
+        } else emptySet()
+
+        return window.map { it.toResponse(it.id in likedHandheldIds, it.id in bookmarkedHandheldIds) }
+            .toResponse(currentOffset) { cursorEncoder.encodeOffset(it) }
     }
 
     @Transactional
     fun deleteHandheld(id: UUID, vendorDetails: UserSecurity) {
-        handheldRepository.delete(getHandheldById(id, vendorDetails))
-        logger.info("Handheld '{}' deleted by vendor '{}'", id, vendorDetails.id)
+        val handheld = getHandheldById(id, vendorDetails)
+        handheld.isActive = false
+        saveHandheld(handheld)
     }
 
     @Transactional
-    fun toggleAvailability(
+    fun changeHandheldAvailability(
         handheldAvailabilityDto: HandheldAvailabilityDto,
         id: UUID,
         vendorDetails: UserSecurity
@@ -105,15 +143,9 @@ class HandheldService(
             handheld.availability = Availability.fromString(handheldAvailabilityDto.availability!!)
         }
 
-        toggleHandheldSizes(handheldAvailabilityDto, handheld)
+        changeHandheldSizeAvailability(handheldAvailabilityDto, handheld)
 
         val updatedHandheld = handheldRepository.saveAndFlush(handheld)
-        logger.info(
-            "Handheld '{}' availability toggled to '{}' by vendor '{}'",
-            id,
-            updatedHandheld.availability,
-            vendorDetails.id
-        )
         return updatedHandheld
     }
 
@@ -291,12 +323,16 @@ class HandheldService(
                 name = dto.sizeName ?: this.size!!.name
                 price = dto.price
                 availability = requireNotNull(Availability.fromString(dto.availability!!))
+                isActive = true
             }
         }
 
-        handheld.handheldSizes.removeIf { existing -> updatedSizes.none { it.id == existing.id } }
+        handheld.handheldSizes.forEach { existing ->
+            if (updatedSizes.none { it.id == existing.id }) existing.isActive = false
+        }
         updatedSizes.forEach { updated ->
-            if (handheld.handheldSizes.none { it.id == updated.id }) handheld.handheldSizes.add(updated)
+            if (handheld.handheldSizes.none { it.id == updated.id })
+                handheld.handheldSizes.add(updated)
         }
 
         return handheld.handheldSizes
@@ -351,7 +387,7 @@ class HandheldService(
         return handheld.handheldImages
     }
 
-    private fun toggleHandheldSizes(handheldAvailabilityDto: HandheldAvailabilityDto, handheld: Handheld) {
+    private fun changeHandheldSizeAvailability(handheldAvailabilityDto: HandheldAvailabilityDto, handheld: Handheld) {
         val handheldSizesToToggle = handheldAvailabilityDto.handheldSizes
         if (handheldSizesToToggle.isNullOrEmpty()) throw IllegalArgumentException("Please select at least one handheld size.")
 

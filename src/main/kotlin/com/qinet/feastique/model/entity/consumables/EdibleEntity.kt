@@ -53,5 +53,8 @@ abstract class EdibleEntity {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     @CreationTimestamp
     var createdAt: Instant? = null
+
+    @Column
+    var isActive: Boolean = true
 }
 

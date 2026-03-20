@@ -1,6 +1,6 @@
 package com.qinet.feastique.service.user
 
-import com.qinet.feastique.model.entity.UserSession
+import com.qinet.feastique.model.entity.authentication.UserSession
 import com.qinet.feastique.repository.authentication.UserSessionRepository
 import com.qinet.feastique.service.authentication.RefreshTokenService
 import org.springframework.scheduling.annotation.Scheduled

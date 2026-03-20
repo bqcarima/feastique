@@ -12,15 +12,19 @@ import com.qinet.feastique.model.enums.AccountType
 import com.qinet.feastique.model.enums.Region
 import com.qinet.feastique.model.enums.RegionCode
 import com.qinet.feastique.repository.address.VendorAddressRepository
+import com.qinet.feastique.repository.bookmark.VendorBookmarkRepository
 import com.qinet.feastique.repository.contact.CustomerPhoneNumberRepository
 import com.qinet.feastique.repository.contact.VendorPhoneNumberRepository
+import com.qinet.feastique.repository.like.VendorLikeRepository
 import com.qinet.feastique.repository.user.VendorRepository
 import com.qinet.feastique.response.token.TokenPairResponse
 import com.qinet.feastique.security.PasswordEncoder
 import com.qinet.feastique.security.UserSecurity
 import com.qinet.feastique.service.authentication.RefreshTokenService
 import com.qinet.feastique.service.user.UserSessionService
+import com.qinet.feastique.utility.CursorEncoder
 import com.qinet.feastique.utility.JwtUtility
+import com.qinet.feastique.utility.SecurityUtility
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.stereotype.Service
@@ -35,10 +39,14 @@ class VendorService(
     private val vendorAddressRepository: VendorAddressRepository,
     private val vendorPhoneNumberRepository: VendorPhoneNumberRepository,
     private val customerPhoneNumberRepository: CustomerPhoneNumberRepository,
+    private val vendorLikeRepository: VendorLikeRepository,
     private val passwordEncoder: PasswordEncoder,
     private val jwtUtility: JwtUtility,
     private val userSessionService: UserSessionService,
-    private val refreshTokenService: RefreshTokenService
+    private val refreshTokenService: RefreshTokenService,
+    private val securityUtility: SecurityUtility,
+    private val vendorBookmarkRepository: VendorBookmarkRepository,
+    private val cursorEncoder: CursorEncoder
 ) {
 
     @Transactional(readOnly = true)
@@ -67,7 +75,6 @@ class VendorService(
             else -> throw IllegalArgumentException("Either username or phone must be provided")
         }
     }
-
 
     @Transactional
     fun saveVendor(vendor: Vendor): Vendor {
@@ -235,5 +242,36 @@ class VendorService(
         vendor.accountUpdated = LocalDateTime.now()
         saveVendor(vendor)
     }
+
+    /*@Transactional(readOnly = true)
+    fun scrollVendors(
+        cursor: String?,
+        size: Int = Constants.DEFAULT_PAGE_SIZE.type,
+        userDetails: UserSecurity
+    ): WindowResponse<VendorBookmarkResponse> {
+        val currentOffset: Long = cursor?.toLongOrNull() ?: 0L
+        val scrollPosition = if (currentOffset == 0L) ScrollPosition.offset() else ScrollPosition.offset(currentOffset)
+        val sort = Sort.by("name").ascending()
+
+        val window = vendorRepository.findAll(scrollPosition, sort, Limit.of(size))
+
+        val isCustomer = securityUtility.getSingleRole(userDetails) == "CUSTOMER"
+        val vendorIds = if (isCustomer) window.toList().map { it.id } else emptyList()
+
+        val likedVendorIds: Set<UUID> = if (isCustomer) {
+            vendorLikeRepository.findAllByCustomerIdAndVendorIdIn(userDetails.id, vendorIds)
+                .map { it.vendor.id }
+                .toHashSet()
+        } else emptySet()
+
+        val bookmarkedVendorIds: Set<UUID> = if (isCustomer) {
+            vendorBookmarkRepository.findAllByCustomerIdAndVendorIdIn(userDetails.id, vendorIds)
+                .map { it.vendor.id }
+                .toHashSet()
+        } else emptySet()
+
+        return window.map { it.toBookmarkResponse(it.id in likedVendorIds, it.id in bookmarkedVendorIds) }
+            .toResponse(currentOffset) { cursorEncoder.encodeOffset(it) }
+    }*/
 }
 

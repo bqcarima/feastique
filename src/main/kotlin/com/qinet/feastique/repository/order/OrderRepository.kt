@@ -19,20 +19,18 @@ import java.util.*
 @Repository
 interface OrderRepository : JpaRepository<Order, UUID> {
 
-    fun findAllByCustomerDeletedAtAndCustomerIdAndOrderStatus(
-        customerDeletedAt: LocalDateTime?,
+    fun findAllByCustomerDeletedFalseAndCustomerIdAndOrderStatus(
         customerId: UUID,orderStatus: OrderStatus,
         scrollPosition: ScrollPosition,
         sort: Sort,
         limit: Limit): Window<Order>
 
-    fun findAllByVendorDeletedAtAndVendorId(vendorDeletedAt: LocalDateTime?, vendorId: UUID, pageable: Pageable): Page<Order>
+    fun findAllByVendorDeletedFalseAndVendorId(vendorId: UUID, pageable: Pageable): Page<Order>
     fun findByIdAndCustomerIdAndOrderStatus(id: UUID, customerId: UUID, orderStatus: OrderStatus): Order?
-    fun findByIdAndCustomerIdAndCustomerDeletedAt(id: UUID, customerId: UUID, customerDeletedAt: LocalDateTime?): Order?
-    fun findByIdAndVendorIdAndVendorDeletedAt(id: UUID, vendorId: UUID, vendorDeletedAt: LocalDateTime?): Order?
+    fun findByIdAndCustomerIdAndCustomerDeletedFalse(id: UUID, customerId: UUID): Order?
+    fun findByIdAndVendorIdAndVendorDeletedFalse(id: UUID, vendorId: UUID, vendorDeletedAt: LocalDateTime?): Order?
 
-    fun findAllByVendorDeletedAtAndVendorIdAndOrderStatus(
-        customerDeletedAt: LocalDateTime?,
+    fun findAllByVendorDeletedFalseAndVendorIdAndOrderStatus(
         vendorId: UUID,orderStatus: OrderStatus,
         scrollPosition: ScrollPosition,
         sort: Sort,

@@ -3,7 +3,7 @@ package com.qinet.feastique.model.entity.consumables.beverage
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonManagedReference
-import com.qinet.feastique.model.entity.Menu
+import com.qinet.feastique.model.entity.menu.Menu
 import com.qinet.feastique.model.entity.consumables.EdibleEntity
 import com.qinet.feastique.model.entity.consumables.flavour.BeverageFlavour
 import com.qinet.feastique.model.entity.discount.BeverageDiscount
@@ -13,6 +13,7 @@ import com.qinet.feastique.model.enums.Day
 import com.qinet.feastique.model.enums.OrderType
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotNull
+import org.hibernate.annotations.Formula
 import java.time.LocalTime
 
 @Entity
@@ -58,7 +59,7 @@ class Beverage : EdibleEntity() {
     @OneToMany(
         mappedBy = "beverage",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var beverageImages: MutableSet<BeverageImage> = mutableSetOf()
 
@@ -66,7 +67,7 @@ class Beverage : EdibleEntity() {
     @OneToMany(
         mappedBy = "beverage",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var beverageFlavours: MutableSet<BeverageFlavour> = mutableSetOf()
 
@@ -85,5 +86,11 @@ class Beverage : EdibleEntity() {
         orphanRemoval = true
     )
     var menu: Menu? = null
+
+    @Formula("(SELECT COUNT(bl.id) FROM beverage_likes bl WHERE bl.beverage_id = id)")
+    var likeCount: Long = 0
+
+    @Formula("(SELECT COUNT(bb.id) FROM beverage_bookmarks bb WHERE bb.beverage_id = id)")
+    var bookmarkCount: Long = 0
 }
 

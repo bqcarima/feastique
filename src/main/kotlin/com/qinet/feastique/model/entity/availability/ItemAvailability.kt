@@ -1,4 +1,4 @@
-package com.qinet.feastique.model.entity
+package com.qinet.feastique.model.entity.availability
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore

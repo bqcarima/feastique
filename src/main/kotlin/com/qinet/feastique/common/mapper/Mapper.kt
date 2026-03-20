@@ -1,9 +1,10 @@
 package com.qinet.feastique.common.mapper
 
-import com.qinet.feastique.model.entity.DessertAvailability
-import com.qinet.feastique.model.entity.FoodAvailability
 import com.qinet.feastique.model.entity.address.Address
 import com.qinet.feastique.model.entity.address.CustomerAddress
+import com.qinet.feastique.model.entity.availability.DessertAvailability
+import com.qinet.feastique.model.entity.availability.FoodAvailability
+import com.qinet.feastique.model.entity.bookmark.*
 import com.qinet.feastique.model.entity.consumables.addOn.AddOn
 import com.qinet.feastique.model.entity.consumables.addOn.FoodAddOn
 import com.qinet.feastique.model.entity.consumables.beverage.Beverage
@@ -25,16 +26,14 @@ import com.qinet.feastique.model.entity.discount.HandheldDiscount
 import com.qinet.feastique.model.entity.image.DessertImage
 import com.qinet.feastique.model.entity.image.FoodImage
 import com.qinet.feastique.model.entity.image.HandheldImage
+import com.qinet.feastique.model.entity.image.PostImage
+import com.qinet.feastique.model.entity.message.Conversation
+import com.qinet.feastique.model.entity.message.Message
 import com.qinet.feastique.model.entity.order.Cart
 import com.qinet.feastique.model.entity.order.Order
 import com.qinet.feastique.model.entity.order.item.*
 import com.qinet.feastique.model.entity.post.Post
-import com.qinet.feastique.model.entity.review.BeverageReview
-import com.qinet.feastique.model.entity.review.DessertReview
-import com.qinet.feastique.model.entity.review.FoodReview
-import com.qinet.feastique.model.entity.review.HandheldReview
-import com.qinet.feastique.model.entity.review.Review
-import com.qinet.feastique.model.entity.review.VendorReview
+import com.qinet.feastique.model.entity.review.*
 import com.qinet.feastique.model.entity.size.BeverageFlavourSize
 import com.qinet.feastique.model.entity.size.DessertFlavourSize
 import com.qinet.feastique.model.entity.size.FoodSize
@@ -43,9 +42,7 @@ import com.qinet.feastique.model.entity.user.Customer
 import com.qinet.feastique.model.entity.user.Vendor
 import com.qinet.feastique.model.enums.*
 import com.qinet.feastique.response.availability.AvailabilityResponse
-import com.qinet.feastique.response.discount.DiscountResponse
-import com.qinet.feastique.response.image.ImageResponse
-import com.qinet.feastique.response.post.PostResponse
+import com.qinet.feastique.response.bookmark.BookmarkResponse
 import com.qinet.feastique.response.consumables.beverage.BeverageFlavourResponse
 import com.qinet.feastique.response.consumables.beverage.BeverageFlavourSizeResponse
 import com.qinet.feastique.response.consumables.beverage.BeverageOrderResponse
@@ -55,28 +52,29 @@ import com.qinet.feastique.response.consumables.dessert.DessertFlavourSizeRespon
 import com.qinet.feastique.response.consumables.dessert.DessertOrderResponse
 import com.qinet.feastique.response.consumables.dessert.DessertResponse
 import com.qinet.feastique.response.consumables.food.*
-import com.qinet.feastique.response.consumables.handheld.FillingOrderResponse
-import com.qinet.feastique.response.consumables.handheld.FillingResponse
-import com.qinet.feastique.response.consumables.handheld.HandheldMinimalResponse
-import com.qinet.feastique.response.consumables.handheld.HandheldOrderResponse
-import com.qinet.feastique.response.consumables.handheld.HandheldResponse
-import com.qinet.feastique.response.consumables.handheld.HandheldSizeResponse
+import com.qinet.feastique.response.consumables.handheld.*
+import com.qinet.feastique.response.discount.DiscountResponse
+import com.qinet.feastique.response.image.ImageResponse
+import com.qinet.feastique.response.message.ConversationResponse
+import com.qinet.feastique.response.message.ConversationSummaryResponse
+import com.qinet.feastique.response.message.MessageReplyResponse
+import com.qinet.feastique.response.message.MessageResponse
 import com.qinet.feastique.response.order.*
 import com.qinet.feastique.response.pagination.PageResponse
 import com.qinet.feastique.response.pagination.WindowResponse
-import com.qinet.feastique.response.review.BeverageOrderItemReviewResponse
-import com.qinet.feastique.response.review.DessertOrderItemReviewResponse
-import com.qinet.feastique.response.review.FoodOrderItemReviewResponse
-import com.qinet.feastique.response.review.HandheldOrderItemReviewResponse
-import com.qinet.feastique.response.review.VendorOrderReviewResponse
+import com.qinet.feastique.response.post.PostResponse
+import com.qinet.feastique.response.review.*
 import com.qinet.feastique.response.user.*
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Window
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 
 val dateFormatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+val dateTimeFormatter: DateTimeFormatter? = DateTimeFormatter.ofPattern("HH:mm:ss dd-MM-yyyy", Locale.getDefault())
 
 fun AddOn.toResponse() = AddOnResponse(
     id = this.id,
@@ -96,6 +94,19 @@ fun Address.toResponse(): AddressResponse = AddressResponse(
     location = listOf(longitude ?: "0.0", latitude ?: "0.0")
 )
 
+fun Bookmark.toResponse(like: Boolean = false, bookmark: Boolean = true) = BookmarkResponse(
+    id = id,
+    item = when (this) {
+        is BeverageBookmark -> this.beverage.toResponse(like, bookmark)
+        is DessertBookmark -> this.dessert.toResponse(like, bookmark)
+        is FoodBookmark -> this.food.toResponse(like, bookmark)
+        is HandheldBookmark -> this.handheld.toResponse(like, bookmark)
+        is VendorBookmark -> this.vendor.toBookmarkResponse(like, bookmark)
+        else -> throw IllegalArgumentException("Unknown bookmark type.")
+    },
+    createdAt = createdAt?.format(dateTimeFormatter) ?: LocalDateTime.MIN.format(dateTimeFormatter)
+)
+
 fun CustomerAddress.toResponse(): CustomerAddressResponse = CustomerAddressResponse(
     id = id,
     country = country,
@@ -108,9 +119,9 @@ fun CustomerAddress.toResponse(): CustomerAddressResponse = CustomerAddressRespo
     default = default ?: false
 )
 
-fun Beverage.toResponse() = BeverageResponse(
+fun Beverage.toResponse(like: Boolean = false, bookmark: Boolean = false) = BeverageResponse(
     id = id,
-    beverageName = name.orEmpty(),
+    name = name.orEmpty(),
     alcoholic = alcoholic ?: false,
     beverageGroup = beverageGroup?.type ?: "Unknown",
     percentage = percentage ?: 0,
@@ -120,7 +131,12 @@ fun Beverage.toResponse() = BeverageResponse(
     preparationTime = preparationTime ?: 0,
     readyAsFrom = readyAsFrom,
     deliveryFee = deliveryFee ?: 0,
-    beverageFlavours = beverageFlavours.map { it.toResponse() }.toSet(),
+    beverageFlavours = beverageFlavours.filter { it.isActive }.map { it.toResponse() }.toSet(),
+    likeCount = likeCount,
+    likedByCurrentUser = like,
+    availableDays = availableDays.map { it.type }.toSet(),
+    bookmarkCount = bookmarkCount,
+    bookmarkedByCurrentUser = bookmark,
 )
 
 fun BeverageCartItem.toResponse() = BeverageItemResponse(
@@ -146,7 +162,7 @@ fun BeverageFlavour.toResponse() = BeverageFlavourResponse(
     name = name!!,
     description = description.orEmpty(),
     availability = availability?.type ?: Availability.UNAVAILABLE.type,
-    flavourSizes = beverageFlavourSizes.map { it.toResponse() }.toSet()
+    flavourSizes = beverageFlavourSizes.filter { it.isActive }.map { it.toResponse() }.toSet()
 )
 
 fun BeverageFlavourSize.toResponse() = BeverageFlavourSizeResponse(
@@ -185,6 +201,33 @@ fun Complement.toResponse() = ComplementResponse(
     availability = availability?.type ?: Availability.UNAVAILABLE.type
 )
 
+fun Conversation.toSummaryResponse(role: String): ConversationSummaryResponse = ConversationSummaryResponse(
+    id = id,
+    startedAt = startedAt,
+    read = if (role == "VENDOR") vendorRead else customerRead,
+    otherPartyName = if (role == "VENDOR") {
+        customer.username
+    }
+    else {
+        vendor.restaurantName ?: vendor.chefName ?: vendor.username
+    },
+    otherPartyId = if (role == "VENDOR") customer.id else vendor.id
+)
+
+fun Conversation.toResponse(recentMessages: List<Message>, role: String): ConversationResponse = ConversationResponse(
+    id = id,
+    startedAt = startedAt,
+    read = if (role == "VENDOR") vendorRead else customerRead,
+    otherPartyName = if (role == "VENDOR") {
+        customer.username
+    }
+    else {
+        vendor.restaurantName ?: vendor.chefName ?: vendor.username
+    },
+    otherPartyId = if (role == "VENDOR") customer.id else vendor.id,
+    recentMessages = recentMessages.map { it.toResponse() }
+)
+
 fun Customer.toResponse(): CustomerResponse = CustomerResponse(
     id = id,
     username = username,
@@ -208,21 +251,25 @@ fun Customer.orderResponse(): FoodOrderCustomerResponse = FoodOrderCustomerRespo
     lastName = lastName.orEmpty(),
 )
 
-fun Dessert.toResponse(): DessertResponse = DessertResponse(
+fun Dessert.toResponse(like: Boolean = false, bookmark: Boolean = false): DessertResponse = DessertResponse(
     id = id,
-    dessertName = name.orEmpty(),
+    name = name.orEmpty(),
     dessertType = dessertType?.type ?: DessertType.OTHER.type,
     description = description.orEmpty(),
     availability = availability?.type ?: Availability.UNAVAILABLE.type,
     deliverable = deliverable ?: false,
     deliveryFee = deliveryFee ?: 0,
-    dessertFlavours = dessertFlavours.map { it.toResponse() },
+    dessertFlavours = dessertFlavours.filter { it.isActive }.map { it.toResponse() },
     preparationTime = preparationTime ?: 0,
     readyAsFrom = readyAsFrom,
-    orderTypes = dessertOrderTypes.map { it.type },
-    availableDays = availableDays.map { it.type },
+    orderTypes = dessertOrderTypes.map { it.type }.toSet(),
+    availableDays = availableDays.map { it.type }.toSet(),
     discounts = dessertDiscounts.map { it.discount.toResponse() }.toSet(),
-    dessertImages = dessertImages.map { it.toResponse() }
+    dessertImages = dessertImages.map { it.toResponse() },
+    likeCount = likeCount,
+    likedByCurrentUser = like,
+    bookmarkCount = bookmarkCount,
+    bookmarkedByCurrentUser = bookmark
 )
 
 fun DessertAvailability.toResponse() = AvailabilityResponse(
@@ -261,7 +308,7 @@ fun DessertFlavour.toResponse(): DessertFlavourResponse = DessertFlavourResponse
     flavourName = name.orEmpty(),
     description = description.orEmpty(),
     availability = availability?.type ?: Availability.UNAVAILABLE.type,
-    flavourSizes = dessertFlavourSizes.map { it.toResponse() }
+    flavourSizes = dessertFlavourSizes.filter { it.isActive }.map { it.toResponse() }
 )
 
 fun DessertFlavourSize.toResponse(): DessertFlavourSizeResponse = DessertFlavourSizeResponse(
@@ -291,10 +338,10 @@ fun Filling.toResponse() = FillingResponse(
     description = description
 )
 
-fun Food.toResponse() = FoodResponse(
+fun Food.toResponse(like: Boolean = false, bookmark: Boolean = false) = FoodResponse(
     id = id,
     foodNumber = foodNumber.orEmpty(),
-    foodName = name.orEmpty(),
+    name = name.orEmpty(),
     vendorId = vendor.id,
     vendorName = vendor.chefName.orEmpty(),
     mainCourse = mainCourse.orEmpty(),
@@ -306,26 +353,27 @@ fun Food.toResponse() = FoodResponse(
     dailyDeliveryQuantity = dailyDeliveryQuantity,
     deliveryTime = deliveryTime,
     deliveryFee = deliveryFee ?: 0,
-    images = this.foodImages.map { image ->
-        ImageResponse(
-            id = image.id,
-            imageUrl = image.imageUrl.orEmpty(),
-        )
-    },
-    size = foodSizes.map { it.toResponse() },
-    complements = foodComplements.map { it.toResponse() },
-    addOn = foodAddOns.map { it.toResponse() },
-    orderType = orderTypes.map { it.type },
-    availableDays = availableDays.map { it.type },
-    discount = foodDiscounts.map { it.toResponse() },
-    availability = availability?.type ?: Availability.UNAVAILABLE.type
+    images = this.foodImages.map { it.toResponse() }.toSet(),
+    size = foodSizes.filter { it.isActive }.map { it.toResponse() }.toSet(),
+    complements = foodComplements.filter { it.complement.isActive }.map { it.toResponse() }.toSet(),
+    addOn = foodAddOns.filter { it.addOn.isActive }.map { it.toResponse() },
+    orderTypes = orderTypes.map { it.type }.toSet(),
+    availableDays = availableDays.map { it.type }.toSet(),
+    discount = foodDiscounts.map { it.toResponse() }.toSet(),
+    availability = availability?.type ?: Availability.UNAVAILABLE.type,
+    likeCount = likeCount,
+    likedByCurrentUser = like,
+    bookmarkCount = bookmarkCount,
+    bookmarkedByCurrentUser = bookmark
 )
 
-fun Food.toMinimalResponse(): FoodMinimalResponse = FoodMinimalResponse(
+fun Food.toMinimalResponse(like: Boolean = false): FoodMinimalResponse = FoodMinimalResponse(
     id = id,
     foodName = name.orEmpty(),
     mainCourse = mainCourse.orEmpty(),
-    basePrice = basePrice ?: 0
+    basePrice = basePrice ?: 0,
+    likeCount = likeCount,
+    likedByCurrentUser = like
 )
 
 fun FoodAddOn.toResponse() = AddOnResponse(
@@ -392,32 +440,38 @@ fun FoodSize.toResponse(): FoodSizeResponse = FoodSizeResponse(
     availability = availability?.type ?: Availability.UNAVAILABLE.type
 )
 
-fun Handheld.toResponse() = HandheldResponse(
+fun Handheld.toResponse(like: Boolean = false, bookmark: Boolean = false) = HandheldResponse(
     id = id,
     handheldNumber = handheldNumber.orEmpty(),
-    handheldName = name.orEmpty(),
+    name = name.orEmpty(),
     vendorId = vendor.id,
     vendorName = vendor.chefName.orEmpty(),
     description = description,
     images = handheldImages.map { it.toResponse() },
-    sizes = handheldSizes.map { it.toResponse() },
-    fillings = handheldFillings.map { it.toResponse() },
+    sizes = handheldSizes.filter { it.isActive }.map { it.toResponse() },
+    fillings = handheldFillings.filter { it.filling.isActive }.map { it.toResponse() },
     availability = availability?.type ?: Availability.UNAVAILABLE.type,
     preparationTime = preparationTime ?: 0,
     readyAsFrom = readyAsFrom,
-    orderType = orderTypes.map { it.type },
+    orderTypes = orderTypes.map { it.type }.toSet(),
     handheldType = handHeldType?.type ?: HandHeldType.OTHER.type,
-    availableDays = availableDays.map { it.type },
+    availableDays = availableDays.map { it.type }.toSet(),
     deliverable = deliverable ?: false,
     deliveryFee = deliveryFee ?: 0,
-    discounts = handheldDiscounts.map { it.toResponse() }.toSet()
+    discounts = handheldDiscounts.map { it.toResponse() }.toSet(),
+    likeCount = likeCount,
+    likedByCurrentUser = like,
+    bookmarkCount = bookmarkCount,
+    bookmarkedByCurrentUser = bookmark
 )
 
-fun Handheld.toMinimalResponse() = HandheldMinimalResponse(
+fun Handheld.toMinimalResponse(like: Boolean = false) = HandheldMinimalResponse(
     id = id,
     handheldNumber = handheldNumber.orEmpty(),
     handheldName = name.orEmpty(),
     description = description,
+    likeCount = likeCount,
+    likedByCurrentUser = like,
 )
 
 fun HandheldCartItem.toResponse() = HandheldItemResponse(
@@ -470,6 +524,32 @@ private fun HandheldSize.toResponse() = HandheldSizeResponse(
     availability = availability?.type
 )
 
+fun Message.toResponse() = MessageResponse(
+    id = id,
+    body = when {
+        senderType == AccountType.VENDOR && vendorDeleted -> "[Message deleted.]"
+        senderType == AccountType.CUSTOMER && customerDeleted -> "[Message deleted.]"
+        else -> body.orEmpty()
+    },
+    sentAt = sentAt,
+    senderType = senderType.type,
+    replyTo = replyTo?.let {
+        MessageReplyResponse(
+            id = it.id,
+            body = when (it.senderType) {
+                AccountType.VENDOR if it.vendorDeleted -> "[Message deleted]"
+                AccountType.CUSTOMER if it.customerDeleted -> "[Message deleted]"
+                else -> it.body.orEmpty()
+            },
+            senderType = it.senderType.type,
+        )
+    },
+    deleted = when(senderType) {
+        AccountType.VENDOR -> vendorDeleted
+        AccountType.CUSTOMER -> customerDeleted
+    }
+)
+
 /** Dispatches each order item to its typed response. */
 fun Order.toResponse(): OrderResponse = OrderResponse(
     id = id,
@@ -501,7 +581,6 @@ fun Order.toResponse(): OrderResponse = OrderResponse(
     customerAddress = customerAddress?.toResponse()
 )
 
-
 fun <T : Any> Page<T>.toResponse() = PageResponse(
     items = this.content,
     pageNumber = this.number,
@@ -518,13 +597,20 @@ fun PhoneNumber.toResponse(): PhoneNumberResponse = PhoneNumberResponse(
     default = default ?: false
 )
 
-fun Post.toResponse(): PostResponse = PostResponse(
+private fun PostImage.toResponse() = ImageResponse(
+    id = id,
+    imageUrl = imageUrl.orEmpty()
+)
+
+fun Post.toResponse(like: Boolean = false): PostResponse = PostResponse(
     id = id,
     title = title.orEmpty(),
-    body = body.orEmpty(),
-    image = image.orEmpty(),
-    likes = likeCount,
-    postDate = createdAt ?: dateFormatter.parse("00-00-0000"),
+    body = body,
+    images = postImages.map { it.toResponse() }.toSet(),
+    likeCount = likeCount,
+    likedByCurrentUser = like,
+    createdAt = createdAt?.format(dateTimeFormatter) ?: LocalDateTime.MIN.format(dateTimeFormatter),
+    updatedAt = updatedAt?.format(dateTimeFormatter),
 )
 
 
@@ -622,14 +708,7 @@ fun Review.toResponse() = when (this) {
     else -> throw IllegalArgumentException("Unknown review type: ${this::class.simpleName}")
 }
 
-
-fun VendorPhoneNumber.toResponse(): PhoneNumberResponse = PhoneNumberResponse(
-    id = id,
-    phoneNumber = phoneNumber.orEmpty(),
-    default = default ?: false
-)
-
-fun Vendor.toResponse(): VendorResponse = VendorResponse(
+fun Vendor.toResponse(like: Boolean = false): VendorResponse = VendorResponse(
     id = id,
     username = username,
     vendorCode = vendorCode.orEmpty(),
@@ -650,9 +729,17 @@ fun Vendor.toResponse(): VendorResponse = VendorResponse(
     addOn = addOn.map { it.toResponse() },
     complement = complement.map { it.toResponse() },
     discount = discount.map { it.toResponse() },
+    likeCount = likeCount,
+    likedByCurrentUser = like,
 )
 
-fun Vendor.toMinimalResponse(): VendorMinimalResponse = VendorMinimalResponse(
+fun VendorPhoneNumber.toResponse(): PhoneNumberResponse = PhoneNumberResponse(
+    id = id,
+    phoneNumber = phoneNumber.orEmpty(),
+    default = default ?: false
+)
+
+fun Vendor.toMinimalResponse(like: Boolean = false, bookmark: Boolean = false): VendorMinimalResponse = VendorMinimalResponse(
     id = id,
     username = username,
     vendorCode = vendorCode.orEmpty(),
@@ -666,7 +753,31 @@ fun Vendor.toMinimalResponse(): VendorMinimalResponse = VendorMinimalResponse(
     address = address!!.toResponse(),
     registrationDate = registrationDate ?: dateFormatter.parse("00-00-0000"),
     openingTime = openingTime,
-    closingTime = closingTime
+    closingTime = closingTime,
+    likeCount = likeCount,
+    likedByCurrentUser = like,
+    bookmarkCount = bookmarkCount,
+    bookmarkedByCurrentUser = bookmark
+)
+
+fun Vendor.toBookmarkResponse(like: Boolean = false, bookmark: Boolean = false) = VendorBookmarkResponse(
+    id = id,
+    username = username,
+    vendorCode = vendorCode.orEmpty(),
+    firstName = firstName.orEmpty(),
+    lastName = lastName.orEmpty(),
+    chefName = chefName.orEmpty(),
+    restaurantName = restaurantName.orEmpty(),
+    verified = verified ?: false,
+    phoneNumber = vendorPhoneNumber.map { it.toResponse() }.toSet(),
+    address = address!!.toResponse(),
+    registrationDate = registrationDate ?: dateFormatter.parse("00-00-0000"),
+    openingTime = openingTime,
+    closingTime = closingTime,
+    likeCount = likeCount,
+    likedByCurrentUser = like,
+    bookmarkCount = bookmarkCount,
+    bookmarkedByCurrentUser = bookmark
 )
 
 /** Returns minimal vendor details for order responses. */

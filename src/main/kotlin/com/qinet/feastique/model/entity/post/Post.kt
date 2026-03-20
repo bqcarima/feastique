@@ -1,14 +1,15 @@
 package com.qinet.feastique.model.entity.post
 
-import com.fasterxml.jackson.annotation.JsonManagedReference
+import com.fasterxml.jackson.annotation.JsonBackReference
 import com.github.f4b6a3.uuid.UuidCreator
+import com.qinet.feastique.model.entity.image.PostImage
 import com.qinet.feastique.model.entity.user.Vendor
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotEmpty
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.Formula
 import org.hibernate.annotations.UpdateTimestamp
+import java.time.LocalDateTime
 import java.util.*
 
 @Entity
@@ -20,37 +21,32 @@ class Post {
     var id: UUID = UuidCreator.getTimeOrdered()
 
     @NotBlank(message = "Title cannot be blank")
-    @NotEmpty(message = "Title cannot be blank")
     var title: String? = null
 
     var body: String? = null
 
-    @NotBlank(message = "Image cannot be blank")
-    @NotEmpty(message = "Image cannot be blank")
-    var image: String? = null
-
-    @Column(name = "created_at")
-    @CreationTimestamp
-    var createdAt: Date? = null
-
-    @Column(name = "updated_at")
-    @UpdateTimestamp
-    var updatedAt: Date? = null
-
-    @ManyToOne
-    @JoinColumn(name = "vendor_id", nullable = false)
-    lateinit var vendor: Vendor
-
-    // Fetch number of likeCount directly when retrieving post without initialising likes
-    @Formula("(SELECT COUNT pl.id) FROM post_like WHERE pl.post.id = :id")
-    var likeCount: Long = 0
-
-    @JsonManagedReference
+    @JsonBackReference
     @OneToMany(
         mappedBy = "post",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
     )
-    var likes: MutableList<PostLike> = mutableListOf()
+    var postImages: MutableSet<PostImage> = mutableSetOf()
+
+    @Column(name = "created_at")
+    @CreationTimestamp
+    var createdAt: LocalDateTime? = null
+
+    @Column(name = "updated_at")
+    @UpdateTimestamp
+    var updatedAt: LocalDateTime? = null
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vendor_id", nullable = false)
+    lateinit var vendor: Vendor
+
+    @Formula("(SELECT COUNT(pl.id) FROM post_likes pl WHERE pl.post_id = id)")
+    var likeCount: Long = 0
 }
 

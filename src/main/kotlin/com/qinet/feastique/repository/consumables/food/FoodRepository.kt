@@ -19,16 +19,18 @@ import java.util.*
 
 @Repository
 interface FoodRepository : JpaRepository<Food, UUID> {
-    fun findAllByVendorId(vendorId: UUID, pageable: Pageable): Page<Food>
-    fun findAllByVendorId(vendorId: UUID, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Food>
+    fun findByIdAndIsActiveTrue(id: UUID): Food?
+    fun findAllByVendorIdAndIsActiveTrue(vendorId: UUID, pageable: Pageable): Page<Food>
+    fun findAllByVendorIdAndIsActiveTrue(vendorId: UUID, scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Food>
+    fun findByIdAndVendorIdAndIsActiveTrue(id: UUID, vendorId: UUID): Food?
 
     @EntityGraph("Vendor.withAllRelations")
     @Query("SELECT f FROM Food f WHERE f.id = :id")
-    fun findByIdWithAllRelations(@Param("id") id: UUID): Optional<Food>
+    fun findByIdWithAllRelationsAndIsActiveTrue(@Param("id") id: UUID): Optional<Food>
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT f FROM Food f ORDER BY f.foodNumber DESC ")
     fun findTopOrderByFoodNumberDescWithLock(pageable: Pageable = PageRequest.of(0, 1)): List<Food>
-    fun existsByNameIgnoreCaseAndVendorId(name: String, vendorId: UUID): Boolean
+    fun existsByNameIgnoreCaseAndVendorIdAndIsActiveTrue(name: String, vendorId: UUID): Boolean
 }
 

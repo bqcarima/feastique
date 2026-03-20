@@ -1,10 +1,10 @@
 package com.qinet.feastique.service.vendor
 
-import com.qinet.feastique.exception.PermissionDeniedException
 import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.model.dto.address.AddressDto
 import com.qinet.feastique.model.entity.address.VendorAddress
+import com.qinet.feastique.model.enums.Region
 import com.qinet.feastique.repository.address.VendorAddressRepository
 import com.qinet.feastique.repository.user.VendorRepository
 import com.qinet.feastique.security.UserSecurity
@@ -20,13 +20,9 @@ class VendorAddressService(
 ) {
     @Transactional(readOnly = true)
     fun getAddress(id: UUID, vendorDetails: UserSecurity): VendorAddress {
-        val vendorAddress = vendorAddressRepository.findById(id)
-            .orElseThrow { IllegalArgumentException("No discount found for id: $id") }
-            .also {
-                if (it.vendor.id != vendorDetails.id) {
-                    throw IllegalArgumentException("You do not have permission to delete discount: $id")
-                }
-            }
+        val vendorAddress = vendorAddressRepository.findByIdAndVendorId(id, vendorDetails.id)
+            ?: throw RequestedEntityNotFoundException("No address found for id: $id")
+
         return vendorAddress
     }
 
@@ -40,15 +36,11 @@ class VendorAddressService(
         val vendor = vendorRepository.findById(vendorDetails.id)
             .orElseThrow { UserNotFoundException("Vendor not found.") }
 
-        var address: VendorAddress = vendorAddressRepository.findById(addressDto.id!!)
-                .orElseThrow { RequestedEntityNotFoundException("No address with ${addressDto.id} found") }
-                .also {
-                    if (it.vendor.id != vendorDetails.id)
-                        throw PermissionDeniedException("You do not have the permission to view address.")
-                }
+        var address: VendorAddress = vendorAddressRepository.findByIdAndVendorId(addressDto.id!!, vendorDetails.id)
+            ?: throw RequestedEntityNotFoundException("No address with ${addressDto.id} found")
 
         address.country = addressDto.country
-        address.region = requireNotNull(addressDto.region) { "Please select a region." }
+        address.region = Region.fromString(addressDto.region)
         address.city = requireNotNull(addressDto.city) { "Please enter a city." }
         address.neighbourhood = requireNotNull(addressDto.neighbourhood) { "Please enter a neighbourhood." }
         address.streetName = addressDto.streetName

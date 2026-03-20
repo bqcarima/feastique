@@ -23,6 +23,25 @@ class DessertController(
     private val securityUtility: SecurityUtility
 ) {
 
+    @GetMapping(
+        path = [
+            "/customers/{customerId}/vendors/{vendorId}/desserts/{dessertId}",
+            "/vendors/{vendorId}/desserts/{dessertId}"
+        ]
+    )
+    fun getPost(
+        @PathVariable dessertId: UUID,
+        @PathVariable customerId: UUID?,
+        @PathVariable vendorId: UUID,
+        @AuthenticationPrincipal userDetails: UserSecurity
+
+    ) : ResponseEntity<DessertResponse> {
+        val pathId = customerId ?: vendorId
+        securityUtility.validatePath(pathId, userDetails)
+        val dessert = dessertService.getDessert(dessertId, userDetails)
+        return ResponseEntity(dessert, HttpStatus.OK)
+    }
+
     @GetMapping("/vendors/{vendorId}/desserts")
     fun getAllDesserts(
         @RequestParam(defaultValue = "0") page: Int,
@@ -55,7 +74,7 @@ class DessertController(
         val pathId = customerId ?: vendorId
         securityUtility.validatePath(pathId, userDetails)
 
-        val window = dessertService.scrollDesserts(vendorId, cursor, size)
+        val window = dessertService.scrollDesserts(vendorId, cursor, size, userDetails)
         return ResponseEntity(window, HttpStatus.OK)
     }
 

@@ -1,58 +1,104 @@
 package com.qinet.feastique.service.post
 
-import com.qinet.feastique.exception.PermissionDeniedException
+import com.qinet.feastique.common.mapper.toResponse
 import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.exception.UserNotFoundException
 import com.qinet.feastique.model.dto.PostDto
+import com.qinet.feastique.model.entity.image.PostImage
 import com.qinet.feastique.model.entity.post.Post
+import com.qinet.feastique.model.enums.Constants
+import com.qinet.feastique.repository.like.PostLikeRepository
 import com.qinet.feastique.repository.post.PostRepository
 import com.qinet.feastique.repository.user.VendorRepository
+import com.qinet.feastique.response.pagination.WindowResponse
+import com.qinet.feastique.response.post.PostResponse
 import com.qinet.feastique.security.UserSecurity
+import com.qinet.feastique.utility.CursorEncoder
+import com.qinet.feastique.utility.SecurityUtility
+import org.slf4j.LoggerFactory
+import org.springframework.data.domain.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.util.UUID
+import java.util.*
+import kotlin.jvm.optionals.getOrElse
 
 @Service
 class PostService (
     private val postRepository: PostRepository,
+    private val postLikeRepository: PostLikeRepository,
     private val vendorRepository: VendorRepository,
+    private val cursorEncoder: CursorEncoder,
+    private val securityUtility: SecurityUtility
 ) {
 
+    @Suppress("unused")
+    private val logger = LoggerFactory.getLogger(PostService::class.java)
     @Transactional(readOnly = true)
-    fun getPostById(id: UUID, vendorDetails: UserSecurity): Post {
-        val post = postRepository.findById(id)
-            .orElseThrow { RequestedEntityNotFoundException("No posts found with id $id") }
-            .also {
-                if (it.vendor.id != vendorDetails.id) {
-                    throw PermissionDeniedException("You do not have permission to access this post.")
-                }
+    fun getPost(id: UUID, userDetails: UserSecurity): PostResponse {
+        val role = securityUtility.getSingleRole(userDetails)
+        var liked = false
+
+        val post = when (role) {
+            "CUSTOMER" -> {
+                liked = postLikeRepository.existsByPostIdAndCustomerId(id, userDetails.id)
+                postRepository.findById(id)
+                    .getOrElse { throw RequestedEntityNotFoundException() }
             }
-        return post
+            "VENDOR" -> postRepository.findByIdAndVendorId(id, userDetails.id)
+                ?: throw RequestedEntityNotFoundException()
+
+            else -> throw IllegalArgumentException("Unsupported role: $role")
+        }
+
+        return post.toResponse(liked)
     }
 
     @Transactional(readOnly = true)
-    fun getAllPosts(vendorDetails: UserSecurity): List<Post> {
-        val posts = postRepository.findAllByVendorId(vendorDetails.id)
-            .takeIf { it.isNotEmpty() }
-            ?: throw RequestedEntityNotFoundException("No post found for the vendor: ${vendorDetails.id}")
+    fun getPostById(id: UUID, vendorDetails: UserSecurity): Post {
+        return postRepository.findByIdAndVendorId(id, vendorDetails.id)
+            ?: throw RequestedEntityNotFoundException()
+    }
 
-        posts.also { list ->
-            if (list.any { it.vendor.id != vendorDetails.id}) {
-                throw PermissionDeniedException("You do not have the permission to access these foods.")
-            }
+    @Transactional(readOnly = true)
+    fun getAllPosts(vendorDetails: UserSecurity, page: Int, size: Int): Page<PostResponse> {
+        val pageable = PageRequest.of(page, size, Sort.by("createdAt").descending())
+        return postRepository.findAllByVendorId(vendorDetails.id, pageable).map { it.toResponse() }
+    }
+
+    @Transactional(readOnly = true)
+    fun scrollPosts(
+        vendorId: UUID,
+        cursor: String?,
+        size: Int = Constants.DEFAULT_PAGE_SIZE.type,
+        userDetails: UserSecurity
+    ): WindowResponse<PostResponse> {
+        val currentOffset: Long = cursor?.toLongOrNull() ?: 0L
+        val scrollPosition = if (currentOffset == 0L) ScrollPosition.offset() else ScrollPosition.offset(currentOffset)
+        val sort = Sort.by("createdAt").descending()
+
+        val window = postRepository.findAllByVendorId(vendorId, scrollPosition, sort, Limit.of(size))
+
+        val likedPostIds: Set<UUID> = if (securityUtility.getSingleRole(userDetails) == "CUSTOMER") {
+            val postIds = window.toList().map { it.id }
+            postLikeRepository.findAllByCustomerIdAndPostIdIn(userDetails.id, postIds)
+                .map { it.post.id }
+                .toHashSet()
+        } else {
+            emptySet()
         }
-        return posts
+
+        return window.map { it.toResponse(it.id in likedPostIds) }
+            .toResponse(currentOffset) { cursorEncoder.encodeOffset(it) }
     }
 
     @Transactional
     fun deletePost(id: UUID, vendorDetails: UserSecurity) {
-        val post = getPostById(id, vendorDetails)
-        postRepository.delete(post)
+        postRepository.delete(getPostById(id, vendorDetails))
     }
 
     @Transactional
     fun savePost(post: Post): Post {
-        return postRepository.save(post)
+        return postRepository.saveAndFlush(post)
     }
 
     @Transactional
@@ -70,10 +116,31 @@ class PostService (
 
         post.title = requireNotNull(postDto.title) { "Please enter a title." }
         post.body = postDto.body
-        post.image = requireNotNull(postDto.image) { "Please select at least one image." }
+        post.postImages = preparePostImages(postDto, post)
         post = savePost(post)
-        vendorRepository.save(vendor)
 
         return post
     }
+
+    private fun preparePostImages(postDto: PostDto, post: Post): MutableSet<PostImage> {
+        if (postDto.postImages.isEmpty() ) {
+            throw IllegalArgumentException("Please add at least 1 image for the post")
+        }
+
+        val existingPostImages = post.postImages.associateBy { it.id }
+
+        val updatedImages = postDto.postImages.map { dto ->
+            val image = existingPostImages[dto.id] ?: PostImage().apply { this.post = post }
+            image.imageUrl = dto.imageUrl
+            image
+        }
+
+        post.postImages.removeIf { existing -> updatedImages.none { it.id == existing.id } }
+        updatedImages.forEach { updated ->
+            if (post.postImages.none { it.id == updated.id }) post.postImages.add(updated)
+        }
+
+        return post.postImages
+    }
 }
+

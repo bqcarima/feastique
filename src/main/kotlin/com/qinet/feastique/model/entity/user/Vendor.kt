@@ -23,6 +23,7 @@ import jakarta.persistence.Table
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
+import org.hibernate.annotations.Formula
 import java.time.LocalTime
 
 @NamedEntityGraphs(
@@ -130,5 +131,11 @@ class Vendor : UserEntity() {
         orphanRemoval = true
     )
     var discount: MutableSet<Discount> = mutableSetOf()
+
+    @Formula("(SELECT COUNT(vl.id) FROM vendor_likes vl WHERE vl.vendor_id = id)")
+    var likeCount: Long = 0
+
+    @Formula("(SELECT COUNT(vb.id) FROM vendor_bookmarks vb WHERE vb.vendor_id = id)")
+    var bookmarkCount: Long = 0
 }
 

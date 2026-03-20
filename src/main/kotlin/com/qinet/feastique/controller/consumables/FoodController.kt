@@ -48,16 +48,23 @@ class FoodController(
         return ResponseEntity("Food deleted successfully. All relationships will be deleted as well.", HttpStatus.OK)
     }
 
-    @GetMapping("/vendors/{vendorId}/foods/{id}")
+    @GetMapping(
+        path = [
+            "/customers/{customerId}/vendors/{vendorId}/foods/{foodId}",
+            "/vendors/{vendorId}/foods/{foodId}"
+        ]
+    )
     fun getFood(
-        @PathVariable id: UUID,
+        @PathVariable foodId: UUID,
+        @PathVariable customerId: UUID?,
         @PathVariable vendorId: UUID,
-        @AuthenticationPrincipal vendorDetails: UserSecurity
+        @AuthenticationPrincipal userDetails: UserSecurity
 
     ) : ResponseEntity<FoodResponse> {
-        securityUtility.validatePath(vendorId, vendorDetails)
-        val food = foodService.getFoodById(id, vendorDetails)
-        return ResponseEntity(food.toResponse(), HttpStatus.OK)
+        val pathId = customerId ?: vendorId
+        securityUtility.validatePath(pathId, userDetails)
+        val food = foodService.getFood(foodId, userDetails)
+        return ResponseEntity(food, HttpStatus.OK)
     }
 
     @GetMapping("/vendors/{vendorId}/foods")
@@ -75,7 +82,7 @@ class FoodController(
 
     @GetMapping(
         path = [
-            "/customers/{customerId}/vendor/{vendorId}/foods/scroll",
+            "/customers/{customerId}/vendors/{vendorId}/foods/scroll",
             "/vendors/{vendorId}/foods/scroll"
         ]
     )
@@ -91,7 +98,7 @@ class FoodController(
 
         val pathId = customerId ?: vendorId
         securityUtility.validatePath(pathId, userDetails)
-        val window = foodService.scrollFoods(vendorId, cursor, size)
+        val window = foodService.scrollFoods(vendorId, cursor, size, userDetails)
         return ResponseEntity(window, HttpStatus.OK)
     }
 

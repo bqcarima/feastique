@@ -4,6 +4,7 @@ import com.qinet.feastique.exception.PermissionDeniedException
 import com.qinet.feastique.exception.RequestedEntityNotFoundException
 import com.qinet.feastique.model.dto.address.AddressDto
 import com.qinet.feastique.model.entity.address.CustomerAddress
+import com.qinet.feastique.model.enums.Region
 import com.qinet.feastique.repository.address.CustomerAddressRepository
 import com.qinet.feastique.repository.user.CustomerRepository
 import com.qinet.feastique.security.UserSecurity
@@ -19,19 +20,14 @@ class CustomerAddressService(
 ) {
     @Transactional(readOnly = true)
     fun getAddressById(addressId: UUID, customerDetails: UserSecurity): CustomerAddress {
-        val address = customerAddressRepository.findById(addressId)
-            .orElseThrow { throw RequestedEntityNotFoundException("Address Not Found.") }
-            .also {
-                if (it.customer.id != customerDetails.id) {
-                    throw PermissionDeniedException("You do not have permission to access this address.")
-                }
-            }
+        val address = customerAddressRepository.findByIdAndCustomerIdAndIsActiveTrue(addressId, customerDetails.id)
+            ?:  throw RequestedEntityNotFoundException("Address Not Found.")
         return address
     }
 
     @Transactional(readOnly = true)
     fun getAllAddresses(customerDetails: UserSecurity): List<CustomerAddress> {
-        val addresses = customerAddressRepository.findAllByCustomerId(customerDetails.id)
+        val addresses = customerAddressRepository.findAllByCustomerIdAndIsActiveTrue(customerDetails.id)
             .takeIf { it.isNotEmpty() }
             ?: throw RequestedEntityNotFoundException("No address found for customer.")
 
@@ -54,8 +50,9 @@ class CustomerAddressService(
             .orElseThrow {
                 throw RequestedEntityNotFoundException("Customer not found.")
             }
-        val address = getAddressById(id, customerDetails)
         val addresses = getAllAddresses(customerDetails)
+        val address = addresses.find { it.id == id }
+            ?: throw RequestedEntityNotFoundException("Address not found.")
 
         if (address.default == true) {
             throw IllegalArgumentException("Cannot delete default address.")
@@ -63,9 +60,9 @@ class CustomerAddressService(
         if (addresses.size < 2) {
             throw IllegalArgumentException("Cannot delete all addresses.")
         }
-
+        address.isActive = false
         customer.accountUpdated = LocalDateTime.now()
-        customerAddressRepository.delete(address)
+        saveAddress(address)
     }
 
     @Transactional
@@ -85,11 +82,12 @@ class CustomerAddressService(
         } else {
             CustomerAddress().apply {
                 this.customer = customer
+                isActive = true
             }
         }
 
         address.country = addressDto.country
-        address.region = requireNotNull(addressDto.region) { "Please select a region." }
+        address.region = Region.fromString(addressDto.region)
         address.city = requireNotNull(addressDto.city) { "Please enter a city." }
         address.neighbourhood = requireNotNull(addressDto.neighbourhood) { "Please enter a neighbourhood." }
         address.streetName = addressDto.streetName
@@ -98,7 +96,7 @@ class CustomerAddressService(
         address.latitude = addressDto.latitude
 
         if (addressDto.default == true) {
-            val currentAddresses = customerAddressRepository.findAllByCustomerId(customer.id)
+            val currentAddresses = customerAddressRepository.findAllByCustomerIdAndIsActiveTrue(customer.id)
             currentAddresses.forEach { it.default = false }
             customerAddressRepository.saveAll(currentAddresses)
             address.default = addressDto.default
@@ -109,5 +107,5 @@ class CustomerAddressService(
         customerAddressRepository.save(address)
         return getAllAddresses(customerDetails)
     }
-
 }
+

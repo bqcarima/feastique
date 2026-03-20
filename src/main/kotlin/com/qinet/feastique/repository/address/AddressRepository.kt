@@ -8,11 +8,11 @@ import java.util.UUID
 
 @Repository
 interface CustomerAddressRepository : JpaRepository<CustomerAddress, UUID> {
-
-    fun findAllByCustomerId(customerId: UUID): List<CustomerAddress>
+    fun findByIdAndCustomerIdAndIsActiveTrue(id: UUID, customerId: UUID): CustomerAddress?
+    fun findAllByCustomerIdAndIsActiveTrue(customerId: UUID): List<CustomerAddress>
 }
 
 @Repository
 interface VendorAddressRepository : JpaRepository<VendorAddress, UUID> {
-    fun findByVendorId(vendorId: UUID): VendorAddress?
+    fun findByIdAndVendorId(id: UUID, vendorId: UUID): VendorAddress?
 }

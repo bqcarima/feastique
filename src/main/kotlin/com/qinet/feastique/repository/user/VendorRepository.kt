@@ -10,10 +10,12 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
-import java.util.UUID
+import java.util.*
 
 @Repository
 interface VendorRepository : JpaRepository<Vendor, UUID> {
+
+    // fun findAll(scrollPosition: ScrollPosition, sort: Sort, limit: Limit): Window<Vendor>
     fun findFirstByUsername(username: String): Vendor?
     fun existsByUsernameIgnoreCase(username: String): Boolean
 
@@ -25,10 +27,5 @@ interface VendorRepository : JpaRepository<Vendor, UUID> {
     @Query("SELECT v FROM Vendor v WHERE v.region = :region ORDER BY v.vendorCode DESC")
     fun findTopByRegionOrderByVendorCodeDescWithLock(region: Region, pageable: Pageable = PageRequest.of(0, 1)): List<Vendor>
 
-    @EntityGraph("Vendor.withFoodAndDiscounts")
-    @Query("SELECT v FROM Vendor v WHERE v.id = :id")
-    fun findByIdAndLoadFoodAndDiscounts(id: UUID): Vendor?
-    @EntityGraph("Vendor.withAllRelations")
-    @Query("SELECT v FROM Vendor v WHERE v.id = :id")
-    fun findByIdWithAllRelations(id: UUID): Vendor?
 }
+

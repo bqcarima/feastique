@@ -114,12 +114,11 @@ class Order {
     @Column(name = "completed_time", nullable = true)
     var completedTime: LocalDateTime? = null
 
-    @Column(name = "customer_deleted_at", nullable = true)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-    var customerDeletedAt: LocalDateTime? = null
+    @Column(name = "customer_deleted", nullable = true)
+    var customerDeleted: Boolean? = false
 
-    @Column(name = "vendor_deleted_at", nullable = true)
-    var vendorDeletedAt: LocalDateTime? = null
+    @Column(name = "vendor_deleted", nullable = true)
+    var vendorDeleted: Boolean? = false
 
     @Suppress("unused")
     @Version

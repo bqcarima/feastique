@@ -50,6 +50,9 @@ class CustomerAddress : Address() {
     @Column(name = "is_default")
     var default: Boolean? = false
 
+    @Column(name = "is_active")
+    var isActive: Boolean = true
+
     @JsonBackReference // prevent infinite recursion for extra protection
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)

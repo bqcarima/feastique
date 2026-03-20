@@ -12,7 +12,7 @@ import com.qinet.feastique.model.dto.consumables.FillingDto
 import com.qinet.feastique.model.dto.consumables.HandheldDto
 import com.qinet.feastique.model.dto.ImageDto
 import com.qinet.feastique.model.dto.consumables.HandheldSizeDto
-import com.qinet.feastique.model.entity.Menu
+import com.qinet.feastique.model.entity.menu.Menu
 import com.qinet.feastique.model.entity.consumables.filling.Filling
 import com.qinet.feastique.model.entity.consumables.handheld.Handheld
 import com.qinet.feastique.model.entity.discount.Discount
@@ -181,17 +181,17 @@ class HandheldServiceTest {
 
         @Test
         fun `delegates to repository with correct vendor id and pageable`() {
-            whenever(handheldRepository.findAllByVendorId(eq(vendorId), any()))
+            whenever(handheldRepository.findAllByVendorIdAndIsActiveTrue(eq(vendorId), any()))
                 .thenReturn(PageImpl(listOf(handheld)))
 
             service.scrollHandhelds(vendorDetails, 0, 10)
 
-            verify(handheldRepository).findAllByVendorId(eq(vendorId), any())
+            verify(handheldRepository).findAllByVendorIdAndIsActiveTrue(eq(vendorId), any())
         }
 
         @Test
         fun `returns empty page when vendor has no handhelds`() {
-            whenever(handheldRepository.findAllByVendorId(eq(vendorId), any()))
+            whenever(handheldRepository.findAllByVendorIdAndIsActiveTrue(eq(vendorId), any()))
                 .thenReturn(PageImpl(emptyList()))
 
             val result = service.scrollHandhelds(vendorDetails, 0, 10)
@@ -262,7 +262,7 @@ class HandheldServiceTest {
             whenever(handheldRepository.findById(handheldId)).thenReturn(Optional.of(handheld))
             whenever(handheldRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
 
-            val result = service.toggleAvailability(dto, handheldId, vendorDetails)
+            val result = service.changeHandheldAvailability(dto, handheldId, vendorDetails)
 
             assertEquals(Availability.UNAVAILABLE, result.availability)
             verify(handheldRepository).saveAndFlush(handheld)
@@ -285,7 +285,7 @@ class HandheldServiceTest {
             whenever(handheldRepository.findById(handheldId)).thenReturn(Optional.of(handheld))
             whenever(handheldRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
 
-            service.toggleAvailability(dto, handheldId, vendorDetails)
+            service.changeHandheldAvailability(dto, handheldId, vendorDetails)
 
             assertEquals(Availability.UNAVAILABLE, handheldSize.availability)
         }
@@ -298,7 +298,7 @@ class HandheldServiceTest {
             whenever(handheldRepository.findById(handheldId)).thenReturn(Optional.of(handheld))
 
             assertThrows<IllegalArgumentException> {
-                service.toggleAvailability(dto, handheldId, vendorDetails)
+                service.changeHandheldAvailability(dto, handheldId, vendorDetails)
             }
         }
 
@@ -311,7 +311,7 @@ class HandheldServiceTest {
             whenever(handheldRepository.findById(handheldId)).thenReturn(Optional.of(handheld))
 
             assertThrows<IllegalArgumentException> {
-                service.toggleAvailability(dto, handheldId, vendorDetails)
+                service.changeHandheldAvailability(dto, handheldId, vendorDetails)
             }
         }
 
@@ -325,7 +325,7 @@ class HandheldServiceTest {
             whenever(handheldRepository.findById(handheldId)).thenReturn(Optional.of(handheld))
 
             assertThrows<IllegalArgumentException> {
-                service.toggleAvailability(dto, handheldId, vendorDetails)
+                service.changeHandheldAvailability(dto, handheldId, vendorDetails)
             }
         }
     }

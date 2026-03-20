@@ -1,6 +1,6 @@
 package com.qinet.feastique.repository.authentication
 
-import com.qinet.feastique.model.entity.RefreshToken
+import com.qinet.feastique.model.entity.authentication.RefreshToken
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.UUID

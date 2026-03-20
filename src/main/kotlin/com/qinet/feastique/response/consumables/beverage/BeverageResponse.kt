@@ -1,22 +1,29 @@
 package com.qinet.feastique.response.consumables.beverage
 
+import com.qinet.feastique.response.consumables.BaseEntityResponse
 import java.time.LocalTime
 import java.util.UUID
 
 data class BeverageResponse(
-    val id: UUID,
-    val beverageName: String,
+    override val id: UUID,
+    val name: String,
     val alcoholic: Boolean,
     val percentage: Int,
     val beverageGroup: String,
+    override val likeCount: Long,
+    override val likedByCurrentUser: Boolean,
+    override val bookmarkCount: Long,
+    override val bookmarkedByCurrentUser: Boolean,
     val deliverable: Boolean,
     val availability: String,
     val readyAsFrom: LocalTime?,
-    val orderTypes: Set<String>,
-    val beverageFlavours: Set<BeverageFlavourResponse>,
     val preparationTime: Int,
     val deliveryFee: Long,
-)
+    val beverageFlavours: Set<BeverageFlavourResponse>,
+    val availableDays: Set<String>,
+    val orderTypes: Set<String>,
+
+    ) : BaseEntityResponse
 
 data class BeverageFlavourResponse(
     val id: UUID,
