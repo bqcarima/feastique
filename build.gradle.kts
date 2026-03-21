@@ -78,6 +78,10 @@ allOpen {
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
+
+/*tasks.withType<Test> {
+	jvmArgs("-XX:+EnableDynamicAgentLoading", "-Xshare:off")
+}*/
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.compilerOptions {
     freeCompilerArgs.set(listOf("-Xannotation-default-target=param-property"))
