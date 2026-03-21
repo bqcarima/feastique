@@ -62,7 +62,7 @@ class CustomerService(
     fun isDuplicateFound(username: String? = null, phoneNumber: String? = null): Boolean {
         return when {
             username != null -> customerRepository.existsByUsernameIgnoreCase(username)
-            phoneNumber != null -> (customerPhoneNumberRepository.existsByPhoneNumber(phoneNumber) && vendorPhoneNumberRepository.existsByPhoneNumber(
+            phoneNumber != null -> (customerPhoneNumberRepository.existsByPhoneNumber(phoneNumber) || vendorPhoneNumberRepository.existsByPhoneNumber(
                 phoneNumber
             ))
 

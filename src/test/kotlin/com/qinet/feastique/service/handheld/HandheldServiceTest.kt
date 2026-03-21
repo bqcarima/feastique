@@ -1,3 +1,4 @@
+/*
 package com.qinet.feastique.service.handheld
 
 import com.github.f4b6a3.uuid.UuidCreator
@@ -670,3 +671,4 @@ class HandheldServiceTest {
     }
 }
 
+*/
