@@ -3,9 +3,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
 	kotlin("jvm") version "2.2.20"
 	kotlin("plugin.spring") version "2.2.20"
-    kotlin("plugin.jpa") version "2.2.20"
-    id("org.springframework.boot") version "4.0.0"
-    id("io.spring.dependency-management") version "1.1.7"
+	kotlin("plugin.jpa") version "2.2.20"
+	id("org.springframework.boot") version "4.0.0"
+	id("io.spring.dependency-management") version "1.1.7"
 }
 
 group = "com.qinet"
@@ -60,12 +60,16 @@ dependencies {
 	// Mockito core + Kotlin extensions (mockito-kotlin)
 	testImplementation("org.mockito:mockito-core:5.15.2")
 	testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+	testImplementation("org.mockito:mockito-inline:5.2.0")
 
 }
 
 kotlin {
+	jvmToolchain(21)
 	compilerOptions {
-		freeCompilerArgs.addAll("-Xjsr305=strict")
+		freeCompilerArgs.addAll(
+			"-Xannotation-default-target=param-property"
+		)
 	}
 }
 
@@ -79,10 +83,13 @@ tasks.withType<Test> {
 	useJUnitPlatform()
 }
 
-/*tasks.withType<Test> {
-	jvmArgs("-XX:+EnableDynamicAgentLoading", "-Xshare:off")
-}*/
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.compilerOptions {
-    freeCompilerArgs.set(listOf("-Xannotation-default-target=param-property"))
+tasks.withType<KotlinCompile> {
+	compilerOptions {
+		freeCompilerArgs.set(listOf("-Xannotation-default-target=param-property"))
+	}
 }
+
+tasks.withType<Test> {
+	jvmArgs("-Dspring.aot.enabled=false")
+}
+
