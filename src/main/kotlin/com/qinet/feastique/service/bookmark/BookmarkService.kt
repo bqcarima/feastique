@@ -31,6 +31,7 @@ import kotlin.jvm.optionals.getOrElse
 
 
 @Service
+@Transactional(readOnly = true)
 class BookmarkService(
     private val beverageRepository: BeverageRepository,
     private val dessertRepository: DessertRepository,
@@ -53,6 +54,7 @@ class BookmarkService(
 
     @Transactional
     fun bookmarkOrUnbookmarkBeverage(beverageId: UUID, customerDetails: UserSecurity) {
+        println("SERVICE repo identity: ${System.identityHashCode(beverageBookmarkRepository)}")
         val existingBookmark = beverageBookmarkRepository.findByBeverageIdAndCustomerId(beverageId, customerDetails.id)
         if (existingBookmark != null) {
             beverageBookmarkRepository.delete(existingBookmark)
@@ -60,9 +62,12 @@ class BookmarkService(
             val beverage = beverageRepository.findByIdAndIsActiveTrue(beverageId)
                 ?: throw RequestedEntityNotFoundException("Beverage not found.")
 
+            val customer = customerRepository.findById(customerDetails.id)
+                .orElseThrow { RequestedEntityNotFoundException("Customer not found.") }
+
             val bookmark = BeverageBookmark().apply {
                 this.beverage = beverage
-                this.customer = customerRepository.getReferenceById(customerDetails.id)
+                this.customer = customer
             }
             beverageBookmarkRepository.save(bookmark)
         }
@@ -74,12 +79,15 @@ class BookmarkService(
         if (existingBookmark != null) {
             dessertBookmarkRepository.delete(existingBookmark)
         } else {
+            val customer = customerRepository.findById(customerDetails.id)
+                .orElseThrow { RequestedEntityNotFoundException("Customer not found.") }
+
             val dessert = dessertRepository.findByIdAndIsActiveTrue(dessertId)
                 ?: throw RequestedEntityNotFoundException("Dessert not found.")
 
             val bookmark = DessertBookmark().apply {
                 this.dessert = dessert
-                this.customer = customerRepository.getReferenceById(customerDetails.id)
+                this.customer = customer
             }
             dessertBookmarkRepository.save(bookmark)
         }
@@ -91,12 +99,15 @@ class BookmarkService(
         if (existingBookmark != null) {
             foodBookmarkRepository.delete(existingBookmark)
         } else {
+            val customer = customerRepository.findById(customerDetails.id)
+                .orElseThrow { RequestedEntityNotFoundException("Customer not found.") }
+
             val food = foodRepository.findByIdAndIsActiveTrue(foodId)
                 ?: throw RequestedEntityNotFoundException("Food not found.")
 
             val bookmark = FoodBookmark().apply {
                 this.food = food
-                this.customer = customerRepository.getReferenceById(customerDetails.id)
+                this.customer = customer
             }
             foodBookmarkRepository.save(bookmark)
         }
@@ -108,12 +119,15 @@ class BookmarkService(
         if (existingBookmark != null) {
             handheldBookmarkRepository.delete(existingBookmark)
         } else {
+            val customer = customerRepository.findById(customerDetails.id)
+                .orElseThrow { RequestedEntityNotFoundException("Customer not found.") }
+
             val handheld = handheldRepository.findByIdAndIsActiveTrue(handheldId)
                 ?: throw RequestedEntityNotFoundException("Handheld not found.")
 
             val bookmark = HandheldBookmark().apply {
                 this.handheld = handheld
-                this.customer = customerRepository.getReferenceById(customerDetails.id)
+                this.customer = customer
             }
             handheldBookmarkRepository.save(bookmark)
         }
@@ -125,16 +139,18 @@ class BookmarkService(
         if (existingBookmark != null) {
             vendorBookmarkRepository.delete(existingBookmark)
         } else {
+            val customer = customerRepository.findById(customerDetails.id)
+                .orElseThrow { RequestedEntityNotFoundException("Customer not found.") }
+
             val vendor = vendorRepository.findById(vendorId)
                 .getOrElse { throw RequestedEntityNotFoundException("Vendor not found.") }
             val bookmark = VendorBookmark()
             bookmark.vendor = vendor
-            bookmark.customer = customerRepository.getReferenceById(customerDetails.id)
+            bookmark.customer = customer
             vendorBookmarkRepository.save(bookmark)
         }
     }
 
-    @Transactional(readOnly = true)
     fun scrollBeverageBookmarks(
         cursor: String?,
         size: Int = Constants.DEFAULT_PAGE_SIZE.type,
@@ -157,7 +173,6 @@ class BookmarkService(
             .toResponse(currentOffset) { cursorEncoder.encodeOffset(it) }
     }
 
-    @Transactional(readOnly = true)
     fun scrollDessertBookmarks(
         cursor: String?,
         size: Int = Constants.DEFAULT_PAGE_SIZE.type,
@@ -179,7 +194,6 @@ class BookmarkService(
             .toResponse(currentOffset) { cursorEncoder.encodeOffset(it) }
     }
 
-    @Transactional(readOnly = true)
     fun scrollFoodBookmarks(
         cursor: String?,
         size: Int = Constants.DEFAULT_PAGE_SIZE.type,
@@ -201,7 +215,6 @@ class BookmarkService(
             .toResponse(currentOffset) { cursorEncoder.encodeOffset(it) }
     }
 
-    @Transactional(readOnly = true)
     fun scrollHandheldBookmarks(
         cursor: String?,
         size: Int = Constants.DEFAULT_PAGE_SIZE.type,
@@ -223,7 +236,6 @@ class BookmarkService(
             .toResponse(currentOffset) { cursorEncoder.encodeOffset(it) }
     }
 
-    @Transactional(readOnly = true)
     fun scrollVendorBookmarks(
         cursor: String?,
         size: Int = Constants.DEFAULT_PAGE_SIZE.type,
