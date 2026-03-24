@@ -99,7 +99,7 @@ class BeverageServiceTest {
         )
     }
 
-    // --- getBeverage (vendor role) ---
+    // getBeverage (vendor role)
 
     @Test
     fun `getBeverage returns response for vendor when beverage belongs to them`() {
@@ -124,7 +124,7 @@ class BeverageServiceTest {
             .isInstanceOf(RequestedEntityNotFoundException::class.java)
     }
 
-    // --- getBeverage (customer role) ---
+    // getBeverage (customer role)
 
     @Test
     fun `getBeverage returns liked and bookmarked true for customer when both exist`() {
@@ -165,7 +165,7 @@ class BeverageServiceTest {
             .isInstanceOf(RequestedEntityNotFoundException::class.java)
     }
 
-    // --- getBeverageById ---
+    // getBeverageById
 
     @Test
     fun `getBeverageById returns beverage when found`() {
@@ -188,7 +188,7 @@ class BeverageServiceTest {
             .isInstanceOf(RequestedEntityNotFoundException::class.java)
     }
 
-    // --- getAllBeverages ---
+    // getAllBeverages
 
     @Test
     fun `getAllBeverages returns paged responses`() {
@@ -212,7 +212,7 @@ class BeverageServiceTest {
         assertThat(result.content).isEmpty()
     }
 
-    // --- scrollBeverages ---
+    // --- scrollBeverages
 
     @Test
     fun `scrollBeverages returns empty window when no beverages exist`() {
@@ -281,7 +281,7 @@ class BeverageServiceTest {
         )
     }
 
-    // --- deleteBeverage ---
+    // deleteBeverage
 
     @Test
     fun `deleteBeverage soft-deletes by setting isActive to false`() {
@@ -307,7 +307,7 @@ class BeverageServiceTest {
         verify(beverageRepository, never()).saveAndFlush(any())
     }
 
-    // --- changeBeverageAvailability ---
+    // changeBeverageAvailability
 
     @Test
     fun `changeBeverageAvailability updates beverage availability`() {
@@ -393,7 +393,7 @@ class BeverageServiceTest {
             .isInstanceOf(RequestedEntityNotFoundException::class.java)
     }
 
-    // --- addOrUpdateBeverage (create path) ---
+    // addOrUpdateBeverage (create path)
 
     @Test
     fun `addOrUpdateBeverage creates new beverage successfully`() {
@@ -476,7 +476,7 @@ class BeverageServiceTest {
             .isInstanceOf(IllegalArgumentException::class.java)
     }
 
-    // --- addOrUpdateBeverage (update path) ---
+    // addOrUpdateBeverage (update path)
 
     @Test
     fun `addOrUpdateBeverage updates existing beverage when id provided`() {
@@ -507,7 +507,7 @@ class BeverageServiceTest {
             .isInstanceOf(RequestedEntityNotFoundException::class.java)
     }
 
-    // --- helpers ---
+    // helpers
 
     private fun makeBeverage(id: UUID, name: String): Beverage {
         return Beverage().apply {
@@ -569,4 +569,5 @@ class BeverageServiceTest {
         )
     }
 }
+
 
