@@ -92,6 +92,23 @@ class FoodServiceTest {
     private lateinit var customerDetails: UserSecurity
 
     @BeforeEach
+    fun setupUserSecurity() {
+        vendorDetails = UserSecurity(
+            id = vendorId,
+            username = "vendor",
+            password = "",
+            mutableListOf(SimpleGrantedAuthority("ROLE_VENDOR"))
+        )
+
+        customerDetails = UserSecurity(
+            id = UUID.randomUUID(),
+            username = "customer",
+            password = "",
+            mutableListOf(SimpleGrantedAuthority("ROLE_CUSTOMER"))
+        )
+    }
+
+    @BeforeEach
     fun setUp() {
         vendorDetails = UserSecurity(
             id = vendorId,
