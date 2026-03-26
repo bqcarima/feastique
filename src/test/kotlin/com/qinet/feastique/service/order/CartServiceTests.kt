@@ -438,6 +438,102 @@ class CartServiceTest {
     }
 
 
+    // addItemToCart — handheld
+    @Nested
+    inner class AddHandheldToCart {
+
+        private fun handheldItemDto(): ItemDto = ItemDto(
+            quickDelivery = false,
+            customerAddressId = null,
+            foodItemDto = null,
+            beverageItemDto = null,
+            dessertItemDto = null,
+            handheldItemDto = HandheldItemDto(
+                handheldId = CS_HANDHELD_ID,
+                handheldSizeId = CS_HANDHELD_SIZE_ID,
+                quantity = 1
+            ),
+            orderType = "DINE_IN"
+        )
+
+        @BeforeEach
+        fun stub() {
+            val customer = csCustomer()
+            whenever(customerRepository.findById(CS_CUSTOMER_ID)).thenReturn(Optional.of(customer))
+            whenever(customerRepository.flush()).then { }
+            whenever(handheldRepository.findById(CS_HANDHELD_ID)).thenReturn(Optional.of(csHandheld()))
+            whenever(cartRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
+        }
+
+        @Test
+        fun `adds handheld to the cart and returns it`() {
+            val result = cartService.addItemToCart(handheldItemDto(), csCustomerSecurity())
+
+            assertNotNull(result)
+            verify(cartRepository).saveAndFlush(any())
+        }
+
+        @Test
+        fun `cart total is updated after adding handheld`() {
+            val result = cartService.addItemToCart(handheldItemDto(), csCustomerSecurity())
+
+            // 3000 price * 1 quantity = 3000
+            assertEquals(3000L, result.totalAmount)
+        }
+
+        @Test
+        fun `throws RequestedEntityNotFoundException when handheld does not exist`() {
+            whenever(handheldRepository.findById(CS_HANDHELD_ID)).thenReturn(Optional.empty())
+
+            assertThrows<RequestedEntityNotFoundException> {
+                cartService.addItemToCart(handheldItemDto(), csCustomerSecurity())
+            }
+        }
+
+        @Test
+        fun `throws RequestedEntityNotFoundException when handheld size id does not match any size on the handheld`() {
+            val handheldWithDifferentSize = csHandheld().apply {
+                handheldSizes = mutableSetOf(HandheldSize().apply {
+                    id = UUID.randomUUID()
+                    size = Size.LARGE
+                    price = 4000
+                    availability = Availability.AVAILABLE
+                })
+            }
+            whenever(handheldRepository.findById(CS_HANDHELD_ID))
+                .thenReturn(Optional.of(handheldWithDifferentSize))
+
+            assertThrows<RequestedEntityNotFoundException> {
+                cartService.addItemToCart(handheldItemDto(), csCustomerSecurity())
+            }
+        }
+
+        @Test
+        fun `merges with existing cart item when same handheld configuration is added again`() {
+            val customer = csCustomer()
+            val cart = Cart().apply { this.customer = customer }
+            val existingItem = HandheldCartItem().apply {
+                this.cart = cart
+                handheld = csHandheld()
+                size = csHandheldSize()
+                quantity = 1
+                totalAmount = 3000
+                orderType = OrderType.DINE_IN
+                vendor = csVendor()
+            }
+            cart.handheldCartItems.add(existingItem)
+            customer.cart = cart
+
+            whenever(customerRepository.findById(CS_CUSTOMER_ID)).thenReturn(Optional.of(customer))
+
+            val result = cartService.addItemToCart(handheldItemDto(), csCustomerSecurity())
+
+            // The existing item quantity should be merged (1 + 1 = 2)
+            assertEquals(2, result.handheldCartItems.first().quantity)
+        }
+    }
+
+
     // removeItems
     @Nested
     inner class RemoveItems {
@@ -571,4 +667,5 @@ class CartServiceTest {
 private fun assertDoesNotThrow(block: () -> Unit) {
     org.junit.jupiter.api.Assertions.assertDoesNotThrow(block)
 }
+
 
