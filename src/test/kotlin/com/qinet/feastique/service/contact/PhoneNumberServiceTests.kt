@@ -24,7 +24,7 @@ import org.mockito.kotlin.any
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import java.util.*
 
-class PhoneNumberServiceTest {
+class PhoneNumberServiceTests {
 
     private val duplicateUtility: DuplicateUtility = mock(DuplicateUtility::class.java)
     private val securityUtility: SecurityUtility = mock(SecurityUtility::class.java)
