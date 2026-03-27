@@ -69,10 +69,10 @@ class OrderService(
 
     @Transactional(readOnly = true)
     fun getOrder(id: UUID, userDetails: UserSecurity): Order? {
-        val role = securityUtility.getRole(userDetails)
+        val role = securityUtility.getSingleRole(userDetails)
         return when (role) {
             "CUSTOMER" -> orderRepository.findByIdAndCustomerIdAndCustomerDeletedFalse(id, userDetails.id)
-            "VENDOR" -> orderRepository.findByIdAndVendorIdAndVendorDeletedFalse(id, userDetails.id, null)
+            "VENDOR" -> orderRepository.findByIdAndVendorIdAndVendorDeletedFalse(id, userDetails.id)
             else -> throw IllegalArgumentException("Invalid role. Contact customer support if issue persists.")
         }
     }
@@ -384,7 +384,7 @@ class OrderService(
 
         while (attempt < maxAttempts) {
             try {
-                val role = securityUtility.getRole(userDetails)
+                val role = securityUtility.getSingleRole(userDetails)
                 val order = orderRepository.findById(id)
                     .orElseThrow { RequestedEntityNotFoundException("An unexpected error occurred. Unable to delete order.") }
 

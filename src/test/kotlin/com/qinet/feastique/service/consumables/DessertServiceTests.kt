@@ -358,7 +358,7 @@ class DessertServiceTest {
         }
 
         val dessert = makeDessert(dessertId, "Ice Cream")
-        dessert.dessertFlavours = mutableListOf(flavour)
+        dessert.dessertFlavours = mutableSetOf(flavour)
         flavour.dessert = dessert
 
         val sizeDto = SizeAvailabilityDto(sizeId = sizeId, availability = "UNAVAILABLE")
@@ -527,7 +527,7 @@ class DessertServiceTest {
             this.preparationTime = 10
             this.dessertOrderTypes = mutableSetOf(OrderType.DINE_IN)
             this.availableDays = mutableSetOf()
-            this.dessertFlavours = mutableListOf()
+            this.dessertFlavours = mutableSetOf()
             this.dessertImages = mutableSetOf()
             this.dessertDiscounts = mutableSetOf()
         }

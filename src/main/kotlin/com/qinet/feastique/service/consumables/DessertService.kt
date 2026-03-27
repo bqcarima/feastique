@@ -302,7 +302,7 @@ class DessertService(
         return existingOrderTypes
     }
 
-    private fun prepareDessertFlavours(dessertDto: DessertDto, dessert: Dessert): MutableList<DessertFlavour> {
+    private fun prepareDessertFlavours(dessertDto: DessertDto, dessert: Dessert): MutableSet<DessertFlavour> {
         val existingFlavours = dessert.dessertFlavours.associateBy { it.id }
 
         val updatedFlavours = dessertDto.dessertFlavours.map { flavourDto ->
