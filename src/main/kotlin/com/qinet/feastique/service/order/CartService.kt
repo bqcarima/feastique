@@ -306,7 +306,9 @@ class CartService(
             this.food = food
             this.vendor = food.vendor
             this.quantity = foodItemDto.foodQuantity ?: 1
-            this.size = food.foodSizes.find { it.id == foodItemDto.foodSizeId } ?: food.foodSizes.first()
+            this.size = food.foodSizes.find { it.id == foodItemDto.foodSizeId }
+                ?: throw RequestedEntityNotFoundException("An error occurred, invalid food size id.")
+
             this.complement = food.foodComplements.firstOrNull { it.complement.id == foodItemDto.complementId }?.complement
                     ?: throw IllegalArgumentException("An error occurred, complement not found.")
             this.addOns.addAll(
@@ -346,7 +348,9 @@ class CartService(
         val handheld = handheldRepository.findById(handheldItemDto.handheldId)
             .getOrElse { throw RequestedEntityNotFoundException("Invalid ID. Cannot add item to cart, handheld not found.") }
 
-        val handheldSize = handheld.handheldSizes.find { it.id == handheldItemDto.handheldSizeId } ?: handheld.handheldSizes.first()
+        val handheldSize = handheld.handheldSizes.find { it.id == handheldItemDto.handheldSizeId }
+            ?: throw RequestedEntityNotFoundException("An error occurred, invalid handheld size id.")
+
         val fillings = handheld.handheldFillings.map { it.filling }
 
         val newHandheldCartItem = HandheldCartItem().apply {
