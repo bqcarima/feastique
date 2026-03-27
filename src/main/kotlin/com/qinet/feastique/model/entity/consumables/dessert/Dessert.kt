@@ -56,7 +56,7 @@ class Dessert : EdibleEntity() {
         cascade = [CascadeType.ALL],
         orphanRemoval = false
     )
-    var dessertFlavours: MutableList<DessertFlavour> = mutableListOf()
+    var dessertFlavours: MutableSet<DessertFlavour> = mutableSetOf()
 
     @ElementCollection(targetClass = OrderType::class)
     @CollectionTable(

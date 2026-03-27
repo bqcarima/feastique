@@ -136,7 +136,7 @@ private fun csDessert(): Dessert = Dessert().apply {
     availability = Availability.AVAILABLE
     deliverable = true
     vendor = csVendor()
-    dessertFlavours = mutableListOf(csDessertFlavour())
+    dessertFlavours = mutableSetOf(csDessertFlavour())
     dessertDiscounts = mutableSetOf()
 }
 
@@ -422,7 +422,7 @@ class CartServiceTest {
         @Test
         fun `throws RequestedEntityNotFoundException when dessert flavour id does not match`() {
             val dessertWithOtherFlavour = csDessert().apply {
-                dessertFlavours = mutableListOf(DessertFlavour().apply {
+                dessertFlavours = mutableSetOf(DessertFlavour().apply {
                     id = UUID.randomUUID()
                     name = "Vanilla"
                     availability = Availability.AVAILABLE
