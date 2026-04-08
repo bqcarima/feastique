@@ -138,6 +138,7 @@ class OrderService(
             this.quickDelivery = itemDto.quickDelivery
             this.orderStatus = OrderStatus.PENDING
             this.orderType = OrderType.fromString(itemDto.orderType)
+            this.note = itemDto.note
         }
 
         when {
@@ -200,6 +201,7 @@ class OrderService(
                 } else null
                 this.quickDelivery = cartItemDto.quickDelivery
                 this.orderStatus = OrderStatus.PENDING
+                this.note = cartItemDto.note
             }
 
             newOrder.addAllItems(itemsForGroup.map { createOrderItemFromCart(it, newOrder) })

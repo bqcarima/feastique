@@ -12,7 +12,8 @@ data class ItemDto (
     var dessertItemDto: DessertItemDto?,
     var foodItemDto: FoodItemDto?,
     var handheldItemDto: HandheldItemDto?,
-    var orderType: String?
+    var orderType: String?,
+    var note: String?
 )
 data class BeverageItemDto (
 
@@ -33,7 +34,8 @@ data class BeverageItemDto (
 data class CartItemDto(
     val ids: List<UUID>,
     val deliveryAddress: UUID?,
-    val quickDelivery: Boolean
+    val quickDelivery: Boolean,
+    val note: String?
 )
 
 data class ChangeQuantityDto(

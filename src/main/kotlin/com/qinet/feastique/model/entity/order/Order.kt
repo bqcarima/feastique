@@ -90,6 +90,8 @@ class Order {
     @Column(name = "total_amount")
     var totalAmount: Long? = null
 
+    var note: String? = null
+
     @Column(name = "response_time", nullable = true)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     var responseTime: LocalDateTime? = null
@@ -126,9 +128,9 @@ class Order {
 
     fun addItem(item: OrderEntity) {
         when (item) {
-            is FoodOrderItem     -> foodOrderItems.add(item.apply { order = this@Order })
+            is FoodOrderItem -> foodOrderItems.add(item.apply { order = this@Order })
             is BeverageOrderItem -> beverageOrderItems.add(item.apply { order = this@Order })
-            is DessertOrderItem  -> dessertOrderItems.add(item.apply { order = this@Order })
+            is DessertOrderItem -> dessertOrderItems.add(item.apply { order = this@Order })
             is HandheldOrderItem -> handheldOrderItems.add((item.apply { order = this@Order }))
         }
     }
@@ -136,9 +138,9 @@ class Order {
     fun addAllItems(itemsList: List<OrderEntity>) {
         for (item in itemsList) {
             when (item) {
-                is FoodOrderItem     -> foodOrderItems.add(item.apply { order = this@Order })
+                is FoodOrderItem -> foodOrderItems.add(item.apply { order = this@Order })
                 is BeverageOrderItem -> beverageOrderItems.add(item.apply { order = this@Order })
-                is DessertOrderItem  -> dessertOrderItems.add(item.apply { order = this@Order })
+                is DessertOrderItem -> dessertOrderItems.add(item.apply { order = this@Order })
                 is HandheldOrderItem -> handheldOrderItems.add(item.apply { order = this@Order })
             }
         }

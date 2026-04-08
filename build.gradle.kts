@@ -30,7 +30,6 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.security:spring-security-crypto")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
     testImplementation("org.springframework.security:spring-security-test")
 	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -38,8 +37,6 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
 	implementation("org.springframework.boot:spring-boot-starter-json")
-
-	compileOnly("jakarta.servlet:jakarta.servlet-api:6.1.0")
 
 	//Provides the Json Web Token functionality
 	implementation("io.jsonwebtoken:jjwt-api:0.12.6")
