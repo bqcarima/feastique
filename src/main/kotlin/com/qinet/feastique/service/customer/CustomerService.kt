@@ -85,7 +85,6 @@ class CustomerService(
                     firstName = requireNotNull(customerSignupDto.firstName) { "Please enter your first name." }
                     lastName = requireNotNull(customerSignupDto.lastName) { "Please enter your last name." }
                     username = requireNotNull(customerSignupDto.username) { "Please enter a username." }
-                    dob = requireNotNull(customerSignupDto.dob) { "Please enter a date of birth." }
                     accountType = AccountType.CUSTOMER
                     anniversary = customerSignupDto.anniversary
                     password = passwordEncoder.encode(customerSignupDto.password)

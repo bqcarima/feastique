@@ -3,6 +3,7 @@ package com.qinet.feastique.model.dto.user
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.qinet.feastique.common.validator.password.ValidPassword
+import com.qinet.feastique.common.validator.password.ValidPin
 import com.qinet.feastique.common.validator.phoneNumber.ValidPhoneNumber
 import com.qinet.feastique.common.validator.username.ValidUsername
 import com.qinet.feastique.model.enums.AccountType
@@ -11,7 +12,6 @@ import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import java.time.LocalDate
 import java.time.LocalTime
-
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class CustomerSignupDto(
@@ -26,15 +26,12 @@ data class CustomerSignupDto(
     var lastName: String,
 
     @JsonFormat(pattern = "dd-MM-yyyy")
-    var dob: LocalDate? = null,
-
-    @JsonFormat(pattern = "dd-MM-yyyy")
     var anniversary: LocalDate? = null,
 
     @field:ValidPhoneNumber(message = "Phone number must start with 6 and be exactly 9 digits long.")
     var phoneNumber: String,
 
-    @field:ValidPassword(message = "Password must be at least 8 characters long, contain at least one uppercase letter and one number.")
+    @field:ValidPin(message = "PIN must be exactly characters long.")
     var password: String,
 
     var country: String? = "Cameroon",
