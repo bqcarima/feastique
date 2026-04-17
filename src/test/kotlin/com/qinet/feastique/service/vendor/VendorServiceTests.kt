@@ -230,7 +230,7 @@ class VendorServiceProfileTest {
                         lastName == "Chancie" &&
                         chefName == "Sabi Chef" &&
                         restaurantName == "Sabi Foods" &&
-                        image == "https://cdn.feastique.com/sabi.jpg"
+                        displayPicture == "https://cdn.feastique.com/sabi.jpg"
             })
         }
 

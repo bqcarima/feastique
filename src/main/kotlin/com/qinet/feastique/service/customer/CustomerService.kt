@@ -176,7 +176,7 @@ class CustomerService(
         customer.lastName = requireNotNull(customerUpdateDto.lastName) { "Please enter your last name." }
         customer.dob = requireNotNull(customerUpdateDto.dob) { "Please enter a date of birth." }
         customer.anniversary = customerUpdateDto.anniversary
-        customer.image = customerUpdateDto.image
+        customer.displayPicture = customerUpdateDto.image
 
         val savedCustomer = saveCustomer(customer)
 

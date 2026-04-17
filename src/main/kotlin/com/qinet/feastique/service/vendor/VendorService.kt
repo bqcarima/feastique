@@ -192,7 +192,8 @@ class VendorService(
         vendor.lastName = requireNotNull(vendorUpdateDto.lastName) { "Please enter a last name." }
         vendor.chefName = requireNotNull(vendorUpdateDto.chefName) { "Please enter a chef name." }
         vendor.restaurantName = requireNotNull(vendorUpdateDto.restaurantName) { "Please enter a restaurant name." }
-        vendor.image = requireNotNull(vendorUpdateDto.image) { "Please select an image." }
+        vendor.displayPicture = requireNotNull(vendorUpdateDto.image) { "Please select an image." }
+        vendor.simpleSetup = requireNotNull(vendorUpdateDto.setupType) { "Please specify a setup type." }
         val savedVendor = saveVendor(vendor)
 
 
@@ -242,6 +243,7 @@ class VendorService(
         vendor.accountUpdated = LocalDateTime.now()
         saveVendor(vendor)
     }
+
 
     /*@Transactional(readOnly = true)
     fun scrollVendors(

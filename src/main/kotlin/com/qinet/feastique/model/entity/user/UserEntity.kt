@@ -1,11 +1,11 @@
 package com.qinet.feastique.model.entity.user
 
 import com.fasterxml.jackson.annotation.JsonFormat
+import com.github.f4b6a3.uuid.UuidCreator
 import com.qinet.feastique.model.enums.AccountType
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
-import com.github.f4b6a3.uuid.UuidCreator
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import java.time.LocalDateTime
@@ -16,11 +16,11 @@ abstract class UserEntity {
 
     @Id
     @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
-    var id: UUID = UuidCreator.getTimeOrdered()
+    var id: UUID = UuidCreator.getTimeOrderedEpoch()
 
     @NotBlank(message = "Username cannot be null.")
     @NotEmpty(message = "Username cannot be empty.")
-    var username: String = UUID.randomUUID().toString()
+    var username: String = ""
 
     @Column(name = "first_name")
     @NotBlank(message = "First name cannot be null.")
@@ -36,7 +36,7 @@ abstract class UserEntity {
     @NotEmpty(message = "Password cannot be empty.")
     var password: String? = ""
 
-    var image: String? = ""
+    var displayPicture: String? = null
 
     @Column(name = "registration_date")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH-mm-ss-dd-MM-yyyy")

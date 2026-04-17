@@ -4,8 +4,8 @@ package com.qinet.feastique.model.entity.user
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonManagedReference
 import com.qinet.feastique.model.entity.address.CustomerAddress
-import com.qinet.feastique.model.entity.order.Cart
 import com.qinet.feastique.model.entity.contact.CustomerPhoneNumber
+import com.qinet.feastique.model.entity.order.Cart
 import jakarta.persistence.*
 import java.time.LocalDate
 
@@ -55,6 +55,5 @@ class Customer : UserEntity() {
         orphanRemoval = true
     )
     var address: MutableSet<CustomerAddress> = mutableSetOf()
-
 }
 
