@@ -8,17 +8,12 @@ import com.qinet.feastique.model.entity.consumables.dessert.Dessert
 import com.qinet.feastique.model.entity.consumables.food.Food
 import com.qinet.feastique.model.entity.consumables.handheld.Handheld
 import com.qinet.feastique.model.entity.post.Post
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
-import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
-import jakarta.persistence.MappedSuperclass
-import jakarta.persistence.Table
+import com.qinet.feastique.model.entity.user.Customer
+import com.qinet.feastique.model.entity.user.Vendor
+import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
-import java.util.UUID
+import java.util.*
 
 @MappedSuperclass
 abstract class Image {
@@ -48,7 +43,7 @@ class BeverageImage : Image() {
 @Table(name = "dessert_images")
 class DessertImage : Image() {
 
-    @JsonBackReference // prevent infinite recursion for extra protection
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "dessert_id", nullable = false)
     @JsonIgnore
@@ -60,7 +55,7 @@ class DessertImage : Image() {
 @Table(name = "food_images")
 class FoodImage : Image() {
 
-    @JsonBackReference // prevent infinite recursion for extra protection
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "food_id", nullable = false)
     @JsonIgnore
@@ -71,7 +66,7 @@ class FoodImage : Image() {
 @Table(name = "handheld_images")
 class HandheldImage : Image() {
 
-    @JsonBackReference // prevent infinite recursion for extra protection
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "handheld_id", nullable = false)
     @JsonIgnore
@@ -82,10 +77,32 @@ class HandheldImage : Image() {
 @Table(name = "post_images")
 class PostImage : Image() {
 
-    @JsonBackReference // prevent infinite recursion for extra protection
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "post_id", nullable = false)
     @JsonIgnore
     lateinit var post: Post
+}
+
+
+// User images
+@Entity
+@Table(name = "vendor_images")
+class VendorImage : Image() {
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "vendor_id", nullable = false)
+    @JsonIgnore
+    lateinit var vendor: Vendor
+}
+
+@Entity
+@Table(name = "customer_images")
+class CustomerImage : Image() {
+    @JsonBackReference
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "customer_id", nullable = false)
+    @JsonIgnore
+    lateinit var customer: Customer
 }
 

@@ -2,24 +2,15 @@ package com.qinet.feastique.model.entity.user
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonManagedReference
-import com.qinet.feastique.model.entity.consumables.addOn.AddOn
 import com.qinet.feastique.model.entity.address.VendorAddress
+import com.qinet.feastique.model.entity.consumables.addOn.AddOn
 import com.qinet.feastique.model.entity.consumables.complement.Complement
-import com.qinet.feastique.model.entity.discount.Discount
 import com.qinet.feastique.model.entity.consumables.food.Food
 import com.qinet.feastique.model.entity.contact.VendorPhoneNumber
+import com.qinet.feastique.model.entity.discount.Discount
+import com.qinet.feastique.model.entity.image.VendorImage
 import com.qinet.feastique.model.enums.Region
-import jakarta.persistence.CascadeType
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
-import jakarta.persistence.NamedAttributeNode
-import jakarta.persistence.NamedEntityGraph
-import jakarta.persistence.NamedEntityGraphs
-import jakarta.persistence.OneToMany
-import jakarta.persistence.OneToOne
-import jakarta.persistence.Table
+import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
@@ -59,6 +50,8 @@ import java.time.LocalTime
 @Table(name = "vendors")
 class Vendor : UserEntity() {
 
+    var simpleSetup: Boolean = false
+
     @Column(name = "region")
     @Enumerated(EnumType.STRING)
     @NotNull(message = "Region cannot be empty.")
@@ -88,7 +81,7 @@ class Vendor : UserEntity() {
     @OneToMany(
         mappedBy = "vendor",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true // Automatic removal of addresses if removed from the vendor
+        orphanRemoval = false
     )
     var addOn: MutableSet<AddOn> = mutableSetOf()
 
@@ -96,7 +89,7 @@ class Vendor : UserEntity() {
     @OneToOne(
         mappedBy = "vendor",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var address: VendorAddress? = null
 
@@ -104,7 +97,7 @@ class Vendor : UserEntity() {
     @OneToMany(
         mappedBy = "vendor",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var food: MutableSet<Food> = mutableSetOf()
 
@@ -112,7 +105,7 @@ class Vendor : UserEntity() {
     @OneToMany(
         mappedBy = "vendor",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var vendorPhoneNumber: MutableSet<VendorPhoneNumber> = mutableSetOf()
 
@@ -120,7 +113,7 @@ class Vendor : UserEntity() {
     @OneToMany(
         mappedBy = "vendor",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var complement: MutableSet<Complement> = mutableSetOf()
 
@@ -128,9 +121,17 @@ class Vendor : UserEntity() {
     @OneToMany(
         mappedBy = "vendor",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = false
     )
     var discount: MutableSet<Discount> = mutableSetOf()
+
+    @JsonManagedReference
+    @OneToMany(
+        mappedBy = "vendor",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    var previewImages: MutableSet<VendorImage> = mutableSetOf()
 
     @Formula("(SELECT COUNT(vl.id) FROM vendor_likes vl WHERE vl.vendor_id = id)")
     var likeCount: Long = 0

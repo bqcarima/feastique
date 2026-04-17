@@ -59,6 +59,9 @@ dependencies {
 	testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
 	testImplementation("org.mockito:mockito-inline:5.2.0")
 
+	// AWS S3 service
+	implementation("software.amazon.awssdk:s3:2.25.0")
+
 }
 
 kotlin {

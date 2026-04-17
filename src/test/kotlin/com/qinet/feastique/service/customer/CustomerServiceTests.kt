@@ -215,7 +215,7 @@ class CustomerServiceProfileTest {
                         lastName == "Doe" &&
                         dob == CS_JANE_DOB &&
                         anniversary == CS_JANE_ANNIVERSARY &&
-                        image == "https://cdn.feastique.com/jane.jpg"
+                        displayPicture == "https://cdn.feastique.com/jane.jpg"
             })
         }
 

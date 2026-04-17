@@ -240,7 +240,7 @@ fun Customer.toResponse(): CustomerResponse = CustomerResponse(
     verified = verified ?: false,
     accountType = accountType?.type.orEmpty(),
     registrationDate = registrationDate ?: dateFormatter.parse("00-00-0000"),
-    imageUrl = image.orEmpty()
+    imageUrl = displayPicture.orEmpty()
 )
 
 /** Returns minimal customer details for order responses. */
@@ -721,7 +721,7 @@ fun Vendor.toResponse(like: Boolean = false): VendorResponse = VendorResponse(
     closingTime = closingTime,
     verified = verified ?: false,
     accountType = accountType?.type,
-    imageUrl = image.orEmpty(),
+    imageUrl = displayPicture.orEmpty(),
     registrationDate = registrationDate ?: dateFormatter.parse("00-00-0000"),
     phoneNumber = vendorPhoneNumber.map { it.toResponse() },
     address = address!!.toResponse(),
